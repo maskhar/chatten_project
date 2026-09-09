@@ -1,5 +1,5 @@
 export type Field = { key: string; label: string; type?: "text" | "textarea" | "number" | "checkbox" | "datetime-local" | "time" | "select" | "media"; options?: string[]; required?: boolean };
-export type Resource = { key: string; label: string; table: string; primaryKey?: string; fields: Field[] };
+export type Resource = { key: string; label: string; table: string; group?: "website" | "content" | "settings"; description?: string; primaryKey?: string; fields: Field[] };
 const editorial = [{ key: "sort_order", label: "Sort order", type: "number" as const }, { key: "is_active", label: "Active", type: "checkbox" as const }, { key: "status", label: "Status", type: "select" as const, options: ["draft", "published"] }];
 export const resources: Resource[] = [
   { key: "hero", label: "Hero", table: "hero_slides", fields: [{ key: "title", label: "Title", required: true }, { key: "subtitle", label: "Subtitle", type: "textarea" }, { key: "cta_label", label: "CTA label" }, { key: "cta_url", label: "CTA URL" }, { key: "image_media_id", label: "Image", type: "media" }, ...editorial] },

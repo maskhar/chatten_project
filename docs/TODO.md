@@ -39,3 +39,6 @@
 
 - [ ] Add operator-approved Chatten photography to content/chatten-media-import.json and map Hero, Moments, Gallery, Spaces, and Experiences
 - [x] Add rights-aware media metadata and approved manifest importer
+
+## Phase 6 — CMS Experience Refactor
+- [ ] Complete dedicated domain editors, visual media manager, and operator-facing ordering across all CMS areas
