@@ -9,7 +9,7 @@ export async function publicRows<T>(table: string, order = "sort_order") {
   return (result.data ?? []) as unknown as T[];
 }
 
-export async function publicMedia() { const supabase = await createServerSupabaseClient(); const result = await supabase.from("media").select("*"); return mediaMap(result.data ?? []); }
+export async function publicMedia() { const supabase = await createServerSupabaseClient(); const result = await supabase.from("media").select("*").eq("rights_status", "approved"); return mediaMap(result.data ?? []); }
 export async function publicMenu() { const [items, categories] = await Promise.all([publicRows<PublicMenuItem>("menu_items"), publicRows<{ id: string; name: string }>("menu_categories")]); return { items: items.filter((item) => item.is_active !== false && item.status === "published"), categories }; }
 export async function publicCards(table: "experiences" | "spaces") { return (await publicRows<PublicCard>(table)).filter((item) => item.is_active !== false && item.status === "published"); }
 export async function publicAbout() { return publicRows<PublicAbout>("about_sections"); }
