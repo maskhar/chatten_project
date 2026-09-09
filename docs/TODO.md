@@ -7,7 +7,9 @@
 - [ ] Generate database TypeScript types after future schema changes
 
 ## Phase 2 — Public Homepage
-- [ ] Build Panoramic Editorial homepage
+- [x] Build Panoramic Editorial homepage
+- [x] Add CMS-backed server data layer and responsive homepage sections
+- [x] Confirm application Docker build after Phase 1 fix
 ## Phase 3 — Public Pages & SEO
 - [ ] Build public detail pages, sitemap, structured data
 ## Phase 4 — Management Dashboard & CRUD
