@@ -36,3 +36,6 @@
 
 - [ ] Operator-assisted Auth login/session/browser smoke verification
 - [x] Add guarded temporary Auth provision/session/cleanup tooling
+
+- [ ] Add operator-approved Chatten photography to content/chatten-media-import.json and map Hero, Moments, Gallery, Spaces, and Experiences
+- [x] Add rights-aware media metadata and approved manifest importer
