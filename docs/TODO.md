@@ -45,3 +45,5 @@
 
 - [x] Complete Homepage management drag ordering, visibility, and public integration
 - [x] Complete Menu management categories, item workflows, ordering, availability, media, and price UX
+
+- [x] Complete dedicated Gallery management ordering, editing, visibility, and safe deletion
