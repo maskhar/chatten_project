@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function EditGallery(){return <section><Link href="/admin/gallery">Back to Gallery</Link><h1>Edit Gallery image</h1></section>}
