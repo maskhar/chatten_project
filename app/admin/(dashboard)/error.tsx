@@ -1,0 +1,2 @@
+"use client";
+export default function AdminError({ reset }: { reset: () => void }) { return <section className="border border-[#c9bfa8] bg-[#ede3d0] p-8"><h1 className="font-serif text-4xl">CMS action failed.</h1><p className="mt-3 text-[#596052]">No changes were applied. Check the form and try again.</p><button className="mt-6 bg-[#1f3426] px-4 py-2 text-sm font-semibold text-white" onClick={() => reset()}>Try again</button></section>; }

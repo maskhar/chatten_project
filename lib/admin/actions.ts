@@ -1,0 +1,11 @@
+"use server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { resourceFor } from "./resources";
+
+function value(field: string, input: FormDataEntryValue | null) { if (input === null || input === "") return null; if (field === "sort_order" || field === "day_of_week") return Number(input); if (field === "price") return Number(input); return input; }
+export async function saveResource(formData: FormData) { await requireAdmin(); const resource = resourceFor(String(formData.get("resource"))); if (!resource) throw new Error("Unknown resource"); const id = formData.get("id"); const payload = Object.fromEntries(resource.fields.map((field) => [field.key, field.type === "checkbox" ? formData.get(field.key) === "on" : value(field.key, formData.get(field.key))]).filter(([, entry]) => entry !== null)); const supabase = await createServerSupabaseClient(); const query = id ? supabase.from(resource.table).update(payload).eq("id", String(id)) : supabase.from(resource.table).insert(payload); const { error } = await query; if (error) throw new Error("Unable to save content."); revalidatePath("/"); revalidatePath(`/admin/${resource.key}`); redirect(`/admin/${resource.key}?saved=1`); }
+export async function deleteResource(formData: FormData) { await requireAdmin(); const resource = resourceFor(String(formData.get("resource"))); const id = String(formData.get("id")); if (!resource || !id) throw new Error("Invalid content request"); const supabase = await createServerSupabaseClient(); const { error } = await supabase.from(resource.table).delete().eq("id", id); if (error) throw new Error("Unable to delete content."); revalidatePath("/"); revalidatePath(`/admin/${resource.key}`); }
+export async function signOut() { const supabase = await createServerSupabaseClient(); await supabase.auth.signOut(); redirect("/admin/login"); }

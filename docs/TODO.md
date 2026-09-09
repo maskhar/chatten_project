@@ -15,6 +15,10 @@
 - [x] Add metadata, canonical strategy, robots, sitemap, JSON-LD, and OG fallback
 - [ ] Verify live browser rendering with local Supabase environment
 ## Phase 4 — Management Dashboard & CRUD
-- [ ] Build role-aware CMS CRUD and media library
+- [x] Build role-aware CMS shell, content CRUD modules, account, and logout
+- [x] Add self-hosted Storage media upload/delete workflow
+- [x] Add Users & Roles module with super-admin safeguards
+- [x] Split directions and map embed contact URLs through migration
+- [ ] Bootstrap first production super_admin through controlled database administration
 ## Phase 5 — Integration, QA & Production
 - [ ] Complete responsive, security, deployment, and production QA

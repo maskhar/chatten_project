@@ -12,3 +12,5 @@ Apply `supabase/migrations/` through controlled access to existing self-hosted S
 Homepage content comes from `chatten_cafe` through public RLS-safe server queries. Uploading CMS media later uses `chatten-media`; no remote image host is required for Phase 2.
 
 Public pages: `/menu`, `/experience`, `/spaces`, `/gallery`, `/events`, `/about`, and `/visit`. Set `NEXT_PUBLIC_APP_URL` for production canonical URLs, sitemap entries, robots sitemap reference, and social preview URLs.
+
+CMS routes live under `/admin`. Create a Supabase Auth user, then assign its initial `super_admin` role through controlled database administration before signing in. CMS media uses the self-hosted `chatten-media` bucket; never expose the service-role key to browser code.
