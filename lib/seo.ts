@@ -1,0 +1,2 @@
+import type { Metadata } from "next";
+export function publicMetadata(title: string, description: string, path: string): Metadata { const base = process.env.NEXT_PUBLIC_APP_URL ? new URL(process.env.NEXT_PUBLIC_APP_URL) : undefined; return { title: `${title} | Chatten Cafe`, description, metadataBase: base, alternates: base ? { canonical: new URL(path, base).toString() } : undefined, openGraph: { title: `${title} | Chatten Cafe`, description, type: "website", url: base ? new URL(path, base).toString() : undefined } }; }

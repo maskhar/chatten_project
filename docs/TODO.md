@@ -11,7 +11,9 @@
 - [x] Add CMS-backed server data layer and responsive homepage sections
 - [x] Confirm application Docker build after Phase 1 fix
 ## Phase 3 — Public Pages & SEO
-- [ ] Build public detail pages, sitemap, structured data
+- [x] Build public listing and detail pages
+- [x] Add metadata, canonical strategy, robots, sitemap, JSON-LD, and OG fallback
+- [ ] Verify live browser rendering with local Supabase environment
 ## Phase 4 — Management Dashboard & CRUD
 - [ ] Build role-aware CMS CRUD and media library
 ## Phase 5 — Integration, QA & Production
