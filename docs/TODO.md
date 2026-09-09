@@ -21,4 +21,11 @@
 - [x] Split directions and map embed contact URLs through migration
 - [ ] Bootstrap first production super_admin through controlled database administration
 ## Phase 5 — Integration, QA & Production
-- [ ] Complete responsive, security, deployment, and production QA
+- [x] Add liveness/readiness endpoints and Docker healthcheck
+- [x] Add explicit CLI-only super-admin bootstrap workflow
+- [x] Add database last-super-admin trigger protection
+- [x] Add authenticated CMS draft preview route
+- [x] Add automated bootstrap argument tests
+- [x] Complete isolated database backup/restore drill
+- [ ] Assign operator-selected first super_admin and complete authenticated CMS E2E verification
+- [ ] Configure production domain/host and deploy Chatten application

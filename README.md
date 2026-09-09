@@ -14,3 +14,5 @@ Homepage content comes from `chatten_cafe` through public RLS-safe server querie
 Public pages: `/menu`, `/experience`, `/spaces`, `/gallery`, `/events`, `/about`, and `/visit`. Set `NEXT_PUBLIC_APP_URL` for production canonical URLs, sitemap entries, robots sitemap reference, and social preview URLs.
 
 CMS routes live under `/admin`. Create a Supabase Auth user, then assign its initial `super_admin` role through controlled database administration before signing in. CMS media uses the self-hosted `chatten-media` bucket; never expose the service-role key to browser code.
+
+For a safer first role assignment, run `npm run admin:bootstrap -- --email user@example.com` using ignored server runtime configuration. See `docs/BACKUP_RESTORE.md`, `docs/DEPLOYMENT.md`, and `docs/RELEASE_CHECKLIST.md` for release operations.
