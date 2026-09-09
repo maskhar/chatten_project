@@ -20,3 +20,7 @@
 - Add approved images from Media Library, edit caption and alt text, replace image references, show or hide items, and remove Gallery records.
 - Drag items or use Move Up/Down to save public ordering.
 - Removing Gallery item does not delete shared Media Library asset.
+
+## Media Search
+
+- Type a word into **Search media...**, submit, then use **Clear search** to return to full library.

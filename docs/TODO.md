@@ -47,3 +47,5 @@
 - [x] Complete Menu management categories, item workflows, ordering, availability, media, and price UX
 
 - [x] Complete dedicated Gallery management ordering, editing, visibility, and safe deletion
+
+- [x] Add Media Search to Media Library
