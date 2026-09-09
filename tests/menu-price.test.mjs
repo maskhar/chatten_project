@@ -1,0 +1,10 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import ts from "typescript";
+const source=fs.readFileSync(new URL("../lib/menu/price.ts", import.meta.url),"utf8");
+const output=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+const {formatIdr,parseIdr}=await import(`data:text/javascript,${encodeURIComponent(output)}`);
+test("formatIdr formats Rupiah values",()=>{assert.equal(formatIdr(25000),"Rp 25.000");assert.equal(formatIdr(100000),"Rp 100.000");});
+test("parseIdr accepts supported operator inputs",()=>{assert.equal(parseIdr("25000"),25000);assert.equal(parseIdr("25.000"),25000);assert.equal(parseIdr("Rp 25.000"),25000);});
+test("parseIdr rejects invalid values",()=>{assert.equal(parseIdr(""),null);assert.equal(parseIdr("coffee"),null);assert.equal(parseIdr("-25000"),25000);});
