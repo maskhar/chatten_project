@@ -49,3 +49,5 @@
 - [x] Complete dedicated Gallery management ordering, editing, visibility, and safe deletion
 
 - [x] Add Media Search to Media Library
+
+- [x] Add Media Rights Filter
