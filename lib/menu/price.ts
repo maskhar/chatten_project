@@ -1,0 +1,2 @@
+export function formatIdr(value: number | null | undefined) { return value === null || value === undefined ? "" : new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value); }
+export function parseIdr(value: string) { const normalized=value.replace(/[^0-9]/g, ""); if (!normalized) return null; const parsed=Number(normalized); return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null; }

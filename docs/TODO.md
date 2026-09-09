@@ -42,3 +42,6 @@
 
 ## Phase 6 — CMS Experience Refactor
 - [ ] Complete dedicated domain editors, visual media manager, and operator-facing ordering across all CMS areas
+
+- [x] Complete Homepage management drag ordering, visibility, and public integration
+- [x] Complete Menu management categories, item workflows, ordering, availability, media, and price UX
