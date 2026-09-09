@@ -1,0 +1,6 @@
+"use server";
+import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+export async function saveGalleryItem(formData:FormData){await requireAdmin();const supabase=await createServerSupabaseClient();const id=String(formData.get("id")??"");const payload={title:String(formData.get("title")??"").trim()||null,alt_text:String(formData.get("alt_text")??"").trim(),image_media_id:String(formData.get("image_media_id")??"")||null,is_active:formData.get("is_active")==="on",status:String(formData.get("status")??"draft")};if(!payload.alt_text)throw new Error("Alt text is required.");const result=id?await supabase.from("gallery_items").update(payload).eq("id",id):await supabase.from("gallery_items").insert(payload);if(result.error)throw new Error("Unable to save gallery item.");revalidatePath("/admin/gallery");revalidatePath("/");}
+export async function toggleGalleryItem(formData:FormData){await requireAdmin();const supabase=await createServerSupabaseClient();const {error}=await supabase.from("gallery_items").update({is_active:String(formData.get("active"))==="true"}).eq("id",String(formData.get("id")));if(error)throw new Error("Unable to update visibility.");revalidatePath("/admin/gallery");revalidatePath("/");}
