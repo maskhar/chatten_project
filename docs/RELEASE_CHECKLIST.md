@@ -16,3 +16,6 @@
 - [x] Self-hosted Supabase TLS trust gate verified
 - [x] chatten_cafe service_role PostgREST privilege gate verified
 - [x] Admin bootstrap idempotency verified for authorized operator
+
+- [ ] Authenticated browser E2E confirmed by operator
+- [x] Operator-assisted Auth E2E tooling prepared

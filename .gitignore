@@ -5,3 +5,7 @@ node_modules
 .env
 .env.local
 *.tsbuildinfo
+
+.e2e/
+playwright-report/
+test-results/

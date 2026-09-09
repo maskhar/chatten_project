@@ -33,3 +33,6 @@
 - [x] Verify Node system-CA TLS path for self-hosted Supabase Auth Admin
 - [x] Grant service_role custom-schema PostgREST privileges through migration
 - [x] Verify exact-user bootstrap twice and preserve single super_admin role
+
+- [ ] Operator-assisted Auth login/session/browser smoke verification
+- [x] Add guarded temporary Auth provision/session/cleanup tooling
