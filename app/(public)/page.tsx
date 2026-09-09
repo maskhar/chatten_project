@@ -1,0 +1,2 @@
+import { Container } from "@/components/ui/container";
+export default function HomePage() { return <main className="min-h-screen py-24"><Container><p className="text-sm uppercase tracking-[0.2em] text-[#b75e42]">Phase 1 foundation</p><h1 className="mt-4 text-5xl" style={{ fontFamily: "var(--font-display)" }}>Chatten Cafe</h1><p className="mt-6 max-w-xl text-lg leading-8">Public destination experience arrives in Phase 2.</p></Container></main>; }
