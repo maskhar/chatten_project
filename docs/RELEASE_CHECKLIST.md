@@ -12,3 +12,7 @@
 - [ ] Media backup verified
 - [ ] Admin login verified with CMS role
 - [x] Public smoke test verified
+
+- [x] Self-hosted Supabase TLS trust gate verified
+- [x] chatten_cafe service_role PostgREST privilege gate verified
+- [x] Admin bootstrap idempotency verified for authorized operator

@@ -15,4 +15,4 @@ Public pages: `/menu`, `/experience`, `/spaces`, `/gallery`, `/events`, `/about`
 
 CMS routes live under `/admin`. Create a Supabase Auth user, then assign its initial `super_admin` role through controlled database administration before signing in. CMS media uses the self-hosted `chatten-media` bucket; never expose the service-role key to browser code.
 
-For a safer first role assignment, run `npm run admin:bootstrap -- --email user@example.com` using ignored server runtime configuration. See `docs/BACKUP_RESTORE.md`, `docs/DEPLOYMENT.md`, and `docs/RELEASE_CHECKLIST.md` for release operations.
+For a safer first role assignment, run `npm run admin:bootstrap -- --email user@example.com` or `npm run admin:bootstrap -- --user-id uuid` using ignored server runtime configuration. Node 24 uses the operating-system CA store for self-hosted Supabase TLS (`--use-system-ca` locally and `NODE_USE_SYSTEM_CA=1` in the production container). See `docs/BACKUP_RESTORE.md`, `docs/DEPLOYMENT.md`, and `docs/RELEASE_CHECKLIST.md` for release operations.

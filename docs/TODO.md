@@ -29,3 +29,7 @@
 - [x] Complete isolated database backup/restore drill
 - [ ] Assign operator-selected first super_admin and complete authenticated CMS E2E verification
 - [ ] Configure production domain/host and deploy Chatten application
+
+- [x] Verify Node system-CA TLS path for self-hosted Supabase Auth Admin
+- [x] Grant service_role custom-schema PostgREST privileges through migration
+- [x] Verify exact-user bootstrap twice and preserve single super_admin role
