@@ -67,3 +67,11 @@
 - [x] Human-readable Media Delete Protection
 
 - [x] Multi-file Upload Core
+
+- [x] Multi-file Selection UI
+
+- [x] Drag & Drop UI
+
+- [ ] Upload Queue / per-file result UI
+
+- [ ] Final Media Picker polish

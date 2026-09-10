@@ -29,6 +29,13 @@
 - Category filter derives existing Media categories and combines with Search, Rights, and Usage.
 - **Clear filters** resets Search, Rights, Usage, and Category together.
 
+## Uploading Multiple Images
+
+- Choose multiple images in one file-picker interaction, or drag and drop images into the upload zone.
+- Each upload accepts a maximum of 20 files. Selections over the limit remain visible so files can be removed before submission.
+- Supported formats are JPEG, PNG, WebP, and AVIF, with a maximum size of 10 MB per image.
+- New uploads default to **Needs Review** until an authorized operator approves their rights status.
+
 ## Used In
 
 - Open a Media item from **View / Edit** in Media Library.
