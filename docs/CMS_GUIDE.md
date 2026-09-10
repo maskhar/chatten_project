@@ -74,7 +74,8 @@
 - Event start date/time is required; Event end date/time is optional and cannot precede its start.
 - Promotion start and end date/times are optional; when both exist, the end cannot precede the start.
 - Shared Media Picker shows approved media only. Replacing or removing an image changes only the content relation and preserves the Media Library asset.
-- Ordering, quick visibility controls, and deletion are handled in a later operational-controls slice.
+- Drag or use Move Up and Move Down, then save display order. Show/Hide changes active state without changing Draft/Published status.
+- Delete removes only the Event or Promotion record; linked Media Library and Storage assets remain preserved.
 ## Menu
 
 - Add, edit, delete, drag, or move menu categories. Categories containing items cannot be deleted.
