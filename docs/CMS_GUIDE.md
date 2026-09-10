@@ -67,6 +67,14 @@
 - Linked Media remains available in Media Library, and no Storage object is deleted.
 - Remaining Spaces keep normalized public ordering after deletion.
 
+## Events and Promotions
+
+- Use `/admin/events` and `/admin/promotions` for dedicated operator-friendly managers.
+- Add or edit titles, slugs, summaries, body content, approved images, dates, active state, and editorial status.
+- Event start date/time is required; Event end date/time is optional and cannot precede its start.
+- Promotion start and end date/times are optional; when both exist, the end cannot precede the start.
+- Shared Media Picker shows approved media only. Replacing or removing an image changes only the content relation and preserves the Media Library asset.
+- Ordering, quick visibility controls, and deletion are handled in a later operational-controls slice.
 ## Menu
 
 - Add, edit, delete, drag, or move menu categories. Categories containing items cannot be deleted.

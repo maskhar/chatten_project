@@ -1,0 +1,3 @@
+import { createServerSupabaseClient } from "@/lib/supabase/server"; import { EventPromotionManager } from "@/components/admin/event-promotion-manager";
+export const dynamic="force-dynamic";
+export default async function PromotionsManagerPage(){const supabase=await createServerSupabaseClient();const [{data:rows},{data:media}]=await Promise.all([supabase.from("promotions").select("*").order("created_at",{ascending:false}),supabase.from("media").select("id,title,alt_text,category,rights_status,width,height,bucket,storage_path").eq("rights_status","approved").order("created_at",{ascending:false})]);return <EventPromotionManager kind="promotion" rows={(rows??[]) as never[]} media={(media??[]) as never[]} baseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL??""}/>}
