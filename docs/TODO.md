@@ -61,3 +61,5 @@
 - [x] Structured Media Usage Core
 
 - [x] Structured Media Usage Database Wiring
+
+- [x] Media Detail Used In

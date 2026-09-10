@@ -24,11 +24,13 @@
 ## Media Search
 
 - Type a word into **Search media...**, submit, then use **Clear search** to return to full library.
-
 - Media Rights filter: All rights, Approved, Needs Review, Restricted. Search and Rights combine.
-
 - Usage filter: All usage, Used, or Unused; combines with Search and Rights.
-
 - Category filter derives existing Media categories and combines with Search, Rights, and Usage.
-
 - **Clear filters** resets Search, Rights, Usage, and Category together.
+
+## Used In
+
+- Open a Media item from **View / Edit** in Media Library.
+- **Used In** shows every CMS resource currently referencing that image with human-readable resource and content names.
+- Images without references show `This image is not currently used anywhere.`
