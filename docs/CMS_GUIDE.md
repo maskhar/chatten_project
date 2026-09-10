@@ -30,3 +30,5 @@
 - Usage filter: All usage, Used, or Unused; combines with Search and Rights.
 
 - Category filter derives existing Media categories and combines with Search, Rights, and Usage.
+
+- **Clear filters** resets Search, Rights, Usage, and Category together.

@@ -55,3 +55,5 @@
 - [x] Add Media Usage Filter
 
 - [x] Add Media Category Filter
+
+- [x] Complete Media Library browsing/filtering
