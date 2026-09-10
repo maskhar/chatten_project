@@ -21,6 +21,38 @@
 - Drag items or use Move Up/Down to save public ordering.
 - Removing Gallery item does not delete shared Media Library asset.
 
+## Choosing Images
+
+When selecting images for content (Hero, Moments, Menu, Gallery, Events, Promotions), the Media Picker shows only **Approved** images. Images with **Needs Review** or **Restricted** rights status are not selectable.
+
+### Search and Filter
+
+- **Search** matches image titles, alt text, and categories (case-insensitive).
+- **Category filter** shows all unique categories from approved images, sorted alphabetically.
+- Search and Category combine with AND logic—both conditions must match.
+- Use **Clear filters** to reset search and category together.
+
+### Selecting Images
+
+- Currently selected image shows a **Selected** label above the title for clarity.
+- The selected thumbnail displays a green ring border and shows selection state in the grid.
+- Click any image thumbnail to select it.
+- Use **Replace** to change the current selection without removing it first.
+- Use **Remove** to clear the selection (only available when the field is optional).
+
+### Empty States
+
+- If no approved images exist, the picker shows: **No approved images yet** with guidance to upload and approve images first.
+- **Open Media Library** button navigates directly to `/admin/media` for uploading and approval.
+- If filters exclude all results, the picker shows: **No images match your filters** with a **Clear filters** action.
+
+### Workflow
+
+1. Upload images through Media Library
+2. Approve images by setting Rights status to **Approved**
+3. Return to content editor (Hero, Menu, Gallery, etc.)
+4. Select approved images through the Media Picker
+
 ## Media Search
 
 - Type a word into **Search media...**, submit, then use **Clear search** to return to full library.

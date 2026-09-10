@@ -74,4 +74,4 @@
 
 - [x] Upload Queue / per-file result UI
 
-- [ ] Final Media Picker polish
+- [x] Final Media Picker polish

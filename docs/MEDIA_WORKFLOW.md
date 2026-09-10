@@ -30,7 +30,7 @@ Media Library shows Storage thumbnails, dimensions, size, rights state, and usag
 
 ## Picker
 
-Editorial modules with `image_media_id` use shared visual picker. Picker queries only approved assets, shows thumbnail/title/alt/category, and supports replace/remove without URL or UUID entry.
+Editorial modules with `image_media_id` use the shared visual Media Picker component (`components/admin/media-picker.tsx`). The Picker queries only `rights_status: approved` assets from the server, ensuring Needs Review and Restricted images are never selectable for publishable content. Operators search by title, alt text, or category; filter by category dropdown; and combine search + category with AND logic. Selected images show explicit **Selected** indicator text with visual ring styling. Replace and Remove actions clear selection without requiring UUID entry. Zero approved images shows **No approved images yet** with a direct **Open Media Library** link, guiding operators to upload and approve assets. Filtered empty state shows **No images match your filters** with inline **Clear filters** action. The workflow enforces: Upload → Needs Review → Approve → Select through Media Picker.
 
 ## Structured Usage Core
 
@@ -39,10 +39,11 @@ Editorial modules with `image_media_id` use shared visual picker. Picker queries
 ## Structured Usage Database Wiring
 
 `lib/media/usage-server.ts` loads batched, read-only resource rows through the server Supabase client and feeds them once into `buildMediaUsageMap`. It performs no per-Media N+1 queries. Media Library counts and deletion safety derive from structured reference arrays. SEO selects `og_media_id`; Media Detail `Used In` UI remains next step.
+
 ## Human-readable Delete Protection
 
 Media deletion rechecks current structured references on server immediately before Storage removal. Referenced Media is rejected with human-readable usage count and the same resource/title context shown by Media Detail `Used In`, including SEO through `og_media_id`. Unused Media keeps exact Storage-object removal followed by exact database-row deletion.
 
 ## Multi-file Upload Core
 
-`lib/media/upload-core.ts` processes up to 20 selected images sequentially and independently. Each file receives server-side signature validation, a 10 MB per-file limit, SHA-256 duplicate detection, and an individual result, so invalid or failed files do not roll back valid siblings. Normal uploads always create `operator-upload` Media records with `rights_status: unknown` (`Needs Review`); client-supplied rights are ignored. Storage upload must succeed before Media insertion, and a failed insertion attempts removal of the exact uploaded Storage object. Multi-file selection, Drag & Drop, and per-file queue UI wiring remain pending.
+`lib/media/upload-core.ts` processes up to 20 selected images sequentially and independently. Each file receives server-side signature validation, a 10 MB per-file limit, SHA-256 duplicate detection, and an individual result, so invalid or failed files do not roll back valid siblings. Normal uploads always create `operator-upload` Media records with `rights_status: unknown` (`Needs Review`); client-supplied rights are ignored. Storage upload must succeed before Media insertion, and a failed insertion attempts removal of the exact uploaded Storage object. Multi-file selection, Drag & Drop, and per-file queue UI wiring are complete.
