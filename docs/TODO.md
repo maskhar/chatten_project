@@ -51,3 +51,5 @@
 - [x] Add Media Search to Media Library
 
 - [x] Add Media Rights Filter
+
+- [x] Add Media Usage Filter

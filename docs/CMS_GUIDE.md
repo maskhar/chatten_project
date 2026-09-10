@@ -26,3 +26,5 @@
 - Type a word into **Search media...**, submit, then use **Clear search** to return to full library.
 
 - Media Rights filter: All rights, Approved, Needs Review, Restricted. Search and Rights combine.
+
+- Usage filter: All usage, Used, or Unused; combines with Search and Rights.
