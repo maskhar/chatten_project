@@ -50,7 +50,7 @@ test("partial batch summary stays aggregate", () => {
   assert.equal(message, "3 images uploaded. 1 file could not be uploaded.");
 });
 
-test("media upload component wires native multiple input, drag drop, selected state, and batch action", () => {
+test("media upload component wires native multiple input, drag drop, queue state, and batch action", () => {
   const component = fs.readFileSync(new URL("../components/admin/media-upload-dropzone.tsx", import.meta.url), "utf8");
   const page = fs.readFileSync(new URL("../app/admin/(dashboard)/media/page.tsx", import.meta.url), "utf8");
   assert.match(component, /name="files"/);
@@ -58,7 +58,7 @@ test("media upload component wires native multiple input, drag drop, selected st
   assert.match(component, /onDragEnter=/);
   assert.match(component, /onDragOver=/);
   assert.match(component, /onDrop=/);
-  assert.match(component, /selectedFiles/);
+  assert.match(component, /queueItems/);
   assert.match(component, /uploadMediaBatch/);
   assert.match(component, /buildMediaUploadFormData/);
   assert.match(page, /MediaUploadDropzone/);

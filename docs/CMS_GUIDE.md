@@ -36,6 +36,14 @@
 - Supported formats are JPEG, PNG, WebP, and AVIF, with a maximum size of 10 MB per image.
 - New uploads default to **Needs Review** until an authorized operator approves their rights status.
 
+## Upload Results
+
+- Each selected file displays its own status: **Ready**, **Uploading**, **Complete**, or **Failed**.
+- Failed files show the specific reason, such as unsupported format, file size limit, or duplicate detection.
+- One failed file does not cancel successful uploads in the same batch.
+- After upload completes, a summary shows how many images uploaded successfully and how many failed.
+- Use **Clear results** to reset the queue and start a new upload batch.
+
 ## Used In
 
 - Open a Media item from **View / Edit** in Media Library.

@@ -72,6 +72,6 @@
 
 - [x] Drag & Drop UI
 
-- [ ] Upload Queue / per-file result UI
+- [x] Upload Queue / per-file result UI
 
 - [ ] Final Media Picker polish
