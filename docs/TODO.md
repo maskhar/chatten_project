@@ -87,7 +87,7 @@
 - [x] Spaces final closure
 
 - [x] Events + Promotions Manager Core
-- [x] Event + Promotion Ordering + Visibility + Delete
+- [x] Event + Promotion Temporal Ordering + Visibility + Delete
 
 - [ ] About Manager
 
