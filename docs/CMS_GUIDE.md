@@ -41,6 +41,16 @@
 - Deleting an experience does not delete its image from Media Library.
 - The same image can be reused by other content after the experience is deleted.
 
+## Spaces
+
+- Use the dedicated **Spaces** manager at `/admin/spaces` to view Spaces as visual cards.
+- Select **Add Space** to create a Space, or **Edit** on an existing card to open its dedicated form.
+- Editable fields are Space Name, Slug, Description, approved Image, Active, and Status.
+- Leave Slug blank when creating to generate it from the Space name; edit slugs as URL-friendly lowercase identifiers.
+- The shared Media Picker shows approved media only. Existing images initialize as selected, and optional images can be replaced or removed without deleting the Media Library asset.
+- Use **Save Changes** to persist a Space and **Cancel** to return to the manager.
+- Space ordering, quick visibility controls, and deletion are not part of this manager slice yet.
+
 ## Menu
 
 - Add, edit, delete, drag, or move menu categories. Categories containing items cannot be deleted.

@@ -82,7 +82,10 @@
 
 - [x] Close Experiences management verification
 
-- [ ] Spaces Manager
+- [x] Spaces Manager Core
+- [ ] Space Ordering
+- [ ] Space Visibility
+- [ ] Space Delete
 
 - [ ] Events & Promotions Manager
 
