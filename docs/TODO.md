@@ -84,7 +84,7 @@
 
 - [x] Spaces Manager Core
 - [x] Space Ordering + Visibility + Delete
-- [ ] Spaces final closure
+- [x] Spaces final closure
 
 - [ ] Events & Promotions Manager
 
