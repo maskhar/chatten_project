@@ -39,3 +39,6 @@ Editorial modules with `image_media_id` use shared visual picker. Picker queries
 ## Structured Usage Database Wiring
 
 `lib/media/usage-server.ts` loads batched, read-only resource rows through the server Supabase client and feeds them once into `buildMediaUsageMap`. It performs no per-Media N+1 queries. Media Library counts and deletion safety derive from structured reference arrays. SEO selects `og_media_id`; Media Detail `Used In` UI remains next step.
+## Human-readable Delete Protection
+
+Media deletion rechecks current structured references on server immediately before Storage removal. Referenced Media is rejected with human-readable usage count and the same resource/title context shown by Media Detail `Used In`, including SEO through `og_media_id`. Unused Media keeps exact Storage-object removal followed by exact database-row deletion.

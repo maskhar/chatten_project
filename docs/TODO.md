@@ -63,3 +63,5 @@
 - [x] Structured Media Usage Database Wiring
 
 - [x] Media Detail Used In
+
+- [x] Human-readable Media Delete Protection

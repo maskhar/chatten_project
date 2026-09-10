@@ -34,3 +34,10 @@
 - Open a Media item from **View / Edit** in Media Library.
 - **Used In** shows every CMS resource currently referencing that image with human-readable resource and content names.
 - Images without references show `This image is not currently used anywhere.`
+
+## Deleting Media
+
+- Unused images may be deleted from Media Library after confirming permanent removal from Storage.
+- Used images cannot be deleted. The Media card shows current usage count plus human-readable resource and content names.
+- Remove or change every listed content reference before deleting the image.
+- Server checks current usage again when Delete is submitted, so stale page state cannot bypass protection.
