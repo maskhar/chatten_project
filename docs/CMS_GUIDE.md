@@ -20,6 +20,27 @@
 - Status can be **Draft** or **Published**. Only published + active experiences appear on the public website.
 - **Save Changes** updates the experience. **Cancel** returns to the experiences list without saving.
 
+### Experience Ordering
+
+- Drag experience cards to reorder them, then click **Save display order** to persist changes.
+- Use **Move Up** and **Move Down** buttons for keyboard-friendly and accessible ordering.
+- First experience cannot move up; last experience cannot move down.
+- Public `/experience` page displays experiences in saved order.
+
+### Experience Visibility
+
+- Use **Show** or **Hide** buttons to quickly toggle experience visibility without opening the editor.
+- An experience must be both **Active** and **Published** to appear on the public website.
+- **Draft** experiences remain hidden regardless of active state.
+- Status badges show current state: Draft (gray) or Published (green), plus Active (blue) or Inactive (gray).
+
+### Deleting Experiences
+
+- Click **Delete** on any experience card to remove it permanently.
+- Confirmation dialog warns that deletion is permanent but preserves the associated media file.
+- Deleting an experience does not delete its image from Media Library.
+- The same image can be reused by other content after the experience is deleted.
+
 ## Menu
 
 - Add, edit, delete, drag, or move menu categories. Categories containing items cannot be deleted.

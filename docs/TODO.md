@@ -78,7 +78,7 @@
 
 - [x] Experiences Manager Core
 
-- [ ] Experience Ordering + Visibility + Delete
+- [x] Experience Ordering + Visibility + Delete
 
 - [ ] Spaces Manager
 

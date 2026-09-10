@@ -71,3 +71,105 @@ export async function saveExperience(formData: FormData) {
   revalidatePath("/experience");
   revalidatePath("/");
 }
+
+export async function reorderExperiences(ids: string[]) {
+  await requireAdmin();
+  
+  if (!ids.length || ids.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) {
+    throw new Error("Invalid experience order.");
+  }
+  
+  const supabase = await createServerSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from("experiences")
+    .select("id")
+    .in("id", ids);
+  
+  if (error || data?.length !== ids.length) {
+    throw new Error("Unknown experience.");
+  }
+  
+  // Stage to temporary sort_order to avoid conflicts
+  const staged = await Promise.all(
+    ids.map((id, index) =>
+      supabase
+        .from("experiences")
+        .update({ sort_order: 100000 + index })
+        .eq("id", id)
+    )
+  );
+  
+  if (staged.some((r) => r.error)) {
+    throw new Error("Unable to save experience order.");
+  }
+  
+  // Normalize to sequential order
+  const saved = await Promise.all(
+    ids.map((id, index) =>
+      supabase
+        .from("experiences")
+        .update({ sort_order: index })
+        .eq("id", id)
+    )
+  );
+  
+  if (saved.some((r) => r.error)) {
+    throw new Error("Unable to save experience order.");
+  }
+  
+  revalidatePath("/admin/experiences");
+  revalidatePath("/experience");
+  revalidatePath("/");
+}
+
+export async function setExperienceActive(formData: FormData) {
+  await requireAdmin();
+  
+  const id = String(formData.get("id") ?? "");
+  const active = String(formData.get("active")) === "true";
+  
+  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+    throw new Error("Invalid experience ID.");
+  }
+  
+  const supabase = await createServerSupabaseClient();
+  
+  const { error } = await supabase
+    .from("experiences")
+    .update({ is_active: active })
+    .eq("id", id);
+  
+  if (error) {
+    throw new Error("Unable to update experience visibility.");
+  }
+  
+  revalidatePath("/admin/experiences");
+  revalidatePath("/experience");
+  revalidatePath("/");
+}
+
+export async function deleteExperience(formData: FormData) {
+  await requireAdmin();
+  
+  const id = String(formData.get("id") ?? "");
+  
+  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+    throw new Error("Invalid experience ID.");
+  }
+  
+  const supabase = await createServerSupabaseClient();
+  
+  const { error } = await supabase
+    .from("experiences")
+    .delete()
+    .eq("id", id);
+  
+  if (error) {
+    throw new Error("Unable to delete experience.");
+  }
+  
+  revalidatePath("/admin/experiences");
+  revalidatePath("/experience");
+  revalidatePath("/");
+}
