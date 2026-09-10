@@ -59,3 +59,5 @@
 - [x] Complete Media Library browsing/filtering
 
 - [x] Structured Media Usage Core
+
+- [x] Structured Media Usage Database Wiring
