@@ -80,6 +80,8 @@
 
 - [x] Experience Ordering + Visibility + Delete
 
+- [x] Close Experiences management verification
+
 - [ ] Spaces Manager
 
 - [ ] Events & Promotions Manager
