@@ -26,4 +26,12 @@ Media Library shows Storage thumbnails, dimensions, size, rights state, and usag
 
 ## Ownership
 
-`chatten_cafe.media` is the durable metadata record. Content stores `image_media_id`; one asset may serve Hero, Moments, Gallery, Spaces, Experiences, or other content. `approved` is required before publishing workflows should assign new external/imported assets.## Picker`nEditorial modules with image_media_id use shared visual picker. Picker queries only approved assets, shows thumbnail/title/alt/category, and supports replace/remove without URL or UUID entry.
+`chatten_cafe.media` is the durable metadata record. Content stores `image_media_id`; one asset may serve Hero, Moments, Gallery, Spaces, Experiences, or other content. SEO stores its Open Graph reference in `og_media_id`. `approved` is required before publishing workflows should assign new external/imported assets.
+
+## Picker
+
+Editorial modules with `image_media_id` use shared visual picker. Picker queries only approved assets, shows thumbnail/title/alt/category, and supports replace/remove without URL or UUID entry.
+
+## Structured Usage Core
+
+`lib/media/usage.ts` provides pure structured Media usage aggregation for CMS content and SEO `og_media_id` references. Database batching and Media Library UI wiring remain next steps.

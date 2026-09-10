@@ -57,3 +57,5 @@
 - [x] Add Media Category Filter
 
 - [x] Complete Media Library browsing/filtering
+
+- [x] Structured Media Usage Core
