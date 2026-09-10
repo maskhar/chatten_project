@@ -83,9 +83,8 @@
 - [x] Close Experiences management verification
 
 - [x] Spaces Manager Core
-- [ ] Space Ordering
-- [ ] Space Visibility
-- [ ] Space Delete
+- [x] Space Ordering + Visibility + Delete
+- [ ] Spaces final closure
 
 - [ ] Events & Promotions Manager
 

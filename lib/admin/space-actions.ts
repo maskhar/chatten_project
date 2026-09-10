@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+const uuidPattern = /^[0-9a-f-]{36}$/i;
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -23,7 +25,7 @@ export async function saveSpace(formData: FormData) {
   const imageMediaId = String(formData.get("image_media_id") ?? "") || null;
   const status = String(formData.get("status") ?? "draft");
 
-  if (id && !/^[0-9a-f-]{36}$/i.test(id)) throw new Error("Invalid space ID.");
+  if (id && !uuidPattern.test(id)) throw new Error("Invalid space ID.");
   if (!name) throw new Error("Space name is required.");
   if (!slug) throw new Error("Space slug is required.");
   if (!['draft', 'published'].includes(status)) throw new Error("Invalid space status.");
@@ -70,4 +72,71 @@ export async function saveSpace(formData: FormData) {
   revalidatePath("/spaces");
   revalidatePath("/");
   redirect("/admin/spaces?saved=1");
+}
+
+export async function reorderSpaces(ids: string[]) {
+  await requireAdmin();
+
+  if (!ids.length || ids.some((id) => !uuidPattern.test(id)) || new Set(ids).size !== ids.length) {
+    throw new Error("Invalid space order.");
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.from("spaces").select("id");
+  const existingIds = (data ?? []).map((row) => String(row.id));
+  if (error || existingIds.length !== ids.length || existingIds.some((id) => !ids.includes(id))) {
+    throw new Error("Space order must include every Space exactly once.");
+  }
+
+  const staged = await Promise.all(
+    ids.map((id, index) => supabase.from("spaces").update({ sort_order: 100000 + index }).eq("id", id)),
+  );
+  if (staged.some((result) => result.error)) throw new Error("Unable to save space order.");
+
+  const saved = await Promise.all(
+    ids.map((id, index) => supabase.from("spaces").update({ sort_order: index }).eq("id", id)),
+  );
+  if (saved.some((result) => result.error)) throw new Error("Unable to save space order.");
+
+  revalidatePath("/admin/spaces");
+  revalidatePath("/spaces");
+  revalidatePath("/");
+}
+
+export async function setSpaceActive(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!uuidPattern.test(id)) throw new Error("Invalid space ID.");
+  const active = String(formData.get("active")) === "true";
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.from("spaces").update({ is_active: active }).eq("id", id);
+  if (error) throw new Error("Unable to update space visibility.");
+  revalidatePath("/admin/spaces");
+  revalidatePath("/spaces");
+  revalidatePath("/");
+}
+
+export async function deleteSpace(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!uuidPattern.test(id)) throw new Error("Invalid space ID.");
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.from("spaces").delete().eq("id", id);
+  if (error) throw new Error("Unable to delete space.");
+
+  const { data: remaining, error: remainingError } = await supabase
+    .from("spaces")
+    .select("id")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (remainingError) throw new Error("Space deleted, but ordering could not be normalized.");
+
+  const normalized = await Promise.all(
+    (remaining ?? []).map((row, index) => supabase.from("spaces").update({ sort_order: index }).eq("id", String(row.id))),
+  );
+  if (normalized.some((result) => result.error)) throw new Error("Space deleted, but ordering could not be normalized.");
+
+  revalidatePath("/admin/spaces");
+  revalidatePath("/spaces");
+  revalidatePath("/");
 }

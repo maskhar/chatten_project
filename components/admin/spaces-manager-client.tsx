@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
-import { saveSpace } from "@/lib/admin/space-actions";
+import { deleteSpace, reorderSpaces, saveSpace, setSpaceActive } from "@/lib/admin/space-actions";
+import { SortableList } from "@/components/admin/sortable-list";
 
 type Space = {
   id: string;
@@ -35,6 +36,38 @@ export function SpacesManagerClient({ spaces, media, baseUrl }: { spaces: Space[
     return image ? `${baseUrl}/storage/v1/object/public/${image.bucket}/${image.storage_path}` : null;
   };
 
+  const handleVisibility = async (id: string, active: boolean) => {
+    const formData = new FormData();
+    formData.append("id", id);
+    formData.append("active", String(active));
+    await setSpaceActive(formData);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Delete “${name}”? This removes the Space record but preserves its Media Library image.`)) return;
+    const formData = new FormData();
+    formData.append("id", id);
+    await deleteSpace(formData);
+  };
+
+  const sortableItems = spaces.map((space) => ({
+    id: space.id,
+    label: space.name,
+    detail: (
+      <div className="mt-1 flex items-center gap-3">
+        {imageUrl(space.image_media_id) ? <Image src={imageUrl(space.image_media_id) as string} alt={space.name} width={80} height={60} className="h-12 w-16 rounded object-cover" /> : <div className="h-12 w-16 rounded bg-[#405542]" />}
+        <div className="min-w-0"><p className="text-xs text-[#657064]">/{space.slug}</p><div className="mt-1 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded bg-[#eef1ea] px-2 py-1">{space.status === "published" ? "Published" : "Draft"}</span><span className="rounded bg-[#eef1ea] px-2 py-1">{space.is_active ? "Active" : "Hidden"}</span></div>{space.description ? <p className="mt-1 line-clamp-1 text-xs text-[#596052]">{space.description}</p> : null}</div>
+      </div>
+    ),
+    actions: (
+      <>
+        <button type="button" onClick={() => handleVisibility(space.id, !space.is_active)} className="rounded border border-[#768075] px-2 py-1 text-xs font-semibold text-[#768075]">{space.is_active ? "Hide" : "Show"}</button>
+        <Link href={`/admin/spaces/items/${space.id}`} className="rounded border border-[#1f3426] px-2 py-1 text-xs font-semibold text-[#1f3426]">Edit</Link>
+        <button type="button" onClick={() => handleDelete(space.id, space.name)} className="rounded border border-[#b65d40] px-2 py-1 text-xs font-semibold text-[#b65d40]">Delete</button>
+      </>
+    ),
+  }));
+
   return (
     <section>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -48,24 +81,7 @@ export function SpacesManagerClient({ spaces, media, baseUrl }: { spaces: Space[
 
       <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-4">
-          {spaces.length ? spaces.map((space) => {
-            const image = imageUrl(space.image_media_id);
-            return (
-              <article key={space.id} className="grid gap-5 rounded border border-[#c9bfa8] bg-white p-5 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-center">
-                {image ? <Image src={image} alt={space.name} width={240} height={160} className="h-28 w-full rounded object-cover" /> : <div className="h-28 rounded bg-[#405542]" />}
-                <div className="min-w-0">
-                  <h2 className="font-serif text-3xl">{space.name}</h2>
-                  <p className="mt-1 text-xs text-[#657064]">/{space.slug}</p>
-                  {space.description ? <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#596052]">{space.description}</p> : null}
-                  <div className="mt-3 flex gap-2 text-xs font-semibold">
-                    <span className="rounded bg-[#eef1ea] px-2 py-1">{space.status === "published" ? "Published" : "Draft"}</span>
-                    <span className="rounded bg-[#eef1ea] px-2 py-1">{space.is_active ? "Active" : "Inactive"}</span>
-                  </div>
-                </div>
-                <Link href={`/admin/spaces/items/${space.id}`} className="rounded border border-[#1f3426] px-4 py-2 text-center text-sm font-semibold text-[#1f3426]">Edit</Link>
-              </article>
-            );
-          }) : (
+          {spaces.length ? <SortableList items={sortableItems} onSave={reorderSpaces} /> : (
             <div className="rounded border border-dashed border-[#c9bfa8] bg-white p-10 text-center">
               <p className="font-serif text-3xl">No spaces have been added yet.</p>
               <a href="#add-space" className="mt-5 inline-block rounded bg-[#b65d40] px-5 py-3 text-sm font-semibold text-white">Add Space</a>

@@ -49,7 +49,23 @@
 - Leave Slug blank when creating to generate it from the Space name; edit slugs as URL-friendly lowercase identifiers.
 - The shared Media Picker shows approved media only. Existing images initialize as selected, and optional images can be replaced or removed without deleting the Media Library asset.
 - Use **Save Changes** to persist a Space and **Cancel** to return to the manager.
-- Space ordering, quick visibility controls, and deletion are not part of this manager slice yet.
+
+### Space Ordering
+
+- Drag Space cards, then select **Save display order** to persist their public order.
+- Use **Move Up** and **Move Down** for keyboard-friendly and mobile ordering. Boundary controls disable on the first and last Space.
+- Ordering is visual; operators never enter raw sort-order numbers.
+
+### Space Visibility
+
+- Use **Show** or **Hide** for quick active-state changes.
+- **Draft** and **Published** remain separate editorial states. Public routes require both Active and Published.
+
+### Deleting Spaces
+
+- **Delete** removes the selected Space record after confirmation.
+- Linked Media remains available in Media Library, and no Storage object is deleted.
+- Remaining Spaces keep normalized public ordering after deletion.
 
 ## Menu
 
