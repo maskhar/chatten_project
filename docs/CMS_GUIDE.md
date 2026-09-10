@@ -28,3 +28,5 @@
 - Media Rights filter: All rights, Approved, Needs Review, Restricted. Search and Rights combine.
 
 - Usage filter: All usage, Used, or Unused; combines with Search and Rights.
+
+- Category filter derives existing Media categories and combines with Search, Rights, and Usage.
