@@ -65,3 +65,5 @@
 - [x] Media Detail Used In
 
 - [x] Human-readable Media Delete Protection
+
+- [x] Multi-file Upload Core

@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { mediaInUseActionState, type MediaDeleteActionState } from "@/lib/media/delete-state";
+import { processMediaUploadBatch, type MediaUploadAdapter, type MediaUploadBatchResult } from "@/lib/media/upload-core";
 import { loadMediaUsageMap } from "@/lib/media/usage-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -9,7 +10,50 @@ function mediaDeleteFailure(message: string): MediaDeleteActionState {
   return { status: "error", code: "MEDIA_DELETE_FAILED", message };
 }
 
-export async function uploadMedia(formData: FormData) { await requireAdmin(); const file = formData.get("file"); if (!(file instanceof File) || !["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type) || file.size > 10 * 1024 * 1024) throw new Error("Upload an image under 10 MB."); const supabase = await createServerSupabaseClient(); const path = crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g, "-"); const upload = await supabase.storage.from("chatten-media").upload(path, file, { contentType: file.type, upsert: false }); if (upload.error) throw new Error("Unable to upload media."); const { error } = await supabase.from("media").insert({ bucket: "chatten-media", storage_path: path, original_filename: file.name, mime_type: file.type, file_size: file.size, alt_text: String(formData.get("alt_text") ?? "") || null, title: String(formData.get("title") ?? file.name), source_type: "operator-upload", rights_status: "unknown" }); if (error) { await supabase.storage.from("chatten-media").remove([path]); throw new Error("Unable to save media metadata."); } revalidatePath("/admin/media"); revalidatePath("/"); }
+function mediaUploadAdapter(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>): MediaUploadAdapter {
+  return {
+    async findBySha256(sha256) {
+      const { data, error } = await supabase.from("media").select("id").eq("sha256", sha256).maybeSingle();
+      if (error) throw error;
+      return data ? { id: String(data.id) } : null;
+    },
+    async upload(path, content, contentType) {
+      const { error } = await supabase.storage.from("chatten-media").upload(path, content, { contentType, upsert: false });
+      return error ? { error } : {};
+    },
+    async insert(record) {
+      const { data, error } = await supabase.from("media").insert(record).select("id").single();
+      return error || !data ? { error: error ?? new Error("Media insert returned no record.") } : { id: String(data.id) };
+    },
+    async remove(path) {
+      await supabase.storage.from("chatten-media").remove([path]);
+    },
+  };
+}
+
+async function uploadFiles(files: File[], title?: string | null, altText?: string | null): Promise<MediaUploadBatchResult> {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const result = await processMediaUploadBatch(files, mediaUploadAdapter(supabase), { title, altText });
+  if (result.results.some((file) => file.ok)) {
+    revalidatePath("/admin/media");
+    revalidatePath("/");
+  }
+  return result;
+}
+
+export async function uploadMedia(formData: FormData) {
+  const file = formData.get("file");
+  if (!(file instanceof File)) throw new Error("Choose an image to upload.");
+  const result = await uploadFiles([file], String(formData.get("title") ?? ""), String(formData.get("alt_text") ?? ""));
+  const fileResult = result.results[0];
+  if (!fileResult?.ok) throw new Error(fileResult?.message ?? result.error?.message ?? "Unable to upload image.");
+}
+
+export async function uploadMediaBatch(formData: FormData): Promise<MediaUploadBatchResult> {
+  const files = formData.getAll("files").filter((entry): entry is File => entry instanceof File);
+  return uploadFiles(files);
+}
 
 export async function deleteMediaWithFeedback(_previousState: MediaDeleteActionState, formData: FormData): Promise<MediaDeleteActionState> {
   await requireAdmin();

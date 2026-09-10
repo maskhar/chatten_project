@@ -42,3 +42,7 @@ Editorial modules with `image_media_id` use shared visual picker. Picker queries
 ## Human-readable Delete Protection
 
 Media deletion rechecks current structured references on server immediately before Storage removal. Referenced Media is rejected with human-readable usage count and the same resource/title context shown by Media Detail `Used In`, including SEO through `og_media_id`. Unused Media keeps exact Storage-object removal followed by exact database-row deletion.
+
+## Multi-file Upload Core
+
+`lib/media/upload-core.ts` processes up to 20 selected images sequentially and independently. Each file receives server-side signature validation, a 10 MB per-file limit, SHA-256 duplicate detection, and an individual result, so invalid or failed files do not roll back valid siblings. Normal uploads always create `operator-upload` Media records with `rights_status: unknown` (`Needs Review`); client-supplied rights are ignored. Storage upload must succeed before Media insertion, and a failed insertion attempts removal of the exact uploaded Storage object. Multi-file selection, Drag & Drop, and per-file queue UI wiring remain pending.
