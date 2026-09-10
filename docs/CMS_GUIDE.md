@@ -7,6 +7,19 @@
 - Use **Show** or **Hide** to control public homepage visibility.
 - Use **Edit** to open each section editor. Public homepage reflects saved order and visibility.
 
+## Experiences
+
+- View all experiences in a visual card layout showing thumbnail, title, slug, description, and status.
+- Use **Add Experience** to create a new experience with name, slug, description, and approved media.
+- Click **Edit** on any experience card to modify its details.
+- Experience name is the public display title shown on `/experience` and `/experience/[slug]`.
+- Slug must be URL-friendly (e.g., `morning-coffee`). It becomes the public URL path.
+- Description appears on both the experience list and detail pages.
+- Select approved images using the Media Picker.
+- Active checkbox controls whether the experience is visible (used with status for publishing).
+- Status can be **Draft** or **Published**. Only published + active experiences appear on the public website.
+- **Save Changes** updates the experience. **Cancel** returns to the experiences list without saving.
+
 ## Menu
 
 - Add, edit, delete, drag, or move menu categories. Categories containing items cannot be deleted.
@@ -23,7 +36,7 @@
 
 ## Choosing Images
 
-When selecting images for content (Hero, Moments, Menu, Gallery, Events, Promotions), the Media Picker shows only **Approved** images. Images with **Needs Review** or **Restricted** rights status are not selectable.
+When selecting images for content (Hero, Moments, Menu, Gallery, Experiences, Events, Promotions), the Media Picker shows only **Approved** images. Images with **Needs Review** or **Restricted** rights status are not selectable.
 
 ### Search and Filter
 
@@ -50,7 +63,7 @@ When selecting images for content (Hero, Moments, Menu, Gallery, Events, Promoti
 
 1. Upload images through Media Library
 2. Approve images by setting Rights status to **Approved**
-3. Return to content editor (Hero, Menu, Gallery, etc.)
+3. Return to content editor (Hero, Menu, Gallery, Experiences, etc.)
 4. Select approved images through the Media Picker
 
 ## Media Search

@@ -75,3 +75,17 @@
 - [x] Upload Queue / per-file result UI
 
 - [x] Final Media Picker polish
+
+- [x] Experiences Manager Core
+
+- [ ] Experience Ordering + Visibility + Delete
+
+- [ ] Spaces Manager
+
+- [ ] Events & Promotions Manager
+
+- [ ] About Manager
+
+- [ ] Testimonials Manager
+
+- [ ] Contact & Visit Manager
