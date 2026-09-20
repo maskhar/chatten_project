@@ -134,22 +134,55 @@ stable references for commits and verification notes.
       CMS-managed image on the public site resolves to nothing. Add
       `public_media` (`for select using (rights_status = 'approved')`).
       Migration `supabase/migrations/20260921000100_fix_media_and_role_rls.sql`
-      covers A2 and A3 but has NOT been applied to the self-hosted server yet —
-      A5 stays open until it is.
+      applied to the self-hosted server on 2026-09-21 (via SSH, `psql` against
+      the `db` compose service). Confirmed with `pg_policies`: `public_media`
+      (SELECT, public role) and `own_role` (SELECT, authenticated role) both
+      exist alongside the original `cms_manage` / `role_manage` policies.
 - [x] **A4** Filter `rights_status = 'approved'` in `lib/homepage/data.ts:11`
       (currently unfiltered, unlike `publicMedia()` in `lib/public-data/queries.ts:12`).
-- [ ] **A5** Verify A1–A4 end to end: anonymous homepage renders images, an
-      `editor` account can sign in, Events/Promotions managers load their media picker.
+- [x] **A5** Verify A1–A4 end to end.
+      DB-verified 2026-09-21: anon REST call to `chatten_cafe.media` returns
+      rows filtered by `public_media` (no policy error, no leak of
+      non-approved rows); `chatten_cafe.user_roles` returns 0 rows to anon
+      (correct — `own_role` requires `auth.uid()`, null for anon) and would
+      return exactly the caller's row for an authenticated member, since
+      `own_role` is role-value-agnostic. Only one CMS member exists
+      (`super_admin`, no `editor` account) so the editor-login path is
+      verified by policy construction, not by a live editor session — create
+      a test `editor` account if a literal login test is wanted.
+      **New finding, not a code defect:** all 3 existing `chatten_cafe.media`
+      rows have `rights_status = 'unknown'`; none are `approved`. A1–A4 are
+      fixed, but the public homepage and Events/Promotions media pickers will
+      still show zero images until an admin approves media rights in the CMS
+      (Media Library → set rights status). Tracked as **A66** below.
 
 ## Phase 8 — Security Hardening
 
-- [ ] **A6** Restrict Storage read policy on `chatten-media`.
-      `"chatten public read"` is unconditional (`using (bucket_id = 'chatten-media')`)
-      on a `public = true` bucket, so anyone with the anon key can enumerate via
-      `storage.list()` and download every object, including `rights_status`
-      `restricted`/`unknown` assets deliberately never published. Join the policy
-      to `chatten_cafe.media` on `rights_status = 'approved'`, or move to a private
-      bucket with signed URLs.
+- [~] **A6** Storage read exposure on `chatten-media` — accepted risk, not fixed.
+      `"chatten public read"` was unconditional (`using (bucket_id = 'chatten-media')`).
+      Migration `20260921000200_restrict_chatten_media_storage_read.sql`
+      (applied 2026-09-21) joined it to `chatten_cafe.media.rights_status =
+      'approved'`, matching the `public_media` table policy. **Verified this
+      does not close the actual hole**: the bucket has `public = true`, and
+      self-hosted storage-api serves `/storage/v1/object/public/{bucket}/{path}`
+      for a public bucket without evaluating RLS at all — confirmed by curling
+      an `unknown`-rights object before *and after* the policy change; both
+      returned `200`. Every image URL in the app (9 call sites, e.g.
+      `lib/homepage/media.ts:2`, `lib/public-data/media.ts:6`,
+      `components/admin/media-picker.tsx:70,163`) uses that same
+      `object/public/...` path, so a real fix means either (a) a private
+      bucket with server-generated signed URLs everywhere an image renders, or
+      (b) splitting into a public bucket (approved only) and a private one
+      (pending/restricted), migrating objects between them as rights_status
+      changes. Both are multi-file architecture changes, not a migration.
+      2026-09-21: presented both options to the project owner; **decision was
+      to accept the risk and document it** rather than do the rewrite now —
+      only 3 stock images exist today, none sensitive. The RLS policy fix
+      stays applied (it is still strictly correct and closes the gap for any
+      access path that *does* honor storage.objects RLS), but path enumeration
+      of `storage_path` is enough to download any object in the bucket
+      regardless of rights_status. Revisit if real/sensitive media is ever
+      uploaded before this is actually fixed.
 - [x] **A7** Add a minimum-role parameter to `requireAdmin()` and enforce
       `admin` on `app/admin/(dashboard)/users/page.tsx:5`, which currently gates
       only on "has any role" before constructing the RLS-bypassing service-role
@@ -158,23 +191,23 @@ stable references for commits and verification notes.
       (`lib/admin/role-actions.ts:34-35`); today only the DB policy stops a
       non-admin, with no defense in depth (contrast `media-actions.ts:80`, which
       does check).
-- [ ] **A9** Split `editor` from `admin` on settings-class tables. Tighten
+- [x] **A9** Split `editor` from `admin` on settings-class tables. Tighten
       `cms_manage` from `has_role('editor')` to `has_role('admin')` on
       `site_settings`, `seo_settings`, `navigation_items`, `social_links`,
       `contact_information`, and mirror the check in the matching server actions.
 - [x] **A10** Gate the "Users & Roles" nav entry and page on role so non-admins
       do not see controls that always fail (`app/admin/(dashboard)/layout.tsx:4`).
-- [ ] **A11** Add `Content-Security-Policy` (with an explicit `frame-src`
+- [x] **A11** Add `Content-Security-Policy` (with an explicit `frame-src`
       allowlist — `app/visit/page.tsx:9` renders a CMS-controlled map `<iframe>`),
       `Strict-Transport-Security`, and `poweredByHeader: false` in `next.config.ts`.
 - [ ] **A12** Document and configure GoTrue rate limits plus reverse-proxy
       throttling for `/auth/v1/*`; admin sign-in currently has no brute-force
       protection (`app/admin/login/login-form.tsx:6` posts straight to GoTrue).
-- [ ] **A13** Validate URL fields against a scheme allowlist (`cta_url`,
+- [x] **A13** Validate URL fields against a scheme allowlist (`cta_url`,
       `whatsapp_url`, `directions_url`, `map_embed_url`, `href`, `canonical_url`,
       social `url`) — no URL is validated anywhere today, and `javascript:` is not
       blocked.
-- [ ] **A14** Add `middleware.ts` protecting `/admin/*` as defense in depth, so a
+- [x] **A14** Add `middleware.ts` protecting `/admin/*` as defense in depth, so a
       future route handler under `app/admin/` cannot skip the layout-level check.
 
 ## Phase 9 — Dashboard Responsiveness & Completion
@@ -298,6 +331,13 @@ stable references for commits and verification notes.
 - [ ] **A65** Document the `prevent_last_super_admin_removal` cascade behaviour:
       deleting the last super_admin's auth user fails the whole cascade with a raw
       trigger exception.
+- [ ] **A66** Approve rights status on existing media (data, not code). All 3
+      rows in `chatten_cafe.media` are `rights_status = 'unknown'` as of
+      2026-09-21 — found while verifying A5. `public_media` and the app's
+      `.eq("rights_status", "approved")` filters are working as designed, but
+      with zero approved rows the homepage, Events, and Promotions media
+      pickers render with no images until someone reviews and approves media
+      in the CMS Media Library.
 
 ## Migration process note
 
