@@ -251,7 +251,7 @@ stable references for commits and verification notes.
 - [x] **A24** Surface `error.message` in `app/admin/(dashboard)/error.tsx`;
       validation messages like "Event end must be after its start." are currently
       replaced by one generic sentence.
-- [ ] **A25** Build a real dashboard overview: draft counts across all
+- [x] **A25** Build a real dashboard overview: draft counts across all
       status-bearing tables (only `hero_slides` is checked today), recent activity
       from `updated_at`, publish status, and correct quick actions.
 - [ ] **A26** Add drag ordering to generic-route resources by wiring the existing
