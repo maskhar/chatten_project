@@ -269,18 +269,18 @@ stable references for commits and verification notes.
 
 ## Phase 10 — Public Site UX, Content Sync & SEO
 
-- [ ] **A32** Wire `seo_settings` into `lib/seo.ts` / `generateMetadata`. The CMS
+- [x] **A32** Wire `seo_settings` into `lib/seo.ts` / `generateMetadata`. The CMS
       SEO editor is currently disconnected from the live site entirely.
-- [ ] **A33** Resolve `navigation_items` and `social_links` centrally in
+- [x] **A33** Resolve `navigation_items` and `social_links` centrally in
       `PublicShell`. Today only the homepage passes them, so every other page
       falls back to hardcoded links (`components/public/header.tsx:5`) and drops
       CMS social links — a direct violation of the CMS-managed content rule.
-- [ ] **A34** Add `/about` and `/events` to navigation and footer; both are
+- [x] **A34** Add `/about` and `/events` to navigation and footer; both are
       working content pages currently unreachable from any link.
-- [ ] **A35** Replace the homepage's hand-rolled `<footer>`
+- [x] **A35** Replace the homepage's hand-rolled `<footer>`
       (`app/(public)/page.tsx:34`) with `PublicFooter`, restoring internal links
       on the highest-traffic page.
-- [ ] **A36** Fix homepage landmarks: move `Header`/footer out of `<main>` so
+- [x] **A36** Fix homepage landmarks: move `Header`/footer out of `<main>` so
       `banner` and `contentinfo` roles survive for screen readers.
 - [ ] **A37** Add `generateMetadata` to `events/[slug]`, `experience/[slug]`,
       `spaces/[slug]`; all detail pages currently share one generic title.
@@ -297,7 +297,7 @@ stable references for commits and verification notes.
       currently downloads desktop-resolution originals throughout.
 - [ ] **A43** Make hero heights mobile-first (`min-h-[760px]` and
       `py-36 sm:py-44` never shrink below the `sm` breakpoint).
-- [ ] **A44** Enlarge the mobile menu button to a ≥44px touch target
+- [x] **A44** Enlarge the mobile menu button to a ≥44px touch target
       (`components/public/header.tsx:5`).
 - [ ] **A45** Add `loading.tsx` to public routes (all are `force-dynamic`).
 - [ ] **A46** Emit `LocalBusiness`/`Restaurant` JSON-LD from CMS contact/hours
@@ -305,7 +305,7 @@ stable references for commits and verification notes.
 - [ ] **A47** Fail the production build (or warn loudly) when
       `NEXT_PUBLIC_APP_URL` is unset — it silently yields no canonical URLs, no OG
       tags, and an empty `sitemap.xml`.
-- [ ] **A48** Add a skip-to-content link and `aria-current="page"` on active nav links.
+- [x] **A48** Add a skip-to-content link and `aria-current="page"` on active nav links.
 - [ ] **A49** Reuse `components/ui/button.tsx` for public CTAs instead of
       hand-copied Tailwind (currently imported by no public page).
 
