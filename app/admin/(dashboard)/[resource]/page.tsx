@@ -55,10 +55,10 @@ export default async function AdminResourcePage({ params, searchParams }: { para
     <section>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[.2em] text-[#b26043]">CMS module</p>
+          <p className="text-xs uppercase tracking-[.2em] text-[#8a3a21]">CMS module</p>
           <h1 className="mt-3 font-serif text-3xl sm:text-4xl lg:text-5xl">{resource.label}</h1>
         </div>
-        <p className="text-sm text-[#596052]">{total} record{total === 1 ? "" : "s"}{filtered ? " matching" : ""}</p>
+        <p className="text-sm text-[#4d5649]">{total} record{total === 1 ? "" : "s"}{filtered ? " matching" : ""}</p>
       </div>
 
       {/* A plain GET form: filters live in the URL, so a filtered list can be
@@ -89,7 +89,7 @@ export default async function AdminResourcePage({ params, searchParams }: { para
       {sortable && !filtered && rows.length > 1 ? (
         <details className="mt-6 border border-[#c9bfa8] bg-[#ede3d0] p-5">
           <summary className="cursor-pointer text-sm font-semibold">Reorder display order</summary>
-          <p className="mt-3 text-sm text-[#596052]">Drag a row, or use the arrows, then save. This sets the order visitors see on the public site.</p>
+          <p className="mt-3 text-sm text-[#4d5649]">Drag a row, or use the arrows, then save. This sets the order visitors see on the public site.</p>
           <div className="mt-4">
             <ResourceReorder resourceKey={resource.key} offset={from} action={reorderResource} items={rows.map((row) => ({ id: String(row.id), label: rowLabel(row) }))} />
           </div>
@@ -115,14 +115,14 @@ export default async function AdminResourcePage({ params, searchParams }: { para
               </form>
             </details>
           )) : (
-            <p className="border border-dashed border-[#c9bfa8] p-6 text-sm text-[#596052]">
+            <p className="border border-dashed border-[#c9bfa8] p-6 text-sm text-[#4d5649]">
               {filtered ? "No records match these filters." : `No ${resource.label.toLowerCase()} records yet. Use the form to add the first one.`}
             </p>
           )}
 
           {page.pageCount > 1 ? (
             <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-[#dde0d7] pt-4 text-sm">
-              <p className="text-[#596052]">Showing {page.from}–{page.to} of {total}</p>
+              <p className="text-[#4d5649]">Showing {page.from}–{page.to} of {total}</p>
               <div className="flex flex-wrap items-center gap-2">
                 {page.hasPrevious ? <Link href={listHref(basePath, query, { page: page.current - 1 })} className="border border-[#1f3426] px-3 py-1.5 font-semibold">Previous</Link> : <span className="border border-[#dde0d7] px-3 py-1.5 text-[#98a096]">Previous</span>}
                 <span className="px-1">Page {page.current} of {page.pageCount}</span>

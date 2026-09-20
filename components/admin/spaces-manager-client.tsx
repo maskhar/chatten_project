@@ -55,7 +55,7 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
     detail: (
       <div className="mt-1 flex items-center gap-3">
         {imageUrl(space.image_media_id) ? <Image src={imageUrl(space.image_media_id) as string} alt={space.name} width={80} height={60} className="h-12 w-16 rounded object-cover" /> : <div className="h-12 w-16 rounded bg-[#405542]" />}
-        <div className="min-w-0"><p className="text-xs text-[#657064]">/{space.slug}</p><div className="mt-1 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded bg-[#eef1ea] px-2 py-1">{space.status === "published" ? "Published" : "Draft"}</span><span className="rounded bg-[#eef1ea] px-2 py-1">{space.is_active ? "Active" : "Hidden"}</span></div>{space.description ? <p className="mt-1 line-clamp-1 text-xs text-[#596052]">{space.description}</p> : null}</div>
+        <div className="min-w-0"><p className="text-xs text-[#657064]">/{space.slug}</p><div className="mt-1 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded bg-[#eef1ea] px-2 py-1">{space.status === "published" ? "Published" : "Draft"}</span><span className="rounded bg-[#eef1ea] px-2 py-1">{space.is_active ? "Active" : "Hidden"}</span></div>{space.description ? <p className="mt-1 line-clamp-1 text-xs text-[#4d5649]">{space.description}</p> : null}</div>
       </div>
     ),
     actions: (
@@ -73,7 +73,7 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">Website</p>
           <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">Spaces</h1>
-          <p className="mt-3 max-w-2xl text-[#596052]">Manage the spaces guests can discover and use at Chatten.</p>
+          <p className="mt-3 max-w-2xl text-[#4d5649]">Manage the spaces guests can discover and use at Chatten.</p>
         </div>
         <a href="#add-space" className="rounded bg-[#b65d40] px-5 py-3 text-sm font-semibold text-white">+ Add Space</a>
       </div>

@@ -282,24 +282,24 @@ stable references for commits and verification notes.
       on the highest-traffic page.
 - [x] **A36** Fix homepage landmarks: move `Header`/footer out of `<main>` so
       `banner` and `contentinfo` roles survive for screen readers.
-- [ ] **A37** Add `generateMetadata` to `events/[slug]`, `experience/[slug]`,
+- [x] **A37** Add `generateMetadata` to `events/[slug]`, `experience/[slug]`,
       `spaces/[slug]`; all detail pages currently share one generic title.
-- [ ] **A38** Render a hero image on Experience and Space detail pages — the list
+- [x] **A38** Render a hero image on Experience and Space detail pages — the list
       cards show imagery, the detail pages show none.
-- [ ] **A39** Add `app/error.tsx` for the public tree and wrap the unguarded
+- [x] **A39** Add `app/error.tsx` for the public tree and wrap the unguarded
       query helpers in `lib/public-data/queries.ts` like `getHomepageData` already does.
-- [ ] **A40** Fix kicker contrast: `text-[#b26043]` on `#f4eedf` is ≈3.9:1,
+- [x] **A40** Fix kicker contrast: `text-[#b26043]` on `#f4eedf` is ≈3.9:1,
       below the 4.5:1 AA threshold, and appears on nearly every page.
-- [ ] **A41** Re-check `text-[#6c715d]` / `text-[#5b6254]` body and empty-state
+- [x] **A41** Re-check `text-[#6c715d]` / `text-[#5b6254]` body and empty-state
       greys against AA.
 - [ ] **A42** Migrate background-image rendering to `next/image` with `sizes`
       (hero, moments, cards, gallery, menu). Only Events uses it today; mobile
       currently downloads desktop-resolution originals throughout.
-- [ ] **A43** Make hero heights mobile-first (`min-h-[760px]` and
+- [x] **A43** Make hero heights mobile-first (`min-h-[760px]` and
       `py-36 sm:py-44` never shrink below the `sm` breakpoint).
 - [x] **A44** Enlarge the mobile menu button to a ≥44px touch target
       (`components/public/header.tsx:5`).
-- [ ] **A45** Add `loading.tsx` to public routes (all are `force-dynamic`).
+- [x] **A45** Add `loading.tsx` to public routes (all are `force-dynamic`).
 - [ ] **A46** Emit `LocalBusiness`/`Restaurant` JSON-LD from CMS contact/hours
       data; only a generic `WebSite` object is emitted today.
 - [ ] **A47** Fail the production build (or warn loudly) when
@@ -329,13 +329,13 @@ stable references for commits and verification notes.
       works only because the `handle_new_user` trigger is `SECURITY DEFINER`).
 - [ ] **A56** Add index on `menu_items.category_id` (FK filtered on every
       reorder, insert, and delete guard).
-- [ ] **A57** Push `is_active`/`status` filtering into public queries instead of
+- [x] **A57** Push `is_active`/`status` filtering into public queries instead of
       filtering in JS (`about_sections` is never filtered at all).
 - [ ] **A58** Batch reorder writes; every reorder action issues one UPDATE per
       row, several doing a two-pass staging round trip.
 - [x] **A59** Replace per-row `auth.admin.getUserById` in
       `app/admin/(dashboard)/users/page.tsx:5` with a single `listUsers()`.
-- [ ] **A60** Look up public detail pages by `.eq("slug", …)` instead of fetching
+- [x] **A60** Look up public detail pages by `.eq("slug", …)` instead of fetching
       the whole collection and `Array.find`.
 - [ ] **A61** Adopt shared Zod schemas across server actions. Zod is currently
       used only for env parsing; `status` is unchecked in several actions, UUIDs

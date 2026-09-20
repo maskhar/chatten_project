@@ -81,7 +81,7 @@ export function MediaPicker({
             <p className="mt-1 truncate font-medium">
               {current.title ?? "Untitled image"}
             </p>
-            <p className="text-xs text-[#596052]">
+            <p className="text-xs text-[#4d5649]">
               {current.alt_text ?? "No alt text"}
             </p>
           </div>
@@ -96,7 +96,7 @@ export function MediaPicker({
             {!required && (
               <button
                 type="button"
-                className="rounded border border-[#c9bfa8] px-3 py-1.5 text-sm text-[#596052] hover:bg-white"
+                className="rounded border border-[#c9bfa8] px-3 py-1.5 text-sm text-[#4d5649] hover:bg-white"
                 onClick={() => setSelected("")}
               >
                 Remove
@@ -128,7 +128,7 @@ export function MediaPicker({
           <button
             type="button"
             onClick={clearFilters}
-            className="rounded border border-[#c9bfa8] bg-white px-3 py-2 text-sm text-[#596052] hover:bg-[#f5f7f3]"
+            className="rounded border border-[#c9bfa8] bg-white px-3 py-2 text-sm text-[#4d5649] hover:bg-[#f5f7f3]"
           >
             Clear filters
           </button>
@@ -149,7 +149,7 @@ export function MediaPicker({
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded border border-[#c9bfa8] bg-white p-6 text-center">
-          <p className="text-sm text-[#596052]">No images match your filters.</p>
+          <p className="text-sm text-[#4d5649]">No images match your filters.</p>
           <button
             type="button"
             onClick={clearFilters}

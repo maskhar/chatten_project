@@ -1,4 +1,4 @@
-export type PublicMedia = { id: string; bucket: string; storage_path: string; alt_text: string | null; width: number | null; height: number | null };
+export type PublicMedia = { id: string; bucket: string; storage_path: string; alt_text: string | null; width: number | null; height: number | null; focal_x?: number | null; focal_y?: number | null };
 export type PublicCard = { id: string; name: string; slug: string; description: string | null; image_media_id: string | null; sort_order: number; status?: string; is_active?: boolean };
 export type PublicMenuItem = PublicCard & { category_id: string; price: number | null };
 export type PublicEvent = { id: string; title: string; slug: string; summary: string | null; body: string | null; image_media_id: string | null; starts_at: string; ends_at: string | null; status: string; is_active: boolean };

@@ -132,8 +132,8 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
 
       <section className="mt-8 max-w-2xl rounded border border-[#c9bfa8] bg-white p-5" aria-labelledby="media-used-in-heading">
         <h2 id="media-used-in-heading" className="font-serif text-2xl sm:text-3xl">Used In</h2>
-        {usage.summary ? <p className="mt-2 text-sm text-[#596052]">{usage.summary}</p> : null}
-        {usage.emptyMessage ? <p className="mt-3 text-sm text-[#596052]">{usage.emptyMessage}</p> : null}
+        {usage.summary ? <p className="mt-2 text-sm text-[#4d5649]">{usage.summary}</p> : null}
+        {usage.emptyMessage ? <p className="mt-3 text-sm text-[#4d5649]">{usage.emptyMessage}</p> : null}
         {usage.count ? (
           <ul className="mt-4 grid gap-2" aria-label={usage.summary ?? undefined}>
             {usage.references.map((reference, index) => (

@@ -29,7 +29,7 @@ export function Header({ navigation }: { navigation: NavItem[] }) {
       {open ? (
         <nav id="mobile-nav" aria-label="Main" className="mx-4 grid gap-1 border border-white/20 bg-[#1c3025]/95 p-3 text-sm md:hidden">
           {links.map((link) => <Link className="flex min-h-11 items-center px-3 aria-[current=page]:font-semibold" key={link.href} href={link.href} aria-current={current(link.href)} onClick={() => setOpen(false)}>{link.label}</Link>)}
-          <Link className="flex min-h-11 items-center px-3 font-semibold text-[#e6a17f]" href="/visit" onClick={() => setOpen(false)}>Plan Your Visit</Link>
+          <Link className="flex min-h-11 items-center px-3 font-semibold text-[#f3c4a6]" href="/visit" onClick={() => setOpen(false)}>Plan Your Visit</Link>
         </nav>
       ) : null}
     </header>

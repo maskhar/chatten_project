@@ -19,9 +19,9 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
   return (
     <section className="border border-[#c9bfa8] bg-[#ede3d0] p-6 sm:p-8">
       <h1 className="font-serif text-3xl sm:text-4xl">CMS action failed.</h1>
-      <p className="mt-3 text-[#596052]">No changes were applied.</p>
+      <p className="mt-3 text-[#4d5649]">No changes were applied.</p>
       {isGeneric ? (
-        <p className="mt-2 text-[#596052]">Check the form and try again.</p>
+        <p className="mt-2 text-[#4d5649]">Check the form and try again.</p>
       ) : (
         <p role="alert" className="mt-4 break-words border-l-4 border-[#b65d40] bg-white px-4 py-3 text-sm text-[#5a2f20]">
           {message}
