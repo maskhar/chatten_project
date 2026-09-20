@@ -19,7 +19,6 @@ export default async function ExperiencesManager() {
     <ExperiencesManagerClient
       experiences={(experiences ?? []) as never[]}
       media={(media ?? []) as never[]}
-      baseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}
     />
   );
 }

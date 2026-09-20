@@ -28,7 +28,6 @@ export default async function ExperienceEditPage({
     <ExperienceEditForm
       experience={experience as never}
       media={(media ?? []) as never[]}
-      baseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}
     />
   );
 }

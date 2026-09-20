@@ -1,9 +1,9 @@
 import type { PublicMedia } from "./types";
+import { mediaHref } from "@/lib/media/url";
 
+// A6: addressed by id on this origin, served by app/api/media/[id]/route.ts.
 export function mediaUrl(media: PublicMedia | undefined) {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base || !media) return undefined;
-  return `${base.replace(/\/$/, "")}/storage/v1/object/public/${media.bucket}/${media.storage_path}`;
+  return mediaHref(media);
 }
 
 export function mediaMap(rows: unknown[]) {

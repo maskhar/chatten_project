@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveExperience } from "@/lib/admin/experience-actions";
+import { mediaHrefById } from "@/lib/media/url";
 
 type Experience = {
   id: string;
@@ -32,18 +33,11 @@ const field = "mt-1 w-full rounded border px-3 py-2";
 export function ExperienceEditForm({
   experience,
   media,
-  baseUrl,
 }: {
   experience: Experience;
   media: Media[];
-  baseUrl: string;
 }) {
-  const image = (id: string | null) => {
-    const row = media.find((item) => item.id === id);
-    return row
-      ? `${baseUrl}/storage/v1/object/public/${row.bucket}/${row.storage_path}`
-      : null;
-  };
+  const image = (id: string | null) => mediaHrefById(media.find((item) => item.id === id)?.id) ?? null;
 
   const imgUrl = image(experience.image_media_id);
 

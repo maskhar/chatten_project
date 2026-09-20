@@ -5,6 +5,7 @@ import { useState } from "react";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { SortableList } from "@/components/admin/sortable-list";
 import { saveExperience, reorderExperiences, setExperienceActive, deleteExperience } from "@/lib/admin/experience-actions";
+import { mediaHrefById } from "@/lib/media/url";
 
 type Experience = {
   id: string;
@@ -33,20 +34,13 @@ const field = "mt-1 w-full rounded border px-3 py-2";
 export function ExperiencesManagerClient({
   experiences,
   media,
-  baseUrl,
 }: {
   experiences: Experience[];
   media: Media[];
-  baseUrl: string;
 }) {
   const [deleting, setDeleting] = useState<string | null>(null);
   
-  const image = (id: string | null) => {
-    const row = media.find((item) => item.id === id);
-    return row
-      ? `${baseUrl}/storage/v1/object/public/${row.bucket}/${row.storage_path}`
-      : null;
-  };
+  const image = (id: string | null) => mediaHrefById(media.find((item) => item.id === id)?.id) ?? null;
 
   const handleVisibility = async (id: string, active: boolean) => {
     const formData = new FormData();

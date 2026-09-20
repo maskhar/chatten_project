@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { deleteSpace, reorderSpaces, saveSpace, setSpaceActive } from "@/lib/admin/space-actions";
 import { SortableList } from "@/components/admin/sortable-list";
+import { mediaHrefById } from "@/lib/media/url";
 
 type Space = {
   id: string;
@@ -30,11 +31,8 @@ type Media = {
 
 const field = "mt-1 w-full rounded border px-3 py-2";
 
-export function SpacesManagerClient({ spaces, media, baseUrl }: { spaces: Space[]; media: Media[]; baseUrl: string }) {
-  const imageUrl = (id: string | null) => {
-    const image = media.find((item) => item.id === id);
-    return image ? `${baseUrl}/storage/v1/object/public/${image.bucket}/${image.storage_path}` : null;
-  };
+export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media: Media[] }) {
+  const imageUrl = (id: string | null) => mediaHrefById(media.find((item) => item.id === id)?.id) ?? null;
 
   const handleVisibility = async (id: string, active: boolean) => {
     const formData = new FormData();

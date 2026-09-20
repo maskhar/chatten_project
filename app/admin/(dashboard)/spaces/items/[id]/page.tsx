@@ -12,5 +12,5 @@ export default async function SpaceEditPage({ params }: { params: Promise<{ id: 
     supabase.from("media").select("id,title,alt_text,category,rights_status,width,height,bucket,storage_path").eq("rights_status", "approved").order("created_at", { ascending: false }),
   ]);
   if (!space) notFound();
-  return <SpaceEditForm space={space as never} media={(media ?? []) as never[]} baseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""} />;
+  return <SpaceEditForm space={space as never} media={(media ?? []) as never[]} />;
 }

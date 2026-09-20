@@ -2,6 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { mediaHrefById } from "@/lib/media/url";
 
 type Media = {
   id: string;
@@ -67,7 +68,7 @@ export function MediaPicker({
       {current ? (
         <div className="flex items-center gap-3 rounded border border-[#8b9d83] bg-white p-3 shadow-sm">
           <Image
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${current.bucket}/${current.storage_path}`}
+            src={mediaHrefById(current.id)!}
             alt={current.alt_text ?? current.title ?? ""}
             width={96}
             height={72}
@@ -160,7 +161,7 @@ export function MediaPicker({
       ) : (
         <div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto rounded border border-[#ddd9cf] bg-white p-2 sm:grid-cols-3">
           {filtered.map((item) => {
-            const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${item.bucket}/${item.storage_path}`;
+            const url = mediaHrefById(item.id)!;
             const effectiveSelected = selected || value || "";
             const isSelected = effectiveSelected === item.id;
             return (

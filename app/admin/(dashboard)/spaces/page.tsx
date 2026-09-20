@@ -10,5 +10,5 @@ export default async function SpacesManagerPage() {
     supabase.from("media").select("id,title,alt_text,category,rights_status,width,height,bucket,storage_path").eq("rights_status", "approved").order("created_at", { ascending: false }),
   ]);
 
-  return <SpacesManagerClient spaces={(spaces ?? []) as never[]} media={(media ?? []) as never[]} baseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""} />;
+  return <SpacesManagerClient spaces={(spaces ?? []) as never[]} media={(media ?? []) as never[]} />;
 }

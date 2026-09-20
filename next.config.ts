@@ -30,7 +30,9 @@ const csp = [
   // working baseline.
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${supabaseOrigin}`,
+  // A6 moved every media asset onto this origin (/api/media/[id]), so the
+  // Supabase origin is no longer an image source and is not listed here.
+  "img-src 'self' data: blob:",
   "font-src 'self' data:",
   `connect-src 'self' ${supabaseOrigin}${isDev ? " ws: wss:" : ""}`,
   `frame-src ${frameSrc}`,
@@ -44,15 +46,10 @@ const csp = [
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "supabase.carubra.com",
-        pathname: "/storage/v1/object/public/**",
-      },
-    ],
-  },
+  // No remotePatterns: after A6 every <Image src> is the same-origin
+  // /api/media/[id] route, which next/image already allows. Re-adding the
+  // Supabase storage origin here would make the bypass reachable again.
+
   async headers() {
     return [
       {

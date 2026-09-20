@@ -4,14 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveSpace } from "@/lib/admin/space-actions";
+import { mediaHrefById } from "@/lib/media/url";
 
 type Space = { id: string; name: string; slug: string; description: string | null; image_media_id: string | null; is_active: boolean; status: string };
 type Media = { id: string; title: string | null; alt_text: string | null; category: string | null; rights_status: string; width: number | null; height: number | null; bucket: string; storage_path: string };
 const field = "mt-1 w-full rounded border px-3 py-2";
 
-export function SpaceEditForm({ space, media, baseUrl }: { space: Space; media: Media[]; baseUrl: string }) {
+export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }) {
   const current = media.find((item) => item.id === space.image_media_id);
-  const image = current ? `${baseUrl}/storage/v1/object/public/${current.bucket}/${current.storage_path}` : null;
+  const image = mediaHrefById(current?.id) ?? null;
 
   return (
     <section>

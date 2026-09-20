@@ -158,31 +158,39 @@ stable references for commits and verification notes.
 
 ## Phase 8 — Security Hardening
 
-- [~] **A6** Storage read exposure on `chatten-media` — accepted risk, not fixed.
+- [x] **A6** Storage read exposure on `chatten-media` — fixed via route proxy.
       `"chatten public read"` was unconditional (`using (bucket_id = 'chatten-media')`).
-      Migration `20260921000200_restrict_chatten_media_storage_read.sql`
-      (applied 2026-09-21) joined it to `chatten_cafe.media.rights_status =
-      'approved'`, matching the `public_media` table policy. **Verified this
-      does not close the actual hole**: the bucket has `public = true`, and
-      self-hosted storage-api serves `/storage/v1/object/public/{bucket}/{path}`
-      for a public bucket without evaluating RLS at all — confirmed by curling
-      an `unknown`-rights object before *and after* the policy change; both
-      returned `200`. Every image URL in the app (9 call sites, e.g.
-      `lib/homepage/media.ts:2`, `lib/public-data/media.ts:6`,
-      `components/admin/media-picker.tsx:70,163`) uses that same
-      `object/public/...` path, so a real fix means either (a) a private
-      bucket with server-generated signed URLs everywhere an image renders, or
-      (b) splitting into a public bucket (approved only) and a private one
-      (pending/restricted), migrating objects between them as rights_status
-      changes. Both are multi-file architecture changes, not a migration.
-      2026-09-21: presented both options to the project owner; **decision was
-      to accept the risk and document it** rather than do the rewrite now —
-      only 3 stock images exist today, none sensitive. The RLS policy fix
-      stays applied (it is still strictly correct and closes the gap for any
-      access path that *does* honor storage.objects RLS), but path enumeration
-      of `storage_path` is enough to download any object in the bucket
-      regardless of rights_status. Revisit if real/sensitive media is ever
-      uploaded before this is actually fixed.
+      Migration `20260921000200_restrict_chatten_media_storage_read.sql` joined it
+      to `chatten_cafe.media.rights_status = 'approved'`, but that alone closed
+      nothing: the bucket had `public = true`, and self-hosted storage-api serves
+      `/storage/v1/object/public/{bucket}/{path}` **without evaluating RLS at all**
+      for a public bucket — confirmed by curling an `unknown`-rights object before
+      and after the policy change, both `200`.
+      Fixed 2026-09-21 with an application route proxy (not signed URLs):
+      `app/api/media/[id]/route.ts` looks the media row up with the caller's own
+      RLS-bound session client, so visibility is decided by the existing
+      `public_media` / `cms_manage` policies — anonymous visitors get approved
+      media only, signed-in CMS members can still preview unapproved assets. The
+      bytes are then streamed with the service-role client (server-only, reached
+      only after the RLS check passed). Unknown ids and rows no policy exposes
+      both return `404`, so the route does not confirm whether an asset exists.
+      All 9 URL builders now go through `lib/media/url.ts` (`mediaHrefById`) and
+      address media by id on this origin: `lib/homepage/media.ts`,
+      `lib/public-data/media.ts`, `components/admin/media-picker.tsx`,
+      `event-promotion-manager.tsx`, `experience-edit-form.tsx`,
+      `experiences-manager-client.tsx`, `gallery-manager-client.tsx`,
+      `space-edit-form.tsx`, `spaces-manager-client.tsx`, plus
+      `app/admin/(dashboard)/media/page.tsx`. The `baseUrl` prop was dropped from
+      every admin page that passed it. `next.config.ts` lost its
+      `images.remotePatterns` entry and its CSP `img-src` no longer lists the
+      Supabase origin, so re-introducing the bypass would now fail CSP as well.
+      Bucket flipped to `public = false` last, only after the route was verified
+      (`20260921000400_make_chatten_media_bucket_private.sql`, applied 2026-09-21).
+      Post-flip verification: approved media `200` with bytes through the route,
+      unapproved `404`, direct `object/public/...` now `400` (an initial `200`
+      there was a stale Cloudflare edge entry; a cache-busted request returns
+      `400`). CMS upload and delete are unaffected — they match
+      `"chatten cms manage"`, which does not depend on `bucket.public`.
 - [x] **A7** Add a minimum-role parameter to `requireAdmin()` and enforce
       `admin` on `app/admin/(dashboard)/users/page.tsx:5`, which currently gates
       only on "has any role" before constructing the RLS-bypassing service-role
