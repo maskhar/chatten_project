@@ -1,4 +1,4 @@
-import { saveResource, deleteResource } from "@/lib/admin/actions";
+import { saveResource, deleteResource, reorderResource } from "@/lib/admin/actions";
 import { minRoleFor, resourceFor, retiredResourceRedirects, type Field } from "@/lib/admin/resources";
 import { buildSearchFilter, listHref, pageRange, paginationState, parseListQuery, resourceHasStatus } from "@/lib/admin/list-query";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -8,9 +8,11 @@ import { notFound, redirect } from "next/navigation";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { MediaPicker } from "@/components/admin/media-picker";
+import { ResourceReorder } from "@/components/admin/resource-reorder";
 
 type MediaOption = { id: string; title: string | null; alt_text: string | null; category: string | null; rights_status: string; width: number | null; height: number | null; bucket: string; storage_path: string };
 
+function rowLabel(row: Record<string, unknown>) { return String(row.title ?? row.name ?? row.site_name ?? row.page_key ?? row.author_name ?? row.id); }
 function inputValue(value: unknown) { if (value === null || value === undefined) return ""; if (typeof value === "boolean") return undefined; if (typeof value === "number") return String(value); return String(value); }
 function FieldInput({ field, value, media }: { field: Field; value: unknown; media: MediaOption[] }) { const common = { name: field.key, required: field.required, defaultValue: inputValue(value), className: "mt-1 block w-full border border-[#c9bfa8] bg-white px-3 py-2 text-sm" }; if (field.type === "checkbox") return <label className="flex items-center gap-2 text-sm"><input name={field.key} type="checkbox" defaultChecked={value === true} />{field.label}</label>; if (field.type === "textarea") return <label className="block text-sm">{field.label}<textarea {...common} rows={4} /></label>; if (field.type === "media") return <label className="block text-sm">{field.label}<MediaPicker name={field.key} value={inputValue(value)} media={media} /></label>; if (field.type === "select") return <label className="block text-sm">{field.label}<select {...common}>{field.options?.map((option: string) => <option value={option} key={option}>{option}</option>)}</select></label>; return <label className="block text-sm">{field.label}<input {...common} type={field.type ?? "text"} /></label>; }
 
@@ -29,7 +31,8 @@ export default async function AdminResourcePage({ params, searchParams }: { para
   const basePath = `/admin/${resource.key}`;
   const hasStatus = resourceHasStatus(resource);
   const searchFilter = buildSearchFilter(resource, query.search);
-  const orderColumn = resource.fields.some((field) => field.key === "sort_order") ? "sort_order" : "created_at";
+  const sortable = resource.fields.some((field) => field.key === "sort_order");
+  const orderColumn = sortable ? "sort_order" : "created_at";
   const { from, to } = pageRange(query.page);
 
   const supabase = await createServerSupabaseClient();
@@ -78,11 +81,25 @@ export default async function AdminResourcePage({ params, searchParams }: { para
         {filtered ? <Link href={basePath} className="px-2 py-2 text-sm underline">Clear</Link> : null}
       </form>
 
+      {/* A26: drag ordering, hidden while a filter is active — the action writes
+          sort_order from the submitted position, so reordering a filtered subset
+          would renumber it against rows that are not on screen. Pagination is
+          safe because the action offsets by the page's first rank. */}
+      {sortable && !filtered && rows.length > 1 ? (
+        <details className="mt-6 border border-[#c9bfa8] bg-[#ede3d0] p-5">
+          <summary className="cursor-pointer text-sm font-semibold">Reorder display order</summary>
+          <p className="mt-3 text-sm text-[#596052]">Drag a row, or use the arrows, then save. This sets the order visitors see on the public site.</p>
+          <div className="mt-4">
+            <ResourceReorder resourceKey={resource.key} offset={from} action={reorderResource} items={rows.map((row) => ({ id: String(row.id), label: rowLabel(row) }))} />
+          </div>
+        </details>
+      ) : null}
+
       <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-4">
           {rows.length ? rows.map((row) => (
             <details className="border border-[#c9bfa8] bg-[#ede3d0] p-5" key={String(row.id)}>
-              <summary className="cursor-pointer font-serif text-xl sm:text-2xl">{String(row.title ?? row.name ?? row.site_name ?? row.page_key ?? row.author_name ?? row.id)}</summary>
+              <summary className="cursor-pointer font-serif text-xl sm:text-2xl">{rowLabel(row)}</summary>
               <form action={saveResource} className="mt-6 grid gap-4">
                 <input type="hidden" name="resource" value={resource.key} />
                 <input type="hidden" name="id" value={String(row.id)} />
