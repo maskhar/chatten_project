@@ -1,6 +1,7 @@
 import { saveResource, deleteResource, reorderResource } from "@/lib/admin/actions";
 import { minRoleFor, resourceFor, retiredResourceRedirects, type Field } from "@/lib/admin/resources";
 import { buildSearchFilter, listHref, pageRange, paginationState, parseListQuery, resourceHasStatus } from "@/lib/admin/list-query";
+import { isReorderableTable } from "@/lib/admin/reorder-core";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { dynamicTable } from "@/lib/supabase/dynamic";
@@ -80,8 +81,15 @@ export default async function AdminResourcePage({ params, searchParams }: { para
   const basePath = `/admin/${resource.key}`;
   const hasStatus = resourceHasStatus(resource);
   const searchFilter = buildSearchFilter(resource, query.search);
-  const sortable = resource.fields.some((field) => field.key === "sort_order");
-  const orderColumn = sortable ? "sort_order" : "created_at";
+  // Two different questions. A sort_order column decides what the list is
+  // ordered by; whether the drag panel appears depends on the action's
+  // allowlist. opening_hours has the column but is unique on
+  // (day_of_week, sort_order), so reorderResource refuses it — rendering the
+  // panel from the column alone gave the operator a control that dragged,
+  // saved, failed, and rolled back.
+  const ordered = resource.fields.some((field) => field.key === "sort_order");
+  const sortable = ordered && isReorderableTable(resource.table);
+  const orderColumn = ordered ? "sort_order" : "created_at";
   const { from, to } = pageRange(query.page);
 
   const supabase = await createServerSupabaseClient();

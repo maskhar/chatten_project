@@ -83,6 +83,42 @@ test("the only admin data table can scroll instead of overflowing a phone", () =
   assert.match(users, /min-w-\[720px\]/);
 });
 
+test("no two sidebar links point at the same page", () => {
+  // /admin/contact was listed twice — "Visit Chatten" under Website and
+  // "Contact & Location" under Settings — so one of the two was always the
+  // highlighted one and the other looked broken.
+  assert.equal(new Set(navHrefs).size, navHrefs.length, `duplicate sidebar link: ${navHrefs.filter((href, i) => navHrefs.indexOf(href) !== i).join(", ")}`);
+});
+
+test("the drag panel appears only where the reorder action will accept the table", () => {
+  // opening_hours has a sort_order column but is unique on
+  // (day_of_week, sort_order), so reorderResource refuses it. Deriving the
+  // panel from the column alone gave the operator a control that dragged,
+  // saved, failed, and rolled back every time.
+  const page = fs.readFileSync("app/admin/(dashboard)/[resource]/page.tsx", "utf8");
+  assert.match(page, /const sortable = ordered && isReorderableTable\(resource\.table\)/);
+  assert.match(page, /const orderColumn = ordered \? "sort_order" : "created_at"/);
+  assert.ok(!/const sortable = resource\.fields\.some/.test(page), "sortable is derived from the column again");
+
+  const core = fs.readFileSync("lib/admin/reorder-core.ts", "utf8");
+  assert.ok(!/"opening_hours"/.test(core), "opening_hours is reorderable again; the unique constraint says it must not be");
+});
+
+test("a resource only declares sort_order when the table still has the column", () => {
+  // 20260910000200 dropped sort_order from events and promotions. The
+  // registry kept declaring it, so saveResource would have built a payload
+  // naming a column that no longer exists — latent only because the bespoke
+  // routes shadow the generic form.
+  const dropped = fs.readFileSync("supabase/migrations/20260910000200_remove_event_promotion_manual_ordering.sql", "utf8");
+  for (const table of ["events", "promotions"]) {
+    assert.match(dropped, new RegExp(`alter table [^;]*${table}[^;]*drop column[^;]*sort_order`, "is"), `the migration no longer drops ${table}.sort_order`);
+    const block = resources.slice(resources.indexOf(`key: "${table}"`));
+    const declaration = block.slice(0, block.indexOf("] },") + 4);
+    assert.ok(!/key: "sort_order"/.test(declaration), `${table} declares a sort_order field inline`);
+    assert.ok(!/\.\.\.editorial/.test(declaration), `${table} spreads ...editorial, which carries sort_order`);
+  }
+});
+
 test("the content area leaves room for the fixed sidebar only where it exists", () => {
   // The sidebar is `fixed … lg:block`, so the offset must be lg-scoped too or
   // every page carries 16rem of dead left margin on a phone.
