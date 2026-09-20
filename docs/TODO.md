@@ -115,25 +115,28 @@ stable references for commits and verification notes.
 
 ## Phase 7 — Critical Defects (live breakage, fix first)
 
-- [ ] **A1** Fix `media` ordering crash in Events/Promotions managers.
+- [x] **A1** Fix `media` ordering crash in Events/Promotions managers.
       `app/admin/(dashboard)/events/page.tsx:3` and
       `app/admin/(dashboard)/promotions/page.tsx:3` call
       `.from("media").order("sort_order")`, but `chatten_cafe.media` has no
       `sort_order` column (initial migration line 21). Every load raises
       PostgREST `42703 undefined_column`. Order by `created_at` like the sibling
       managers do.
-- [ ] **A2** Add self-read RLS policy to `chatten_cafe.user_roles`.
+- [x] **A2** Add self-read RLS policy to `chatten_cafe.user_roles`.
       The only policy is `role_manage` requiring `has_role('admin')`, so
       `requireAdmin()` (`lib/auth/require-admin.ts:3`), which reads the table with
       the RLS-bound session client, returns zero rows for an `editor`. Every
       `editor` account is redirected to `/admin/login?error=unauthorized` and can
       never enter the CMS. Add `own_role` (`for select using (user_id = auth.uid())`).
-- [ ] **A3** Add public read policy to `chatten_cafe.media`.
+- [x] **A3** Add public read policy to `chatten_cafe.media`.
       `media` is absent from the `public_content` policy list; only `cms_manage`
       (editor) exists. Anonymous visitors receive zero media rows, so every
       CMS-managed image on the public site resolves to nothing. Add
       `public_media` (`for select using (rights_status = 'approved')`).
-- [ ] **A4** Filter `rights_status = 'approved'` in `lib/homepage/data.ts:11`
+      Migration `supabase/migrations/20260921000100_fix_media_and_role_rls.sql`
+      covers A2 and A3 but has NOT been applied to the self-hosted server yet —
+      A5 stays open until it is.
+- [x] **A4** Filter `rights_status = 'approved'` in `lib/homepage/data.ts:11`
       (currently unfiltered, unlike `publicMedia()` in `lib/public-data/queries.ts:12`).
 - [ ] **A5** Verify A1–A4 end to end: anonymous homepage renders images, an
       `editor` account can sign in, Events/Promotions managers load their media picker.
@@ -147,11 +150,11 @@ stable references for commits and verification notes.
       `restricted`/`unknown` assets deliberately never published. Join the policy
       to `chatten_cafe.media` on `rights_status = 'approved'`, or move to a private
       bucket with signed URLs.
-- [ ] **A7** Add a minimum-role parameter to `requireAdmin()` and enforce
+- [x] **A7** Add a minimum-role parameter to `requireAdmin()` and enforce
       `admin` on `app/admin/(dashboard)/users/page.tsx:5`, which currently gates
       only on "has any role" before constructing the RLS-bypassing service-role
       client and reading every member's email via `auth.admin.getUserById`.
-- [ ] **A8** Add explicit app-level role checks to `saveRole` and `removeRole`
+- [x] **A8** Add explicit app-level role checks to `saveRole` and `removeRole`
       (`lib/admin/role-actions.ts:34-35`); today only the DB policy stops a
       non-admin, with no defense in depth (contrast `media-actions.ts:80`, which
       does check).
@@ -159,7 +162,7 @@ stable references for commits and verification notes.
       `cms_manage` from `has_role('editor')` to `has_role('admin')` on
       `site_settings`, `seo_settings`, `navigation_items`, `social_links`,
       `contact_information`, and mirror the check in the matching server actions.
-- [ ] **A10** Gate the "Users & Roles" nav entry and page on role so non-admins
+- [x] **A10** Gate the "Users & Roles" nav entry and page on role so non-admins
       do not see controls that always fail (`app/admin/(dashboard)/layout.tsx:4`).
 - [ ] **A11** Add `Content-Security-Policy` (with an explicit `frame-src`
       allowlist — `app/visit/page.tsx:9` renders a CMS-controlled map `<iframe>`),
@@ -182,10 +185,10 @@ stable references for commits and verification notes.
       sections at all. Highest-impact dashboard fix.
 - [ ] **A16** Audit and fix admin table/form/toolbar overflow at `sm`/`md`
       (horizontal scroll wrappers, stacking, action buttons reachable on phone).
-- [ ] **A17** Repoint sidebar "Homepage" from `/admin/hero` to `/admin/homepage`
+- [x] **A17** Repoint sidebar "Homepage" from `/admin/hero` to `/admin/homepage`
       (the real section manager, currently unreachable from navigation) and add a
       separate "Hero" entry.
-- [ ] **A18** Link `/admin/preview` from the sidebar (orphaned route).
+- [x] **A18** Link `/admin/preview` from the sidebar (orphaned route).
 - [ ] **A19** Fix dashboard overview quick links pointing at the weak generic
       routes (`app/admin/(dashboard)/page.tsx:3,5` → `/admin/menu-items`).
 - [ ] **A20** Remove or redirect the `menu-categories` / `menu-items` generic
@@ -281,7 +284,7 @@ stable references for commits and verification notes.
       filtering in JS (`about_sections` is never filtered at all).
 - [ ] **A58** Batch reorder writes; every reorder action issues one UPDATE per
       row, several doing a two-pass staging round trip.
-- [ ] **A59** Replace per-row `auth.admin.getUserById` in
+- [x] **A59** Replace per-row `auth.admin.getUserById` in
       `app/admin/(dashboard)/users/page.tsx:5` with a single `listUsers()`.
 - [ ] **A60** Look up public detail pages by `.eq("slug", …)` instead of fetching
       the whole collection and `Array.find`.
