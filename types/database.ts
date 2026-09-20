@@ -887,6 +887,10 @@ export type Database = {
     }
     Functions: {
       has_role: { Args: { required_role: string }; Returns: boolean }
+      reorder_rows: {
+        Args: { ids: string[]; start_offset?: number; target_table: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

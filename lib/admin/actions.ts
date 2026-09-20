@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { dynamicTable } from "@/lib/supabase/dynamic";
+import { applyOrder, isReorderableTable, normalizeOffset } from "@/lib/admin/reorder";
 import { minRoleFor, resourceFor } from "./resources";
 import { MAP_EMBED_HOSTS, URL_FIELD_KEYS, isSafeInternalPath, isSafeUrl, isSafeUrlWithHost } from "@/lib/url-safety";
 
@@ -39,6 +40,6 @@ export async function saveResource(formData: FormData) { const resource=await au
 // A26: `offset` is the rank of the first submitted row within the whole table.
 // The list view is paginated, so without it page 2 would renumber its rows from
 // 0 and collide with page 1 instead of continuing after it.
-export async function reorderResource(formData: FormData) { const resource=await authorizeResource(formData); if(!resource.fields.some(field=>field.key==="sort_order")) throw new Error("This resource has no display order."); const ids=String(formData.get("ids") ?? "").split(",").filter(Boolean); if(!ids.length) throw new Error("No order supplied."); const rawOffset=Number(formData.get("offset") ?? 0); const offset=Number.isInteger(rawOffset)&&rawOffset>=0?rawOffset:0; const supabase=await createServerSupabaseClient(); const results=await Promise.all(ids.map((id,index)=>dynamicTable(supabase, resource.table).update({ sort_order:offset+index }).eq("id",id))); if(results.some(({error})=>error)) throw new Error("Unable to save order."); revalidatePath("/"); revalidatePath(`/admin/${resource.key}`); }
+export async function reorderResource(formData: FormData) { const resource=await authorizeResource(formData); if(!resource.fields.some(field=>field.key==="sort_order")) throw new Error("This resource has no display order."); if(!isReorderableTable(resource.table)) throw new Error("This resource has no display order."); const ids=String(formData.get("ids") ?? "").split(",").filter(Boolean); if(!ids.length) throw new Error("No order supplied."); await applyOrder(resource.table, ids, normalizeOffset(formData.get("offset")), "order"); revalidatePath("/"); revalidatePath(`/admin/${resource.key}`); }
 export async function deleteResource(formData: FormData) { const resource=await authorizeResource(formData); const id=String(formData.get("id")); if(!id)throw new Error("Invalid content request"); const supabase=await createServerSupabaseClient(); const {error}=await dynamicTable(supabase, resource.table).delete().eq("id",id); if(error)throw new Error("Unable to delete content."); revalidatePath("/");revalidatePath(`/admin/${resource.key}`); }
 export async function signOut(){const supabase=await createServerSupabaseClient();await supabase.auth.signOut();redirect("/admin/login");}

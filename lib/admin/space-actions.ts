@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { applyOrder } from "@/lib/admin/reorder";
 
 const uuidPattern = /^[0-9a-f-]{36}$/i;
 
@@ -88,15 +89,7 @@ export async function reorderSpaces(ids: string[]) {
     throw new Error("Space order must include every Space exactly once.");
   }
 
-  const staged = await Promise.all(
-    ids.map((id, index) => supabase.from("spaces").update({ sort_order: 100000 + index }).eq("id", id)),
-  );
-  if (staged.some((result) => result.error)) throw new Error("Unable to save space order.");
-
-  const saved = await Promise.all(
-    ids.map((id, index) => supabase.from("spaces").update({ sort_order: index }).eq("id", id)),
-  );
-  if (saved.some((result) => result.error)) throw new Error("Unable to save space order.");
+  await applyOrder("spaces", ids, 0, "space order");
 
   revalidatePath("/admin/spaces");
   revalidatePath("/spaces");
@@ -131,10 +124,13 @@ export async function deleteSpace(formData: FormData) {
     .order("created_at", { ascending: true });
   if (remainingError) throw new Error("Space deleted, but ordering could not be normalized.");
 
-  const normalized = await Promise.all(
-    (remaining ?? []).map((row, index) => supabase.from("spaces").update({ sort_order: index }).eq("id", String(row.id))),
-  );
-  if (normalized.some((result) => result.error)) throw new Error("Space deleted, but ordering could not be normalized.");
+  // The row is already gone; a failure here leaves gaps in sort_order, which
+  // renders fine, so the delete is not reported as failed.
+  try {
+    await applyOrder("spaces", (remaining ?? []).map((row) => String(row.id)), 0, "space order");
+  } catch {
+    throw new Error("Space deleted, but ordering could not be normalized.");
+  }
 
   revalidatePath("/admin/spaces");
   revalidatePath("/spaces");

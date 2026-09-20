@@ -331,7 +331,7 @@ stable references for commits and verification notes.
       reorder, insert, and delete guard).
 - [x] **A57** Push `is_active`/`status` filtering into public queries instead of
       filtering in JS (`about_sections` is never filtered at all).
-- [ ] **A58** Batch reorder writes; every reorder action issues one UPDATE per
+- [x] **A58** Batch reorder writes; every reorder action issues one UPDATE per
       row, several doing a two-pass staging round trip.
 - [x] **A59** Replace per-row `auth.admin.getUserById` in
       `app/admin/(dashboard)/users/page.tsx:5` with a single `listUsers()`.
