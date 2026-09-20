@@ -7,8 +7,6 @@ export const resources: Resource[] = [
   { key: "about", label: "About", table: "about_sections", fields: [{ key: "title", label: "Title", required: true }, { key: "body", label: "Body", type: "textarea", required: true }, { key: "image_media_id", label: "Image", type: "media" }, ...editorial] },
   { key: "experiences", label: "Experiences", table: "experiences", fields: [{ key: "name", label: "Name", required: true }, { key: "slug", label: "Slug", required: true }, { key: "description", label: "Description", type: "textarea", required: true }, { key: "image_media_id", label: "Image", type: "media" }, ...editorial] },
   { key: "spaces", label: "Spaces", table: "spaces", fields: [{ key: "name", label: "Name", required: true }, { key: "slug", label: "Slug", required: true }, { key: "description", label: "Description", type: "textarea" }, { key: "image_media_id", label: "Image", type: "media" }, ...editorial] },
-  { key: "menu-categories", label: "Menu Categories", table: "menu_categories", fields: [{ key: "name", label: "Name", required: true }, { key: "slug", label: "Slug", required: true }, { key: "description", label: "Description", type: "textarea" }, { key: "sort_order", label: "Sort order", type: "number" }, { key: "is_active", label: "Active", type: "checkbox" }] },
-  { key: "menu-items", label: "Menu Items", table: "menu_items", fields: [{ key: "category_id", label: "Category ID", required: true }, { key: "name", label: "Name", required: true }, { key: "slug", label: "Slug", required: true }, { key: "description", label: "Description", type: "textarea" }, { key: "price", label: "Price", type: "number" }, { key: "image_media_id", label: "Image", type: "media" }, ...editorial] },
   { key: "gallery", label: "Gallery", table: "gallery_items", fields: [{ key: "title", label: "Title" }, { key: "alt_text", label: "Alt text", required: true }, { key: "image_media_id", label: "Image", type: "media" }, ...editorial] },
   { key: "testimonials", label: "Testimonials", table: "testimonials", fields: [{ key: "author_name", label: "Author", required: true }, { key: "quote", label: "Quote", type: "textarea", required: true }, { key: "source", label: "Source" }, ...editorial] },
   { key: "promotions", label: "Promotions", table: "promotions", fields: [{ key: "title", label: "Title", required: true }, { key: "slug", label: "Slug", required: true }, { key: "summary", label: "Summary", type: "textarea" }, { key: "body", label: "Body", type: "textarea" }, { key: "image_media_id", label: "Image", type: "media" }, { key: "starts_at", label: "Starts", type: "datetime-local" }, { key: "ends_at", label: "Ends", type: "datetime-local" }, ...editorial] },
@@ -20,6 +18,13 @@ export const resources: Resource[] = [
   { key: "seo", label: "SEO", table: "seo_settings", group: "settings", fields: [{ key: "page_key", label: "Page key", required: true }, { key: "title", label: "SEO title" }, { key: "description", label: "SEO description", type: "textarea" }, { key: "canonical_url", label: "Canonical URL" }, { key: "robots", label: "Robots" }] },
   { key: "site-settings", label: "Site Settings", table: "site_settings", group: "settings", fields: [{ key: "site_name", label: "Site name", required: true }, { key: "tagline", label: "Tagline" }, { key: "description", label: "Description", type: "textarea" }, { key: "is_active", label: "Active", type: "checkbox" }] },
 ];
+// A20: /admin/menu-categories and /admin/menu-items used to be generic
+// resources that wrote menu_categories / menu_items straight from the shared
+// form. That bypassed the dedicated manager’s delete protection and its
+// parseIdr price parsing, so prices could land in the column unnormalised.
+// The keys are gone; the route redirects them to the real manager.
+export const retiredResourceRedirects: Record<string, string> = { "menu-categories": "/admin/menu", "menu-items": "/admin/menu" };
+
 export function resourceFor(key: string) { return resources.find((resource) => resource.key === key); }
 
 // A9: settings-class resources (site settings, SEO, navigation, social links,

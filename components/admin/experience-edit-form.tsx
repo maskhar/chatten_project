@@ -57,7 +57,7 @@ export function ExperienceEditForm({
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">
             Edit Experience
           </p>
-          <h1 className="mt-2 font-serif text-5xl">{experience.name}</h1>
+          <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{experience.name}</h1>
         </div>
       </div>
 

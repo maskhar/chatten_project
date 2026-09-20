@@ -228,27 +228,27 @@ stable references for commits and verification notes.
 
 ## Phase 9 — Dashboard Responsiveness & Completion
 
-- [ ] **A15** Add a mobile navigation drawer to the CMS. The sidebar is
+- [x] **A15** Add a mobile navigation drawer to the CMS. The sidebar is
       `hidden … lg:block` (`app/admin/(dashboard)/layout.tsx:6`) with no hamburger
       control anywhere, so below 1024px there is no way to move between CMS
       sections at all. Highest-impact dashboard fix.
-- [ ] **A16** Audit and fix admin table/form/toolbar overflow at `sm`/`md`
+- [x] **A16** Audit and fix admin table/form/toolbar overflow at `sm`/`md`
       (horizontal scroll wrappers, stacking, action buttons reachable on phone).
 - [x] **A17** Repoint sidebar "Homepage" from `/admin/hero` to `/admin/homepage`
       (the real section manager, currently unreachable from navigation) and add a
       separate "Hero" entry.
 - [x] **A18** Link `/admin/preview` from the sidebar (orphaned route).
-- [ ] **A19** Fix dashboard overview quick links pointing at the weak generic
+- [x] **A19** Fix dashboard overview quick links pointing at the weak generic
       routes (`app/admin/(dashboard)/page.tsx:3,5` → `/admin/menu-items`).
-- [ ] **A20** Remove or redirect the `menu-categories` / `menu-items` generic
+- [x] **A20** Remove or redirect the `menu-categories` / `menu-items` generic
       resource keys (`lib/admin/resources.ts:10-11`), which bypass the dedicated
       manager's delete protection and `parseIdr` price parsing.
-- [ ] **A21** Add `loading.tsx` to admin route segments (none exist today).
-- [ ] **A22** Add success feedback. Four or more actions redirect with `?saved=1`
+- [x] **A21** Add `loading.tsx` to admin route segments (none exist today).
+- [x] **A22** Add success feedback. Four or more actions redirect with `?saved=1`
       but no page reads it, so saves complete with no confirmation.
 - [ ] **A23** Add submit-pending state to admin forms still using plain
       `<form action={…}>` without `useFormStatus`/`useActionState`.
-- [ ] **A24** Surface `error.message` in `app/admin/(dashboard)/error.tsx`;
+- [x] **A24** Surface `error.message` in `app/admin/(dashboard)/error.tsx`;
       validation messages like "Event end must be after its start." are currently
       replaced by one generic sentence.
 - [ ] **A25** Build a real dashboard overview: draft counts across all

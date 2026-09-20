@@ -18,7 +18,7 @@ export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }
     <section>
       <Link href="/admin/spaces" className="text-sm text-[#657064] hover:text-[#1f3426]">← Back to Spaces</Link>
       <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">Edit Space</p>
-      <h1 className="mt-2 font-serif text-5xl">{space.name}</h1>
+      <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{space.name}</h1>
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <form action={saveSpace} className="grid gap-6">
           <input type="hidden" name="id" value={space.id} />

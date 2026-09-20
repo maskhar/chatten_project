@@ -144,7 +144,7 @@ export function ExperiencesManagerClient({
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">
             Website
           </p>
-          <h1 className="mt-2 font-serif text-5xl">Experiences</h1>
+          <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">Experiences</h1>
           <p className="mt-3 max-w-2xl text-[#657064]">
             Manage experiences visitors can discover at Chatten.
           </p>
@@ -182,7 +182,7 @@ export function ExperiencesManagerClient({
         action={saveExperience}
         className="mt-8 max-w-2xl rounded border border-[#c9bfa8] bg-[#e8dfca] p-6"
       >
-        <h2 className="font-serif text-3xl">Add Experience</h2>
+        <h2 className="font-serif text-2xl sm:text-3xl">Add Experience</h2>
         
         <label className="mt-4 block text-sm font-semibold">
           Experience Name

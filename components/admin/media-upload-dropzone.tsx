@@ -89,7 +89,7 @@ export function MediaUploadDropzone() {
 
   return <form onSubmit={handleSubmit} className="h-fit grid gap-4 border border-[#c9bfa8] bg-[#e8dfca] p-6">
     <div>
-      <h2 className="font-serif text-3xl">Upload images</h2>
+      <h2 className="font-serif text-2xl sm:text-3xl">Upload images</h2>
       <p className="mt-1 text-sm text-[#596052]">New uploads default to Needs Review.</p>
     </div>
     <label

@@ -71,7 +71,7 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">Website</p>
-          <h1 className="mt-2 font-serif text-5xl">Spaces</h1>
+          <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">Spaces</h1>
           <p className="mt-3 max-w-2xl text-[#596052]">Manage the spaces guests can discover and use at Chatten.</p>
         </div>
         <a href="#add-space" className="rounded bg-[#b65d40] px-5 py-3 text-sm font-semibold text-white">+ Add Space</a>
@@ -81,14 +81,14 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
         <div className="grid gap-4">
           {spaces.length ? <SortableList items={sortableItems} onSave={reorderSpaces} /> : (
             <div className="rounded border border-dashed border-[#c9bfa8] bg-white p-10 text-center">
-              <p className="font-serif text-3xl">No spaces have been added yet.</p>
+              <p className="font-serif text-2xl sm:text-3xl">No spaces have been added yet.</p>
               <a href="#add-space" className="mt-5 inline-block rounded bg-[#b65d40] px-5 py-3 text-sm font-semibold text-white">Add Space</a>
             </div>
           )}
         </div>
 
         <form id="add-space" action={saveSpace} className="h-fit grid gap-4 rounded border border-[#c9bfa8] bg-[#e8dfca] p-6">
-          <h2 className="font-serif text-3xl">Add Space</h2>
+          <h2 className="font-serif text-2xl sm:text-3xl">Add Space</h2>
           <label className="text-sm font-semibold">Space Name<input name="name" required className={field} /></label>
           <label className="text-sm font-semibold">Slug<input name="slug" className={field} /><span className="mt-1 block text-xs font-normal text-[#657064]">Leave blank to generate from name.</span></label>
           <label className="text-sm font-semibold">Description<textarea name="description" rows={5} className={field} /></label>
