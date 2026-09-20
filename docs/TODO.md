@@ -94,3 +94,212 @@
 - [ ] Testimonials Manager
 
 - [ ] Contact & Visit Manager
+
+- [ ] Opening Hours Manager (day picker, not raw integer input)
+
+- [ ] Social Links Manager (platform picker + ordering)
+
+- [ ] Navigation Manager (route validation + ordering)
+
+- [ ] SEO Manager (per-page fields + OG image selection)
+
+- [ ] Site Settings Manager
+
+---
+
+# Deep Audit Remediation (audit 2026-09-21)
+
+Source: full-project audit of public UI/UX, admin dashboard, database/RLS, and
+application security. Items are ordered by blocking severity. `A#` identifiers are
+stable references for commits and verification notes.
+
+## Phase 7 — Critical Defects (live breakage, fix first)
+
+- [ ] **A1** Fix `media` ordering crash in Events/Promotions managers.
+      `app/admin/(dashboard)/events/page.tsx:3` and
+      `app/admin/(dashboard)/promotions/page.tsx:3` call
+      `.from("media").order("sort_order")`, but `chatten_cafe.media` has no
+      `sort_order` column (initial migration line 21). Every load raises
+      PostgREST `42703 undefined_column`. Order by `created_at` like the sibling
+      managers do.
+- [ ] **A2** Add self-read RLS policy to `chatten_cafe.user_roles`.
+      The only policy is `role_manage` requiring `has_role('admin')`, so
+      `requireAdmin()` (`lib/auth/require-admin.ts:3`), which reads the table with
+      the RLS-bound session client, returns zero rows for an `editor`. Every
+      `editor` account is redirected to `/admin/login?error=unauthorized` and can
+      never enter the CMS. Add `own_role` (`for select using (user_id = auth.uid())`).
+- [ ] **A3** Add public read policy to `chatten_cafe.media`.
+      `media` is absent from the `public_content` policy list; only `cms_manage`
+      (editor) exists. Anonymous visitors receive zero media rows, so every
+      CMS-managed image on the public site resolves to nothing. Add
+      `public_media` (`for select using (rights_status = 'approved')`).
+- [ ] **A4** Filter `rights_status = 'approved'` in `lib/homepage/data.ts:11`
+      (currently unfiltered, unlike `publicMedia()` in `lib/public-data/queries.ts:12`).
+- [ ] **A5** Verify A1–A4 end to end: anonymous homepage renders images, an
+      `editor` account can sign in, Events/Promotions managers load their media picker.
+
+## Phase 8 — Security Hardening
+
+- [ ] **A6** Restrict Storage read policy on `chatten-media`.
+      `"chatten public read"` is unconditional (`using (bucket_id = 'chatten-media')`)
+      on a `public = true` bucket, so anyone with the anon key can enumerate via
+      `storage.list()` and download every object, including `rights_status`
+      `restricted`/`unknown` assets deliberately never published. Join the policy
+      to `chatten_cafe.media` on `rights_status = 'approved'`, or move to a private
+      bucket with signed URLs.
+- [ ] **A7** Add a minimum-role parameter to `requireAdmin()` and enforce
+      `admin` on `app/admin/(dashboard)/users/page.tsx:5`, which currently gates
+      only on "has any role" before constructing the RLS-bypassing service-role
+      client and reading every member's email via `auth.admin.getUserById`.
+- [ ] **A8** Add explicit app-level role checks to `saveRole` and `removeRole`
+      (`lib/admin/role-actions.ts:34-35`); today only the DB policy stops a
+      non-admin, with no defense in depth (contrast `media-actions.ts:80`, which
+      does check).
+- [ ] **A9** Split `editor` from `admin` on settings-class tables. Tighten
+      `cms_manage` from `has_role('editor')` to `has_role('admin')` on
+      `site_settings`, `seo_settings`, `navigation_items`, `social_links`,
+      `contact_information`, and mirror the check in the matching server actions.
+- [ ] **A10** Gate the "Users & Roles" nav entry and page on role so non-admins
+      do not see controls that always fail (`app/admin/(dashboard)/layout.tsx:4`).
+- [ ] **A11** Add `Content-Security-Policy` (with an explicit `frame-src`
+      allowlist — `app/visit/page.tsx:9` renders a CMS-controlled map `<iframe>`),
+      `Strict-Transport-Security`, and `poweredByHeader: false` in `next.config.ts`.
+- [ ] **A12** Document and configure GoTrue rate limits plus reverse-proxy
+      throttling for `/auth/v1/*`; admin sign-in currently has no brute-force
+      protection (`app/admin/login/login-form.tsx:6` posts straight to GoTrue).
+- [ ] **A13** Validate URL fields against a scheme allowlist (`cta_url`,
+      `whatsapp_url`, `directions_url`, `map_embed_url`, `href`, `canonical_url`,
+      social `url`) — no URL is validated anywhere today, and `javascript:` is not
+      blocked.
+- [ ] **A14** Add `middleware.ts` protecting `/admin/*` as defense in depth, so a
+      future route handler under `app/admin/` cannot skip the layout-level check.
+
+## Phase 9 — Dashboard Responsiveness & Completion
+
+- [ ] **A15** Add a mobile navigation drawer to the CMS. The sidebar is
+      `hidden … lg:block` (`app/admin/(dashboard)/layout.tsx:6`) with no hamburger
+      control anywhere, so below 1024px there is no way to move between CMS
+      sections at all. Highest-impact dashboard fix.
+- [ ] **A16** Audit and fix admin table/form/toolbar overflow at `sm`/`md`
+      (horizontal scroll wrappers, stacking, action buttons reachable on phone).
+- [ ] **A17** Repoint sidebar "Homepage" from `/admin/hero` to `/admin/homepage`
+      (the real section manager, currently unreachable from navigation) and add a
+      separate "Hero" entry.
+- [ ] **A18** Link `/admin/preview` from the sidebar (orphaned route).
+- [ ] **A19** Fix dashboard overview quick links pointing at the weak generic
+      routes (`app/admin/(dashboard)/page.tsx:3,5` → `/admin/menu-items`).
+- [ ] **A20** Remove or redirect the `menu-categories` / `menu-items` generic
+      resource keys (`lib/admin/resources.ts:10-11`), which bypass the dedicated
+      manager's delete protection and `parseIdr` price parsing.
+- [ ] **A21** Add `loading.tsx` to admin route segments (none exist today).
+- [ ] **A22** Add success feedback. Four or more actions redirect with `?saved=1`
+      but no page reads it, so saves complete with no confirmation.
+- [ ] **A23** Add submit-pending state to admin forms still using plain
+      `<form action={…}>` without `useFormStatus`/`useActionState`.
+- [ ] **A24** Surface `error.message` in `app/admin/(dashboard)/error.tsx`;
+      validation messages like "Event end must be after its start." are currently
+      replaced by one generic sentence.
+- [ ] **A25** Build a real dashboard overview: draft counts across all
+      status-bearing tables (only `hero_slides` is checked today), recent activity
+      from `updated_at`, publish status, and correct quick actions.
+- [ ] **A26** Add drag ordering to generic-route resources by wiring the existing
+      but entirely unused `reorderResource` (`lib/admin/actions.ts:9`) to
+      `SortableList`; ordering is currently raw `sort_order` number entry.
+- [ ] **A27** Add search/filter/pagination to list views (only Media Library has them).
+- [ ] **A28** Expose DB fields that have no UI: `contact_information.email`,
+      `seo_settings.og_media_id` (OG image is unmanageable today),
+      `media.focal_x`/`focal_y`.
+- [ ] **A29** Style `app/admin/(dashboard)/media/items/[id]/page.tsx` — the form
+      has no Tailwind classes at all, unlike every other edit screen.
+- [ ] **A30** Preserve the requested path across login redirects
+      (`lib/auth/require-admin.ts:3` drops it, always landing on `/admin`).
+- [ ] **A31** Add unsaved-changes warning to long-form admin editors.
+
+## Phase 10 — Public Site UX, Content Sync & SEO
+
+- [ ] **A32** Wire `seo_settings` into `lib/seo.ts` / `generateMetadata`. The CMS
+      SEO editor is currently disconnected from the live site entirely.
+- [ ] **A33** Resolve `navigation_items` and `social_links` centrally in
+      `PublicShell`. Today only the homepage passes them, so every other page
+      falls back to hardcoded links (`components/public/header.tsx:5`) and drops
+      CMS social links — a direct violation of the CMS-managed content rule.
+- [ ] **A34** Add `/about` and `/events` to navigation and footer; both are
+      working content pages currently unreachable from any link.
+- [ ] **A35** Replace the homepage's hand-rolled `<footer>`
+      (`app/(public)/page.tsx:34`) with `PublicFooter`, restoring internal links
+      on the highest-traffic page.
+- [ ] **A36** Fix homepage landmarks: move `Header`/footer out of `<main>` so
+      `banner` and `contentinfo` roles survive for screen readers.
+- [ ] **A37** Add `generateMetadata` to `events/[slug]`, `experience/[slug]`,
+      `spaces/[slug]`; all detail pages currently share one generic title.
+- [ ] **A38** Render a hero image on Experience and Space detail pages — the list
+      cards show imagery, the detail pages show none.
+- [ ] **A39** Add `app/error.tsx` for the public tree and wrap the unguarded
+      query helpers in `lib/public-data/queries.ts` like `getHomepageData` already does.
+- [ ] **A40** Fix kicker contrast: `text-[#b26043]` on `#f4eedf` is ≈3.9:1,
+      below the 4.5:1 AA threshold, and appears on nearly every page.
+- [ ] **A41** Re-check `text-[#6c715d]` / `text-[#5b6254]` body and empty-state
+      greys against AA.
+- [ ] **A42** Migrate background-image rendering to `next/image` with `sizes`
+      (hero, moments, cards, gallery, menu). Only Events uses it today; mobile
+      currently downloads desktop-resolution originals throughout.
+- [ ] **A43** Make hero heights mobile-first (`min-h-[760px]` and
+      `py-36 sm:py-44` never shrink below the `sm` breakpoint).
+- [ ] **A44** Enlarge the mobile menu button to a ≥44px touch target
+      (`components/public/header.tsx:5`).
+- [ ] **A45** Add `loading.tsx` to public routes (all are `force-dynamic`).
+- [ ] **A46** Emit `LocalBusiness`/`Restaurant` JSON-LD from CMS contact/hours
+      data; only a generic `WebSite` object is emitted today.
+- [ ] **A47** Fail the production build (or warn loudly) when
+      `NEXT_PUBLIC_APP_URL` is unset — it silently yields no canonical URLs, no OG
+      tags, and an empty `sitemap.xml`.
+- [ ] **A48** Add a skip-to-content link and `aria-current="page"` on active nav links.
+- [ ] **A49** Reuse `components/ui/button.tsx` for public CTAs instead of
+      hand-copied Tailwind (currently imported by no public page).
+
+## Phase 11 — Database Integrity & Type Safety
+
+- [ ] **A50** Add the missing `media` foreign keys. `image_media_id` on
+      `hero_slides`, `moments`, `about_sections`, `experiences`, `spaces`,
+      `menu_items`, `gallery_items` and `seo_settings.og_media_id` are bare `uuid`
+      columns with no FK; referential integrity is app-layer only.
+- [ ] **A51** Repair `20260909000600_add_event_promotion_media.sql`, which is a
+      silent no-op: `add column if not exists` skips the whole clause (including
+      `references`) because the column already existed, so `events`/`promotions`
+      never got their FK.
+- [ ] **A52** Replace the placeholder `types/database.ts`
+      (`Record<string, unknown>` for every table) with generated types, and add a
+      CI check. This is the root cause that let A1 ship undetected.
+- [ ] **A53** Add `alter default privileges` for `anon`/`authenticated` so new
+      tables are not silently unreadable (only `service_role` has defaults today).
+- [ ] **A54** Add `force row level security` on `chatten_cafe` tables.
+- [ ] **A55** Add `own_profile_insert` policy to `profiles` (INSERT currently
+      works only because the `handle_new_user` trigger is `SECURITY DEFINER`).
+- [ ] **A56** Add index on `menu_items.category_id` (FK filtered on every
+      reorder, insert, and delete guard).
+- [ ] **A57** Push `is_active`/`status` filtering into public queries instead of
+      filtering in JS (`about_sections` is never filtered at all).
+- [ ] **A58** Batch reorder writes; every reorder action issues one UPDATE per
+      row, several doing a two-pass staging round trip.
+- [ ] **A59** Replace per-row `auth.admin.getUserById` in
+      `app/admin/(dashboard)/users/page.tsx:5` with a single `listUsers()`.
+- [ ] **A60** Look up public detail pages by `.eq("slug", …)` instead of fetching
+      the whole collection and `Array.find`.
+- [ ] **A61** Adopt shared Zod schemas across server actions. Zod is currently
+      used only for env parsing; `status` is unchecked in several actions, UUIDs
+      are checked inconsistently, and `Number(input)` has no `NaN` guard.
+- [ ] **A62** Drop the dead `contact_information.map_url` column.
+- [ ] **A63** Add `opening_hours` consistency CHECK (`is_closed` vs
+      `opens_at`/`closes_at`, and `closes_at > opens_at`).
+- [ ] **A64** Add partial indexes for the public `is_active AND status` filters.
+- [ ] **A65** Document the `prevent_last_super_admin_removal` cascade behaviour:
+      deleting the last super_admin's auth user fails the whole cascade with a raw
+      trigger exception.
+
+## Migration process note
+
+`20260910000100_event_promotion_ordering.sql` created a unique index over a
+column defaulting to `0`, which would raise `23505` on the second insert; it was
+reverted by `…000200`. Net effect is zero, but intermediate migration steps must
+never leave a unique index over a non-unique default — squash such pairs before
+shipping.
