@@ -258,10 +258,10 @@ stable references for commits and verification notes.
       but entirely unused `reorderResource` (`lib/admin/actions.ts:9`) to
       `SortableList`; ordering is currently raw `sort_order` number entry.
 - [x] **A27** Add search/filter/pagination to list views (only Media Library has them).
-- [ ] **A28** Expose DB fields that have no UI: `contact_information.email`,
+- [x] **A28** Expose DB fields that have no UI: `contact_information.email`,
       `seo_settings.og_media_id` (OG image is unmanageable today),
       `media.focal_x`/`focal_y`.
-- [ ] **A29** Style `app/admin/(dashboard)/media/items/[id]/page.tsx` — the form
+- [x] **A29** Style `app/admin/(dashboard)/media/items/[id]/page.tsx` — the form
       has no Tailwind classes at all, unlike every other edit screen.
 - [x] **A30** Preserve the requested path across login redirects
       (`lib/auth/require-admin.ts:3` drops it, always landing on `/admin`).
