@@ -3,6 +3,7 @@ import { minRoleFor, resourceFor, retiredResourceRedirects, type Field } from "@
 import { buildSearchFilter, listHref, pageRange, paginationState, parseListQuery, resourceHasStatus } from "@/lib/admin/list-query";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { dynamicTable } from "@/lib/supabase/dynamic";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DeleteButton } from "@/components/admin/delete-button";
@@ -37,7 +38,7 @@ export default async function AdminResourcePage({ params, searchParams }: { para
   const { from, to } = pageRange(query.page);
 
   const supabase = await createServerSupabaseClient();
-  let rowQuery = supabase.from(resource.table).select("*", { count: "exact" }).order(orderColumn, { ascending: true }).range(from, to);
+  let rowQuery = dynamicTable(supabase, resource.table).select("*", { count: "exact" }).order(orderColumn, { ascending: true }).range(from, to);
   if (searchFilter) rowQuery = rowQuery.or(searchFilter);
   if (hasStatus && query.status) rowQuery = rowQuery.eq("status", query.status);
 

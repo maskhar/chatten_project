@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { PublicAbout, PublicCard, PublicContact, PublicEvent, PublicGalleryItem, PublicHour, PublicMedia, PublicMenuItem, PublicSocial } from "./types";
 import { mediaMap } from "./media";
+import type { TableName } from "@/types/tables";
 
 // A39: getHomepageData has always swallowed its own failure so a database
 // blip degrades to an empty page instead of a 500. These helpers did not, so
@@ -14,7 +15,7 @@ async function guard<T>(run: () => Promise<T>, fallback: T): Promise<T> {
   }
 }
 
-export async function publicRows<T>(table: string, order = "sort_order") {
+export async function publicRows<T>(table: TableName, order = "sort_order") {
   return guard(async () => {
     const supabase = await createServerSupabaseClient();
     const result = await supabase.from(table).select("*").order(order, { ascending: true });
@@ -26,7 +27,14 @@ export async function publicRows<T>(table: string, order = "sort_order") {
 // row and dropped the hidden ones after the fact, which shipped unpublished
 // content to the server for no reason — and about_sections was never filtered
 // at all, so drafts were public.
-async function publicVisibleRows<T>(table: string, order = "sort_order") {
+//
+// The table parameter is narrowed to the tables that actually carry both
+// columns. `menu_categories` has no `status` and `opening_hours` has neither,
+// so passing either here would have produced a PostgREST error at runtime
+// rather than a compile error.
+type VisibleTable = "hero_slides" | "moments" | "about_sections" | "experiences" | "spaces" | "menu_items" | "gallery_items" | "testimonials" | "promotions" | "events";
+
+async function publicVisibleRows<T>(table: VisibleTable, order = "sort_order") {
   return guard(async () => {
     const supabase = await createServerSupabaseClient();
     const result = await supabase.from(table).select("*").eq("is_active", true).eq("status", "published").order(order, { ascending: true });

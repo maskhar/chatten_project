@@ -8,7 +8,10 @@
 // This module deliberately has no server-only import and no Supabase
 // dependency: the descriptors and the merge are pure, so they can be covered by
 // the node:test suite without a database.
-export type EditorialTable = { table: string; label: string; href: string; titleColumn: string };
+import type { StatusTableName } from "@/types/tables";
+// The import is type-only, so it is erased before this module runs and the
+// no-runtime-dependency property above is preserved.
+export type EditorialTable = { table: StatusTableName; label: string; href: string; titleColumn: string };
 
 export const editorialTables: readonly EditorialTable[] = [
   { table: "hero_slides", label: "Hero slides", href: "/admin/hero", titleColumn: "title" },

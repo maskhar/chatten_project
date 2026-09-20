@@ -319,7 +319,7 @@ stable references for commits and verification notes.
       silent no-op: `add column if not exists` skips the whole clause (including
       `references`) because the column already existed, so `events`/`promotions`
       never got their FK.
-- [ ] **A52** Replace the placeholder `types/database.ts`
+- [x] **A52** Replace the placeholder `types/database.ts`
       (`Record<string, unknown>` for every table) with generated types, and add a
       CI check. This is the root cause that let A1 ship undetected.
 - [x] **A53** Add `alter default privileges` for `anon`/`authenticated` so new

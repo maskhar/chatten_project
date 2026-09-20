@@ -25,6 +25,44 @@ build error instead.
 - `ALLOW_MISSING_APP_URL=1 npm run build` builds without it, for a CI step
   that only needs to know the code compiles.
 
+## Database types are generated, not hand-written (audit item A52)
+
+`types/database.ts` is generated from the live `chatten_cafe` schema and must
+not be edited by hand. It was previously a placeholder that typed every table
+as `Record<string, unknown>`, which meant supabase-js accepted any table name
+and any column — a query naming a column the schema did not have compiled
+cleanly and failed only at runtime. That is the root cause that let audit item
+A1 ship.
+
+```bash
+npm run types:generate
+```
+
+```bash
+npm run types:check
+```
+
+`types:check` regenerates and compares, exiting non-zero when the committed
+file is stale. Run it in CI after `typecheck`; a schema change that is not
+reflected in the committed types fails the build instead of surfacing as a
+runtime PostgREST error.
+
+Both commands need SSH access to the Supabase host. They read from the
+`supabase-meta` container already running there (`GET
+/generators/typescript`) rather than through `supabase gen types`, which
+would need Postgres published on the host, an SSH tunnel, a local Docker
+image pull, and the database password on a command line. Override the target
+with `SUPABASE_SSH_HOST` and `SUPABASE_DOCKER_DIR` if either moves.
+
+Derived helpers live in `types/tables.ts`, not in the generated file, so the
+generated output stays byte-identical to what the generator emits. Use
+`TableName` for any helper that takes a table name: typing one as `string`
+makes supabase-js fall through to its `(relation: never)` overload, which
+silently disables column checking for the whole chain. `lib/supabase/dynamic.ts`
+is the single sanctioned exception, for the generic CMS actions that resolve
+their table at runtime — it relaxes the column types but still constrains the
+table name.
+
 ## Auth brute-force protection (audit item A12)
 
 `app/admin/login/login-form.tsx` posts credentials straight to GoTrue at

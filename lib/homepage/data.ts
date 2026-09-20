@@ -1,8 +1,9 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { HomepageData, Media } from "./types";
+import type { TableName } from "@/types/tables";
 
 const empty: HomepageData = { settings: null, hero: null, moments: [], stories: [], experiences: [], spaces: [], categories: [], menu: [], gallery: [], testimonials: [], feature: null, hours: [], contact: null, socials: [], navigation: [], media: {} };
-const rows = async (supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, table: string, order = "sort_order") => { const result = await supabase.from(table).select("*").order(order, { ascending: true }); return result.data ?? []; };
+const rows = async (supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, table: TableName, order = "sort_order") => { const result = await supabase.from(table).select("*").order(order, { ascending: true }); return result.data ?? []; };
 
 export async function getHomepageData(): Promise<HomepageData> {
   try {

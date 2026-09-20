@@ -1,12 +1,13 @@
 import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { editorialTables, mergeActivity, toActivityEntries, type ActivityEntry, type DraftGroup } from "@/lib/admin/overview-tables";
+import type { StatusTableName } from "@/types/tables";
 
 export type { ActivityEntry, DraftGroup };
 
 // `head: true` with `count: "exact"` asks PostgREST for the count only, so
 // these stay cheap as content grows.
-async function countRows(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, table: string, draftsOnly: boolean) {
+async function countRows(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, table: StatusTableName, draftsOnly: boolean) {
   let query = supabase.from(table).select("id", { count: "exact", head: true });
   if (draftsOnly) query = query.eq("status", "draft");
   const { count } = await query;
