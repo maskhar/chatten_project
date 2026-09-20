@@ -265,7 +265,7 @@ stable references for commits and verification notes.
       has no Tailwind classes at all, unlike every other edit screen.
 - [x] **A30** Preserve the requested path across login redirects
       (`lib/auth/require-admin.ts:3` drops it, always landing on `/admin`).
-- [ ] **A31** Add unsaved-changes warning to long-form admin editors.
+- [x] **A31** Add unsaved-changes warning to long-form admin editors.
 
 ## Phase 10 — Public Site UX, Content Sync & SEO
 

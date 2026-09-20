@@ -9,6 +9,7 @@ import { DeleteButton } from "@/components/admin/delete-button";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { ResourceReorder } from "@/components/admin/resource-reorder";
+import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
 
 type MediaOption = { id: string; title: string | null; alt_text: string | null; category: string | null; rights_status: string; width: number | null; height: number | null; bucket: string; storage_path: string };
 
@@ -101,6 +102,7 @@ export default async function AdminResourcePage({ params, searchParams }: { para
             <details className="border border-[#c9bfa8] bg-[#ede3d0] p-5" key={String(row.id)}>
               <summary className="cursor-pointer font-serif text-xl sm:text-2xl">{rowLabel(row)}</summary>
               <form action={saveResource} className="mt-6 grid gap-4">
+                <UnsavedChangesGuard />
                 <input type="hidden" name="resource" value={resource.key} />
                 <input type="hidden" name="id" value={String(row.id)} />
                 {resource.fields.map((field) => <FieldInput field={field} value={row[field.key]} media={media} key={field.key} />)}
@@ -131,6 +133,7 @@ export default async function AdminResourcePage({ params, searchParams }: { para
         </div>
 
         <form action={saveResource} className="h-fit grid gap-4 border border-[#c9bfa8] bg-[#e8dfca] p-6">
+          <UnsavedChangesGuard />
           <h2 className="font-serif text-2xl sm:text-3xl">Add {resource.label}</h2>
           <input type="hidden" name="resource" value={resource.key} />
           {resource.fields.map((field) => <FieldInput field={field} key={field.key} value={undefined} media={media} />)}

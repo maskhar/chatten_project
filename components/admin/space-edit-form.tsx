@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveSpace } from "@/lib/admin/space-actions";
+import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
 import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
 
@@ -22,6 +23,7 @@ export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }
       <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{space.name}</h1>
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <form action={saveSpace} className="grid gap-6">
+          <UnsavedChangesGuard />
           <input type="hidden" name="id" value={space.id} />
           <label className="text-sm font-semibold">Space Name<input name="name" required defaultValue={space.name} className={field} /></label>
           <label className="text-sm font-semibold">Slug<input name="slug" required defaultValue={space.slug} className={field} /></label>

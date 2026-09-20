@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveExperience } from "@/lib/admin/experience-actions";
+import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
 import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
 
@@ -64,6 +65,7 @@ export function ExperienceEditForm({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <form action={saveExperience} className="grid gap-6">
+          <UnsavedChangesGuard />
           <input type="hidden" name="id" value={experience.id} />
 
           <div>

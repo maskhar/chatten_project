@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { saveMediaDetails } from "@/lib/admin/media-actions";
+import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
 import { focalObjectPosition } from "@/lib/media/focal-point";
 import { mediaHrefById } from "@/lib/media/url";
 import { buildMediaUsagePresentation } from "@/lib/media/usage-presentation";
@@ -83,6 +84,7 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
         </aside>
 
         <form action={saveMediaDetails} className="grid max-w-2xl gap-5 rounded border border-[#c9bfa8] bg-[#e8dfca] p-6">
+          <UnsavedChangesGuard />
           <input type="hidden" name="id" value={item.id} />
           <label className={labelText}>Title<input name="title" defaultValue={item.title ?? ""} className={field} /></label>
           <label className={labelText}>Alt text<input name="alt_text" defaultValue={item.alt_text ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-[#657064]">Describes the image for screen readers and for anyone whose images fail to load.</span></label>
