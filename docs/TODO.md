@@ -257,7 +257,7 @@ stable references for commits and verification notes.
 - [ ] **A26** Add drag ordering to generic-route resources by wiring the existing
       but entirely unused `reorderResource` (`lib/admin/actions.ts:9`) to
       `SortableList`; ordering is currently raw `sort_order` number entry.
-- [ ] **A27** Add search/filter/pagination to list views (only Media Library has them).
+- [x] **A27** Add search/filter/pagination to list views (only Media Library has them).
 - [ ] **A28** Expose DB fields that have no UI: `contact_information.email`,
       `seo_settings.og_media_id` (OG image is unmanageable today),
       `media.focal_x`/`focal_y`.
