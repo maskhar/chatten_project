@@ -200,9 +200,17 @@ stable references for commits and verification notes.
 - [x] **A11** Add `Content-Security-Policy` (with an explicit `frame-src`
       allowlist — `app/visit/page.tsx:9` renders a CMS-controlled map `<iframe>`),
       `Strict-Transport-Security`, and `poweredByHeader: false` in `next.config.ts`.
-- [ ] **A12** Document and configure GoTrue rate limits plus reverse-proxy
+- [~] **A12** Document and configure GoTrue rate limits plus reverse-proxy
       throttling for `/auth/v1/*`; admin sign-in currently has no brute-force
       protection (`app/admin/login/login-form.tsx:6` posts straight to GoTrue).
+      Documented, **not applied** — see "Auth brute-force protection" in
+      `docs/DEPLOYMENT.md` for the exact variables and the Kong alternative.
+      Confirmed 2026-09-21 that `supabase-auth` runs with no
+      `GOTRUE_RATE_LIMIT_*` set. Blocked on an owner-scheduled maintenance
+      window: the Supabase host is shared by several unrelated applications
+      (25 buckets across projects) that all authenticate through the same
+      `supabase-auth` container and `supabase-kong` gateway, so applying this
+      restarts auth for every tenant, not just Chatten.
 - [x] **A13** Validate URL fields against a scheme allowlist (`cta_url`,
       `whatsapp_url`, `directions_url`, `map_embed_url`, `href`, `canonical_url`,
       social `url`) — no URL is validated anywhere today, and `javascript:` is not
