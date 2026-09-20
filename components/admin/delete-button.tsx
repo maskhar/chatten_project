@@ -1,3 +1,6 @@
 "use client";
 import type { ButtonHTMLAttributes } from "react";
-export function DeleteButton({ children = "Delete safely", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) { return <button {...props} type="submit" className={`text-sm text-red-800 underline ${props.className ?? ""}`} onClick={(event) => { if (!window.confirm("Delete this record? This cannot be undone.")) event.preventDefault(); }}>{children}</button>; }
+import { useFormStatus } from "react-dom";
+// A23: deletes had no pending state either, and a double-submitted delete is
+// worse than a double-submitted save.
+export function DeleteButton({ children = "Delete safely", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) { const { pending } = useFormStatus(); return <button {...props} type="submit" disabled={pending || props.disabled} aria-busy={pending} className={`text-sm text-red-800 underline disabled:cursor-not-allowed disabled:opacity-60 ${props.className ?? ""}`} onClick={(event) => { if (!window.confirm("Delete this record? This cannot be undone.")) event.preventDefault(); }}>{pending ? "Deleting…" : children}</button>; }

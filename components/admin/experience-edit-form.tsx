@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveExperience } from "@/lib/admin/experience-actions";
 import { mediaHrefById } from "@/lib/media/url";
+import { SubmitButton } from "@/components/admin/submit-button";
 
 type Experience = {
   id: string;
@@ -137,12 +138,9 @@ export function ExperienceEditForm({
           </div>
 
           <div className="flex gap-3">
-            <button
-              className="rounded bg-[#1f3426] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2a4735]"
-              type="submit"
-            >
+            <SubmitButton className="rounded bg-[#1f3426] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2a4735]">
               Save Changes
-            </button>
+            </SubmitButton>
             <Link
               href="/admin/experiences"
               className="rounded border border-[#1f3426] px-6 py-3 text-sm font-semibold text-[#1f3426] hover:bg-[#f7f5f0]"

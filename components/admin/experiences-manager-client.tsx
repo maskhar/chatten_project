@@ -6,6 +6,7 @@ import { MediaPicker } from "@/components/admin/media-picker";
 import { SortableList } from "@/components/admin/sortable-list";
 import { saveExperience, reorderExperiences, setExperienceActive, deleteExperience } from "@/lib/admin/experience-actions";
 import { mediaHrefById } from "@/lib/media/url";
+import { SubmitButton } from "@/components/admin/submit-button";
 
 type Experience = {
   id: string;
@@ -221,12 +222,9 @@ export function ExperiencesManagerClient({
           </label>
         </div>
 
-        <button
-          className="mt-6 w-full rounded bg-[#b65d40] px-4 py-3 text-sm font-semibold text-white hover:bg-[#9b5a42]"
-          type="submit"
-        >
+        <SubmitButton className="mt-6 w-full rounded bg-[#b65d40] px-4 py-3 text-sm font-semibold text-white hover:bg-[#9b5a42]" pendingLabel="Creating…">
           Create Experience
-        </button>
+        </SubmitButton>
       </form>
     </section>
   );

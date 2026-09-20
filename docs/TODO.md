@@ -246,7 +246,7 @@ stable references for commits and verification notes.
 - [x] **A21** Add `loading.tsx` to admin route segments (none exist today).
 - [x] **A22** Add success feedback. Four or more actions redirect with `?saved=1`
       but no page reads it, so saves complete with no confirmation.
-- [ ] **A23** Add submit-pending state to admin forms still using plain
+- [x] **A23** Add submit-pending state to admin forms still using plain
       `<form action={…}>` without `useFormStatus`/`useActionState`.
 - [x] **A24** Surface `error.message` in `app/admin/(dashboard)/error.tsx`;
       validation messages like "Event end must be after its start." are currently
@@ -263,7 +263,7 @@ stable references for commits and verification notes.
       `media.focal_x`/`focal_y`.
 - [ ] **A29** Style `app/admin/(dashboard)/media/items/[id]/page.tsx` — the form
       has no Tailwind classes at all, unlike every other edit screen.
-- [ ] **A30** Preserve the requested path across login redirects
+- [x] **A30** Preserve the requested path across login redirects
       (`lib/auth/require-admin.ts:3` drops it, always landing on `/admin`).
 - [ ] **A31** Add unsaved-changes warning to long-form admin editors.
 

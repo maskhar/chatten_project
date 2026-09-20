@@ -6,6 +6,7 @@ import { MediaPicker } from "@/components/admin/media-picker";
 import { deleteSpace, reorderSpaces, saveSpace, setSpaceActive } from "@/lib/admin/space-actions";
 import { SortableList } from "@/components/admin/sortable-list";
 import { mediaHrefById } from "@/lib/media/url";
+import { SubmitButton } from "@/components/admin/submit-button";
 
 type Space = {
   id: string;
@@ -95,7 +96,7 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
           <MediaPicker name="image_media_id" media={media} />
           <label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked />Active</label>
           <label className="text-sm font-semibold">Status<select name="status" defaultValue="draft" className={field}><option value="draft">Draft</option><option value="published">Published</option></select></label>
-          <button className="rounded bg-[#1f3426] px-5 py-3 text-sm font-semibold text-white" type="submit">Create Space</button>
+          <SubmitButton className="rounded bg-[#1f3426] px-5 py-3 text-sm font-semibold text-white" pendingLabel="Creating…">Create Space</SubmitButton>
         </form>
       </div>
     </section>
