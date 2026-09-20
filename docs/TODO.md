@@ -311,23 +311,23 @@ stable references for commits and verification notes.
 
 ## Phase 11 — Database Integrity & Type Safety
 
-- [ ] **A50** Add the missing `media` foreign keys. `image_media_id` on
+- [x] **A50** Add the missing `media` foreign keys. `image_media_id` on
       `hero_slides`, `moments`, `about_sections`, `experiences`, `spaces`,
       `menu_items`, `gallery_items` and `seo_settings.og_media_id` are bare `uuid`
       columns with no FK; referential integrity is app-layer only.
-- [ ] **A51** Repair `20260909000600_add_event_promotion_media.sql`, which is a
+- [x] **A51** Repair `20260909000600_add_event_promotion_media.sql`, which is a
       silent no-op: `add column if not exists` skips the whole clause (including
       `references`) because the column already existed, so `events`/`promotions`
       never got their FK.
 - [ ] **A52** Replace the placeholder `types/database.ts`
       (`Record<string, unknown>` for every table) with generated types, and add a
       CI check. This is the root cause that let A1 ship undetected.
-- [ ] **A53** Add `alter default privileges` for `anon`/`authenticated` so new
+- [x] **A53** Add `alter default privileges` for `anon`/`authenticated` so new
       tables are not silently unreadable (only `service_role` has defaults today).
-- [ ] **A54** Add `force row level security` on `chatten_cafe` tables.
-- [ ] **A55** Add `own_profile_insert` policy to `profiles` (INSERT currently
+- [x] **A54** Add `force row level security` on `chatten_cafe` tables.
+- [x] **A55** Add `own_profile_insert` policy to `profiles` (INSERT currently
       works only because the `handle_new_user` trigger is `SECURITY DEFINER`).
-- [ ] **A56** Add index on `menu_items.category_id` (FK filtered on every
+- [x] **A56** Add index on `menu_items.category_id` (FK filtered on every
       reorder, insert, and delete guard).
 - [x] **A57** Push `is_active`/`status` filtering into public queries instead of
       filtering in JS (`about_sections` is never filtered at all).
@@ -340,11 +340,11 @@ stable references for commits and verification notes.
 - [ ] **A61** Adopt shared Zod schemas across server actions. Zod is currently
       used only for env parsing; `status` is unchecked in several actions, UUIDs
       are checked inconsistently, and `Number(input)` has no `NaN` guard.
-- [ ] **A62** Drop the dead `contact_information.map_url` column.
-- [ ] **A63** Add `opening_hours` consistency CHECK (`is_closed` vs
+- [x] **A62** Drop the dead `contact_information.map_url` column.
+- [x] **A63** Add `opening_hours` consistency CHECK (`is_closed` vs
       `opens_at`/`closes_at`, and `closes_at > opens_at`).
-- [ ] **A64** Add partial indexes for the public `is_active AND status` filters.
-- [ ] **A65** Document the `prevent_last_super_admin_removal` cascade behaviour:
+- [x] **A64** Add partial indexes for the public `is_active AND status` filters.
+- [x] **A65** Document the `prevent_last_super_admin_removal` cascade behaviour:
       deleting the last super_admin's auth user fails the whole cascade with a raw
       trigger exception.
 - [ ] **A66** Approve rights status on existing media (data, not code). All 3

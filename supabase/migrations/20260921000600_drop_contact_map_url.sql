@@ -1,0 +1,17 @@
+-- Audit remediation A62.
+--
+-- contact_information.map_url was superseded by directions_url and
+-- map_embed_url in 20260909000200_split_contact_urls.sql, which also backfilled
+-- `directions_url = coalesce(directions_url, map_url)`. The column was never
+-- removed and no CMS field was ever pointed at it — lib/admin/resources.ts
+-- exposes address, phone, email, whatsapp_url, directions_url, map_embed_url
+-- and is_active, so map_url cannot be written through the application at all.
+--
+-- Two readers were still bound to it, which meant both were permanently dead
+-- rather than merely unused: the homepage "Get Directions" CTA could never
+-- render, and restaurantJsonLd's `hasMap` could never be emitted. Both now read
+-- directions_url. The column is dropped so nothing can bind to it again.
+--
+-- Verified on the live instance first: contact_information holds zero rows, so
+-- no operator-entered value is lost here.
+alter table chatten_cafe.contact_information drop column if exists map_url;

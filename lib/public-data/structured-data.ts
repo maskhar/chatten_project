@@ -72,7 +72,10 @@ export function restaurantJsonLd({
     ...(contact?.address ? { address: { "@type": "PostalAddress", streetAddress: contact.address } } : {}),
     ...(contact?.phone ? { telephone: contact.phone } : {}),
     ...(contact?.email ? { email: contact.email } : {}),
-    ...(absolute(contact?.map_url, undefined) ? { hasMap: absolute(contact?.map_url, undefined) } : {}),
+    // A62: reads directions_url, not the dead map_url. map_url was superseded
+    // by 20260909000200_split_contact_urls.sql and has no CMS field, so it can
+    // never be populated and hasMap would never have been emitted.
+    ...(absolute(contact?.directions_url, undefined) ? { hasMap: absolute(contact?.directions_url, undefined) } : {}),
     ...(specification.length ? { openingHoursSpecification: specification } : {}),
     ...(sameAs.length ? { sameAs } : {}),
   };

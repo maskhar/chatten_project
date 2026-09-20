@@ -12,6 +12,25 @@ Next.js Server Components default. Browser client uses anon key; server client u
 
 RLS permits anonymous reads only for active/published content. CMS mutations require `editor`, `admin`, or `super_admin`; user/role management requires `admin` or `super_admin`. Auth trigger creates profiles. Initial admin role bootstrap must occur through controlled database administration after Auth user creation.
 
+### Deleting the last super_admin (audit item A65)
+
+`auth.users` → `chatten_cafe.profiles` → `chatten_cafe.user_roles` are chained
+`on delete cascade`, and `prevent_last_super_admin_removal` is a row-level
+trigger on `user_roles`. Deleting the last super_admin's **Auth user** therefore
+does not fail at the Auth layer; it cascades into `user_roles`, the trigger
+fires on the resulting DELETE, and `raise exception 'Cannot remove the last
+super_admin'` aborts the whole cascade. The Auth user, the profile and the role
+all survive, and the caller receives the raw Postgres exception — from the
+Supabase Admin API that surfaces as an opaque database error, not as a
+validation message naming the cause.
+
+This is the intended outcome: the guard is deliberately placed where it cannot
+be routed around, and a deferrable constraint trigger also catches a
+delete-then-reinsert inside one transaction. Operationally it means **promote a
+second super_admin before deleting the current one**. Nothing in the CMS deletes
+Auth users today, so this is reachable only through direct database or Admin API
+administration.
+
 `chatten-media` is a private bucket. Reads go through the application route `/api/media/[id]`, which resolves the media row under the caller RLS session and streams the object with the server-only service-role client; the Supabase `object/public` route is closed (audit A6). PostgREST exposes `chatten_cafe` through `PGRST_DB_SCHEMAS`. Docker runs standalone Next.js separately from existing Supabase. Migrations remain source of truth. Risks: generated database types and full CMS controls remain Phase 4 work.
 
 ## Homepage data flow

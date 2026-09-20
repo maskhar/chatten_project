@@ -8,7 +8,7 @@ const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind
 const { restaurantJsonLd, openingHoursSpecification } = await import(`data:text/javascript,${encodeURIComponent(js)}`);
 
 const identity = { name: "Chatten Cafe", description: "A place to eat, talk, and experience Batu." };
-const contact = { address: "Jl. Raya Batu 1", phone: "+62 812 0000 0000", email: "halo@chatten.example", whatsapp_url: "https://wa.me/6281200000000", map_url: "https://maps.google.com/?q=chatten", directions_url: null, map_embed_url: null };
+const contact = { address: "Jl. Raya Batu 1", phone: "+62 812 0000 0000", email: "halo@chatten.example", whatsapp_url: "https://wa.me/6281200000000", directions_url: "https://maps.google.com/?q=chatten", map_embed_url: null };
 const hours = [
   { day_of_week: 0, opens_at: "09:00:00", closes_at: "21:00:00", is_closed: false },
   { day_of_week: 1, opens_at: null, closes_at: null, is_closed: true },
@@ -60,6 +60,15 @@ test("blank CMS columns are omitted, never emitted empty", () => {
     assert.ok(!(key in node), `${key} should be absent, not empty`);
   }
   assert.equal(node.name, "Chatten Cafe");
+});
+
+test("hasMap reads the CMS-editable directions_url (A62)", () => {
+  // map_url was superseded by 20260909000200_split_contact_urls.sql and has no
+  // field in lib/admin/resources.ts, so nothing could ever populate it and
+  // hasMap was dead. Dropped from the schema; this pins the replacement.
+  assert.ok(!/contact\??\.?\??\.map_url/.test(source), "structured-data must not read the dropped map_url column");
+  const node = restaurantJsonLd({ identity, contact: { ...contact, directions_url: "https://maps.app.goo.gl/chatten" }, hours: [], socials: [], appUrl: undefined });
+  assert.equal(node.hasMap, "https://maps.app.goo.gl/chatten");
 });
 
 test("a malformed operator-entered social URL is dropped", () => {
