@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { CtaButton, CtaLink } from "@/components/ui/cta";
 import { useEffect } from "react";
 
 // A39: the public tree had no error boundary, so an unhandled throw anywhere
@@ -22,9 +22,9 @@ export default function PublicError({ error, reset }: { error: Error & { digest?
         <p className="mt-5 text-[#4d5649]">Try again in a moment, or take another path through Chatten.</p>
         {error.digest ? <p className="mt-2 text-xs text-[#4d5649]">Reference: {error.digest}</p> : null}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <button type="button" onClick={reset} className="bg-[#1f3426] px-5 py-3 text-sm font-semibold text-white">Try again</button>
-          <Link href="/" className="border border-[#1f3426] px-5 py-3 text-sm font-semibold">Back Home</Link>
-          <Link href="/visit" className="border border-[#1f3426] px-5 py-3 text-sm font-semibold">Plan Your Visit</Link>
+          <CtaButton type="button" onClick={reset}>Try again</CtaButton>
+          <CtaLink href="/" variant="outline">Back Home</CtaLink>
+          <CtaLink href="/visit" variant="outline">Plan Your Visit</CtaLink>
         </div>
       </div>
     </main>

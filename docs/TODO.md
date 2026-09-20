@@ -292,7 +292,7 @@ stable references for commits and verification notes.
       below the 4.5:1 AA threshold, and appears on nearly every page.
 - [x] **A41** Re-check `text-[#6c715d]` / `text-[#5b6254]` body and empty-state
       greys against AA.
-- [ ] **A42** Migrate background-image rendering to `next/image` with `sizes`
+- [x] **A42** Migrate background-image rendering to `next/image` with `sizes`
       (hero, moments, cards, gallery, menu). Only Events uses it today; mobile
       currently downloads desktop-resolution originals throughout.
 - [x] **A43** Make hero heights mobile-first (`min-h-[760px]` and
@@ -300,13 +300,13 @@ stable references for commits and verification notes.
 - [x] **A44** Enlarge the mobile menu button to a ≥44px touch target
       (`components/public/header.tsx:5`).
 - [x] **A45** Add `loading.tsx` to public routes (all are `force-dynamic`).
-- [ ] **A46** Emit `LocalBusiness`/`Restaurant` JSON-LD from CMS contact/hours
+- [x] **A46** Emit `LocalBusiness`/`Restaurant` JSON-LD from CMS contact/hours
       data; only a generic `WebSite` object is emitted today.
-- [ ] **A47** Fail the production build (or warn loudly) when
+- [x] **A47** Fail the production build (or warn loudly) when
       `NEXT_PUBLIC_APP_URL` is unset — it silently yields no canonical URLs, no OG
       tags, and an empty `sitemap.xml`.
 - [x] **A48** Add a skip-to-content link and `aria-current="page"` on active nav links.
-- [ ] **A49** Reuse `components/ui/button.tsx` for public CTAs instead of
+- [x] **A49** Reuse `components/ui/button.tsx` for public CTAs instead of
       hand-copied Tailwind (currently imported by no public page).
 
 ## Phase 11 — Database Integrity & Type Safety

@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
+import { assertAppUrl } from "./lib/env/app-url";
 
 const isDev = process.env.NODE_ENV === "development";
+
+// A47: throws on a production build with no (or a localhost) NEXT_PUBLIC_APP_URL,
+// warns otherwise. Runs here because next.config.ts is evaluated once, in plain
+// Node, before anything is compiled — so a misconfigured deployment fails at
+// build time rather than shipping an uncrawlable site.
+assertAppUrl();
 
 // The browser Supabase client (lib/supabase/browser.ts) talks to this origin
 // directly, so connect-src has to allow it or admin sign-in breaks. Derived

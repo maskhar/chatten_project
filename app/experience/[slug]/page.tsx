@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageHero } from "@/components/public/page-hero";
 import { PublicShell } from "@/components/public/public-shell";
+import { CtaLink } from "@/components/ui/cta";
 import { publicCardBySlug, publicMediaById } from "@/lib/public-data/queries";
 import { publicMetadata } from "@/lib/seo";
 
@@ -29,7 +30,7 @@ export default async function ExperienceDetail({ params }: { params: Promise<{ s
       <PageHero eyebrow="Experience at Chatten" title={item.name} description={item.description ?? undefined} image={image} />
       <main className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
         <p className="text-lg leading-8 text-[#4d5649]">{item.description ?? "This experience is being prepared for publication."}</p>
-        <a href="/visit" className="mt-10 inline-block bg-[#1f3426] px-5 py-3 text-sm font-semibold text-white">Plan Your Visit</a>
+        <CtaLink href="/visit" className="mt-10">Plan Your Visit</CtaLink>
       </main>
     </PublicShell>
   );

@@ -1,0 +1,43 @@
+import Link from "next/link";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from "react";
+
+// A49: every public call to action was a hand-copied
+// `px-5 py-3 text-sm font-semibold` string — seventeen of them across nine
+// files, in four colour treatments, and not one with a visible focus ring.
+// components/ui/button.tsx could not absorb them: it is a <button> with the
+// admin palette, and most public CTAs are links.
+//
+// The variants are named for the surface they sit on, not for a hierarchy,
+// because that is what actually decides the treatment: `onDark` exists because
+// a green band cannot take the `solid` dark fill.
+export type CtaVariant = "solid" | "outline" | "onDark" | "accent";
+
+const BASE = "inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+
+const VARIANTS: Record<CtaVariant, string> = {
+  // Cream and sand surfaces.
+  solid: "bg-[#1f3426] text-white hover:bg-[#2a4732] focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f4eedf]",
+  outline: "border border-[#1f3426] text-[#1e3024] hover:bg-[#1f3426] hover:text-white focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f4eedf]",
+  // Green bands and photographs: the offset colour is the band, so the ring
+  // reads as a ring rather than as a halo.
+  onDark: "border border-white/70 text-white hover:bg-white/10 focus-visible:ring-white focus-visible:ring-offset-[#1f3426]",
+  // The single peach hero button.
+  accent: "bg-[#e2a07a] text-[#253526] hover:bg-[#d78f66] focus-visible:ring-[#f3c4a6] focus-visible:ring-offset-[#233b2a]",
+};
+
+export function ctaClassName(variant: CtaVariant = "solid", className = "") {
+  return `${BASE} ${VARIANTS[variant]} ${className}`.trim();
+}
+
+export function CtaLink({ href, variant = "solid", className = "", ...props }: { href: string; variant?: CtaVariant } & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href">) {
+  // next/link prefetches and client-navigates, which an in-page hash or an
+  // off-site URL neither needs nor wants.
+  const internal = href.startsWith("/");
+  const classes = ctaClassName(variant, className);
+  if (!internal) return <a href={href} className={classes} {...props} />;
+  return <Link href={href} className={classes} {...props} />;
+}
+
+export function CtaButton({ variant = "solid", className = "", ...props }: { variant?: CtaVariant } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button className={ctaClassName(variant, className)} {...props} />;
+}

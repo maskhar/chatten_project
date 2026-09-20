@@ -8,6 +8,23 @@ The application joins these Docker networks: `carubra-network`, `buzzerhood-netw
 
 The application exposes `/api/health` for liveness and `/api/ready` for Supabase readiness. Docker healthchecks use the liveness endpoint. Set `NEXT_PUBLIC_APP_URL`, browser-safe Supabase URL/key, and server-only service role key in `.env.local`. No authorized Chatten application deployment host or production domain is configured in this repository.
 
+## `NEXT_PUBLIC_APP_URL` is required at build time (audit item A47)
+
+`next build` fails when `NEXT_PUBLIC_APP_URL` is unset. It is the only source
+of the site's absolute origin: without it `lib/seo.ts` drops `metadataBase`,
+the canonical link and the Open Graph URL, `app/sitemap.ts` returns an empty
+sitemap, `app/robots.ts` omits its `Sitemap:` line, and the JSON-LD carries no
+`url`. The site still builds and serves — it is simply invisible to crawlers,
+with nothing in the logs to say why. `lib/env/app-url.ts` turns that into a
+build error instead.
+
+- A value that is not an absolute `http`/`https` URL fails in every
+  environment: that is a typo, and `new URL()` would throw per request.
+- `http://localhost:3000` only warns. A local `npm run build` is also
+  `NODE_ENV=production`, and localhost is the right answer there.
+- `ALLOW_MISSING_APP_URL=1 npm run build` builds without it, for a CI step
+  that only needs to know the code compiles.
+
 ## Auth brute-force protection (audit item A12)
 
 `app/admin/login/login-form.tsx` posts credentials straight to GoTrue at
