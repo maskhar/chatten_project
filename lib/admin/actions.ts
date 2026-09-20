@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { dynamicTable } from "@/lib/supabase/dynamic";
 import { applyOrder, isReorderableTable, normalizeOffset } from "@/lib/admin/reorder";
-import { minRoleFor, resourceFor } from "./resources";
+import { allowedValues, minRoleFor, resourceFor, type Resource } from "./resources";
 import { MAP_EMBED_HOSTS, URL_FIELD_KEYS, isSafeInternalPath, isSafeUrl, isSafeUrlWithHost } from "@/lib/url-safety";
 import { coerceFieldValue } from "./form-schema";
 
@@ -40,7 +40,21 @@ function assertSafeUrls(payload: Record<string, unknown>) {
     throw new Error('"href" must be a site-relative path starting with "/".');
   }
 }
-export async function saveResource(formData: FormData) { const resource=await authorizeResource(formData); const id=formData.get("id"); const payload=Object.fromEntries(resource.fields.map(field=>[field.key,field.type==="checkbox"?formData.get(field.key)==="on":value(field.key,formData.get(field.key),field.label)]).filter(([key,entry])=>entry!==null||key==="image_media_id")); assertSafeUrls(payload); const supabase=await createServerSupabaseClient(); const imageMediaId=payload.image_media_id; const isPublished=payload.status==="published"&&payload.is_active!==false; if(isPublished&&typeof imageMediaId==="string"){const {data,error}=await supabase.from("media").select("rights_status").eq("id",imageMediaId).maybeSingle();if(error||data?.rights_status!=="approved")throw new Error("Published content requires an approved image.");} const query=id?dynamicTable(supabase, resource.table).update(payload).eq("id",String(id)):dynamicTable(supabase, resource.table).insert(payload); const {error}=await query;if(error)throw new Error("Unable to save content.");revalidatePath("/");revalidatePath(`/admin/${resource.key}`);redirect(`/admin/${resource.key}?saved=1`); }
+// Phase 6: a select is a convenience in the browser, not a boundary. The
+// form posts whatever it is given, so the closed sets — day_of_week,
+// platform, href, page_key, robots, status — are re-checked here against the
+// same declaration the form rendered from.
+function assertAllowedChoices(resource: Resource, payload: Record<string, unknown>) {
+  for (const field of resource.fields) {
+    const allowed = allowedValues(field);
+    if (!allowed) continue;
+    const raw = payload[field.key];
+    if (raw === null || raw === undefined || raw === "") continue;
+    if (!allowed.includes(String(raw))) throw new Error(`"${field.label}" is not one of the available options.`);
+  }
+}
+
+export async function saveResource(formData: FormData) { const resource=await authorizeResource(formData); const id=formData.get("id"); const payload=Object.fromEntries(resource.fields.map(field=>[field.key,field.type==="checkbox"?formData.get(field.key)==="on":value(field.key,formData.get(field.key),field.label)]).filter(([key,entry])=>entry!==null||key==="image_media_id")); assertSafeUrls(payload); assertAllowedChoices(resource,payload); const supabase=await createServerSupabaseClient(); const imageMediaId=payload.image_media_id; const isPublished=payload.status==="published"&&payload.is_active!==false; if(isPublished&&typeof imageMediaId==="string"){const {data,error}=await supabase.from("media").select("rights_status").eq("id",imageMediaId).maybeSingle();if(error||data?.rights_status!=="approved")throw new Error("Published content requires an approved image.");} const query=id?dynamicTable(supabase, resource.table).update(payload).eq("id",String(id)):dynamicTable(supabase, resource.table).insert(payload); const {error}=await query;if(error)throw new Error("Unable to save content.");revalidatePath("/");revalidatePath(`/admin/${resource.key}`);redirect(`/admin/${resource.key}?saved=1`); }
 // A26: `offset` is the rank of the first submitted row within the whole table.
 // The list view is paginated, so without it page 2 would renumber its rows from
 // 0 and collide with page 1 instead of continuing after it.

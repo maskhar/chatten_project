@@ -16,7 +16,54 @@ type MediaOption = { id: string; title: string | null; alt_text: string | null; 
 
 function rowLabel(row: Record<string, unknown>) { return String(row.title ?? row.name ?? row.site_name ?? row.page_key ?? row.author_name ?? row.id); }
 function inputValue(value: unknown) { if (value === null || value === undefined) return ""; if (typeof value === "boolean") return undefined; if (typeof value === "number") return String(value); return String(value); }
-function FieldInput({ field, value, media }: { field: Field; value: unknown; media: MediaOption[] }) { const common = { name: field.key, required: field.required, defaultValue: inputValue(value), className: "mt-1 block w-full border border-[#c9bfa8] bg-white px-3 py-2 text-sm" }; if (field.type === "checkbox") return <label className="flex items-center gap-2 text-sm"><input name={field.key} type="checkbox" defaultChecked={value === true} />{field.label}</label>; if (field.type === "textarea") return <label className="block text-sm">{field.label}<textarea {...common} rows={4} /></label>; if (field.type === "media") return <label className="block text-sm">{field.label}<MediaPicker name={field.key} value={inputValue(value)} media={media} /></label>; if (field.type === "select") return <label className="block text-sm">{field.label}<select {...common}>{field.options?.map((option: string) => <option value={option} key={option}>{option}</option>)}</select></label>; return <label className="block text-sm">{field.label}<input {...common} type={field.type ?? "text"} /></label>; }
+// Phase 6: a field may now declare labelled `choices` instead of bare
+// `options`, so a closed set is a picker showing "Sunday" rather than a
+// number box, and `help` puts the explanation under the input instead of
+// leaving the editor to guess what a key like page_key has to match.
+function FieldHelp({ id, text }: { id: string; text?: string }) {
+  if (!text) return null;
+  return <span id={id} className="mt-1 block text-xs text-[#4d5649]">{text}</span>;
+}
+
+function FieldInput({ field, value, media }: { field: Field; value: unknown; media: MediaOption[] }) {
+  const helpId = field.help ? `${field.key}-help` : undefined;
+  const common = {
+    name: field.key,
+    required: field.required,
+    defaultValue: inputValue(value),
+    "aria-describedby": helpId,
+    className: "mt-1 block w-full border border-[#c9bfa8] bg-white px-3 py-2 text-sm",
+  };
+  if (field.type === "checkbox") {
+    return (
+      <div className="text-sm">
+        <label className="flex items-center gap-2"><input name={field.key} type="checkbox" defaultChecked={value === true} aria-describedby={helpId} />{field.label}</label>
+        <FieldHelp id={helpId ?? ""} text={field.help} />
+      </div>
+    );
+  }
+  if (field.type === "textarea") return <label className="block text-sm">{field.label}<textarea {...common} rows={4} /><FieldHelp id={helpId ?? ""} text={field.help} /></label>;
+  if (field.type === "media") return <label className="block text-sm">{field.label}<MediaPicker name={field.key} value={inputValue(value)} media={media} /><FieldHelp id={helpId ?? ""} text={field.help} /></label>;
+  if (field.type === "select") {
+    // A required select with no stored value must start on a blank prompt, or
+    // the browser reports the first option as chosen when the editor never
+    // touched it.
+    const current = inputValue(value);
+    const choices = field.choices ?? field.options?.map((option) => ({ value: option, label: option }));
+    const needsPrompt = field.required && !current;
+    return (
+      <label className="block text-sm">
+        {field.label}
+        <select {...common} defaultValue={current}>
+          {needsPrompt ? <option value="">Select {field.label.toLowerCase()}…</option> : null}
+          {choices?.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
+        </select>
+        <FieldHelp id={helpId ?? ""} text={field.help} />
+      </label>
+    );
+  }
+  return <label className="block text-sm">{field.label}<input {...common} type={field.type ?? "text"} /><FieldHelp id={helpId ?? ""} text={field.help} /></label>;
+}
 
 export default async function AdminResourcePage({ params, searchParams }: { params: Promise<{ resource: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [{ resource: key }, rawSearchParams] = await Promise.all([params, searchParams]);
@@ -58,6 +105,7 @@ export default async function AdminResourcePage({ params, searchParams }: { para
         <div>
           <p className="text-xs uppercase tracking-[.2em] text-[#8a3a21]">CMS module</p>
           <h1 className="mt-3 font-serif text-3xl sm:text-4xl lg:text-5xl">{resource.label}</h1>
+          {resource.description ? <p className="mt-2 max-w-prose text-sm text-[#4d5649]">{resource.description}</p> : null}
         </div>
         <p className="text-sm text-[#4d5649]">{total} record{total === 1 ? "" : "s"}{filtered ? " matching" : ""}</p>
       </div>

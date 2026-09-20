@@ -89,21 +89,21 @@
 - [x] Events + Promotions Manager Core
 - [x] Event + Promotion Temporal Ordering + Visibility + Delete
 
-- [ ] About Manager
+- [x] About Manager
 
-- [ ] Testimonials Manager
+- [x] Testimonials Manager
 
-- [ ] Contact & Visit Manager
+- [x] Contact & Visit Manager
 
-- [ ] Opening Hours Manager (day picker, not raw integer input)
+- [x] Opening Hours Manager (day picker, not raw integer input)
 
-- [ ] Social Links Manager (platform picker + ordering)
+- [x] Social Links Manager (platform picker + ordering)
 
-- [ ] Navigation Manager (route validation + ordering)
+- [x] Navigation Manager (route validation + ordering)
 
-- [ ] SEO Manager (per-page fields + OG image selection)
+- [x] SEO Manager (per-page fields + OG image selection)
 
-- [ ] Site Settings Manager
+- [x] Site Settings Manager
 
 ---
 
