@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyOrder } from "@/lib/admin/reorder";
-
-const uuidPattern = /^[0-9a-f-]{36}$/i;
+import { optionalUuidSchema, parseStatus, uuidSchema } from "@/lib/admin/form-schema";
 
 function slugify(value: string) {
   return value
@@ -24,12 +23,11 @@ export async function saveSpace(formData: FormData) {
   const slug = slugify(String(formData.get("slug") ?? name));
   const description = String(formData.get("description") ?? "").trim() || null;
   const imageMediaId = String(formData.get("image_media_id") ?? "") || null;
-  const status = String(formData.get("status") ?? "draft");
+  const status = parseStatus(formData.get("status"), { strict: true, label: "space status" });
 
-  if (id && !uuidPattern.test(id)) throw new Error("Invalid space ID.");
+  if (!optionalUuidSchema.safeParse(id).success) throw new Error("Invalid space ID.");
   if (!name) throw new Error("Space name is required.");
   if (!slug) throw new Error("Space slug is required.");
-  if (!['draft', 'published'].includes(status)) throw new Error("Invalid space status.");
 
   const supabase = await createServerSupabaseClient();
 
@@ -78,9 +76,8 @@ export async function saveSpace(formData: FormData) {
 export async function reorderSpaces(ids: string[]) {
   await requireAdmin();
 
-  if (!ids.length || ids.some((id) => !uuidPattern.test(id)) || new Set(ids).size !== ids.length) {
-    throw new Error("Invalid space order.");
-  }
+  // applyOrder revalidates the ids itself; this keeps the message specific.
+  if (!ids.length) throw new Error("Invalid space order.");
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.from("spaces").select("id");
@@ -99,7 +96,7 @@ export async function reorderSpaces(ids: string[]) {
 export async function setSpaceActive(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
-  if (!uuidPattern.test(id)) throw new Error("Invalid space ID.");
+  if (!uuidSchema.safeParse(id).success) throw new Error("Invalid space ID.");
   const active = String(formData.get("active")) === "true";
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase.from("spaces").update({ is_active: active }).eq("id", id);
@@ -112,7 +109,7 @@ export async function setSpaceActive(formData: FormData) {
 export async function deleteSpace(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id") ?? "");
-  if (!uuidPattern.test(id)) throw new Error("Invalid space ID.");
+  if (!uuidSchema.safeParse(id).success) throw new Error("Invalid space ID.");
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase.from("spaces").delete().eq("id", id);
   if (error) throw new Error("Unable to delete space.");

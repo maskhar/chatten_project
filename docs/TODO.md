@@ -337,7 +337,7 @@ stable references for commits and verification notes.
       `app/admin/(dashboard)/users/page.tsx:5` with a single `listUsers()`.
 - [x] **A60** Look up public detail pages by `.eq("slug", …)` instead of fetching
       the whole collection and `Array.find`.
-- [ ] **A61** Adopt shared Zod schemas across server actions. Zod is currently
+- [x] **A61** Adopt shared Zod schemas across server actions. Zod is currently
       used only for env parsing; `status` is unchecked in several actions, UUIDs
       are checked inconsistently, and `Number(input)` has no `NaN` guard.
 - [x] **A62** Drop the dead `contact_information.map_url` column.

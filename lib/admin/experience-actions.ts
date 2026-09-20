@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyOrder } from "@/lib/admin/reorder";
+import { parseStatus, uuidSchema } from "@/lib/admin/form-schema";
 
 function slugify(value: string) {
   return value
@@ -46,7 +47,7 @@ export async function saveExperience(formData: FormData) {
     description,
     image_media_id: imageMediaId,
     is_active: formData.get("is_active") === "on",
-    status: String(formData.get("status") ?? "draft"),
+    status: parseStatus(formData.get("status"), { strict: true, label: "experience status" }),
   };
   
   const result = id
@@ -87,7 +88,7 @@ export async function setExperienceActive(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const active = String(formData.get("active")) === "true";
   
-  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+  if (!id || !uuidSchema.safeParse(id).success) {
     throw new Error("Invalid experience ID.");
   }
   
@@ -112,7 +113,7 @@ export async function deleteExperience(formData: FormData) {
   
   const id = String(formData.get("id") ?? "");
   
-  if (!id || !/^[0-9a-f-]{36}$/i.test(id)) {
+  if (!id || !uuidSchema.safeParse(id).success) {
     throw new Error("Invalid experience ID.");
   }
   

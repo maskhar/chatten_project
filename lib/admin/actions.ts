@@ -7,6 +7,7 @@ import { dynamicTable } from "@/lib/supabase/dynamic";
 import { applyOrder, isReorderableTable, normalizeOffset } from "@/lib/admin/reorder";
 import { minRoleFor, resourceFor } from "./resources";
 import { MAP_EMBED_HOSTS, URL_FIELD_KEYS, isSafeInternalPath, isSafeUrl, isSafeUrlWithHost } from "@/lib/url-safety";
+import { coerceFieldValue } from "./form-schema";
 
 // Resolves the resource from the form *before* authorizing, so the required
 // role can depend on which resource is being written (A9).
@@ -16,7 +17,10 @@ async function authorizeResource(formData: FormData) {
   await requireAdmin(minRoleFor(resource));
   return resource;
 }
-function value(field: string, input: FormDataEntryValue | null) { if (input === null || input === "") return null; if (field === "sort_order" || field === "day_of_week") return Number(input); if (field === "price") return Number(input); return input; }
+// A61: was `Number(input)` with no NaN guard, so a non-numeric sort_order,
+// day_of_week or price became NaN, serialised to null, and was rejected by a
+// NOT NULL column instead of by the form. Status was not checked here at all.
+function value(field: string, input: FormDataEntryValue | null, label = field) { return coerceFieldValue(field, input, label); }
 
 // A13: reject dangerous URL schemes before they reach the DB. Runs on the
 // assembled payload so it covers both insert and update, and every resource
@@ -36,7 +40,7 @@ function assertSafeUrls(payload: Record<string, unknown>) {
     throw new Error('"href" must be a site-relative path starting with "/".');
   }
 }
-export async function saveResource(formData: FormData) { const resource=await authorizeResource(formData); const id=formData.get("id"); const payload=Object.fromEntries(resource.fields.map(field=>[field.key,field.type==="checkbox"?formData.get(field.key)==="on":value(field.key,formData.get(field.key))]).filter(([key,entry])=>entry!==null||key==="image_media_id")); assertSafeUrls(payload); const supabase=await createServerSupabaseClient(); const imageMediaId=payload.image_media_id; const isPublished=payload.status==="published"&&payload.is_active!==false; if(isPublished&&typeof imageMediaId==="string"){const {data,error}=await supabase.from("media").select("rights_status").eq("id",imageMediaId).maybeSingle();if(error||data?.rights_status!=="approved")throw new Error("Published content requires an approved image.");} const query=id?dynamicTable(supabase, resource.table).update(payload).eq("id",String(id)):dynamicTable(supabase, resource.table).insert(payload); const {error}=await query;if(error)throw new Error("Unable to save content.");revalidatePath("/");revalidatePath(`/admin/${resource.key}`);redirect(`/admin/${resource.key}?saved=1`); }
+export async function saveResource(formData: FormData) { const resource=await authorizeResource(formData); const id=formData.get("id"); const payload=Object.fromEntries(resource.fields.map(field=>[field.key,field.type==="checkbox"?formData.get(field.key)==="on":value(field.key,formData.get(field.key),field.label)]).filter(([key,entry])=>entry!==null||key==="image_media_id")); assertSafeUrls(payload); const supabase=await createServerSupabaseClient(); const imageMediaId=payload.image_media_id; const isPublished=payload.status==="published"&&payload.is_active!==false; if(isPublished&&typeof imageMediaId==="string"){const {data,error}=await supabase.from("media").select("rights_status").eq("id",imageMediaId).maybeSingle();if(error||data?.rights_status!=="approved")throw new Error("Published content requires an approved image.");} const query=id?dynamicTable(supabase, resource.table).update(payload).eq("id",String(id)):dynamicTable(supabase, resource.table).insert(payload); const {error}=await query;if(error)throw new Error("Unable to save content.");revalidatePath("/");revalidatePath(`/admin/${resource.key}`);redirect(`/admin/${resource.key}?saved=1`); }
 // A26: `offset` is the rank of the first submitted row within the whole table.
 // The list view is paginated, so without it page 2 would renumber its rows from
 // 0 and collide with page 1 instead of continuing after it.
