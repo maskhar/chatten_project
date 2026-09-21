@@ -71,15 +71,39 @@ test("the feature band's own accent clears AA against it", () => {
   assert.ok(contrastRatio("#ffd4bc", "#b65d40") < AA_NORMAL, "the old pairing must stay a failing reference");
 });
 
+// A74 replaced every `text-[#hex]` with a `--color-*` token, so a scan for the
+// literal form now matches nothing and would pass by finding no work to do —
+// a silently empty test. The colour is resolved through the @theme block
+// instead, which keeps this checking the same property against the real values.
+const THEME = (() => {
+  const css = fs.readFileSync(path.join(root, "app", "globals.css"), "utf8");
+  const block = css.match(/@theme\s*\{([\s\S]*?)\n\}/);
+  assert.ok(block, "app/globals.css must declare an @theme block");
+  const map = new Map();
+  for (const m of block[1].matchAll(/--color-([a-z-]+):\s*(#[0-9a-fA-F]{6});/g)) map.set(m[1], m[2].toLowerCase());
+  return map;
+})();
+
+test("the token scan resolves real colours", () => {
+  // Guards the guard: if the @theme parse silently returned nothing, the test
+  // below would pass without checking a single colour.
+  assert.ok(THEME.size >= 20, `expected a full palette, parsed ${THEME.size} tokens`);
+  assert.equal(THEME.get("rust"), "#8a3a21");
+});
+
 test("every public text colour is readable on at least one surface family", () => {
   const failures = [];
+  let checked = 0;
   for (const file of files) {
     const src = fs.readFileSync(file, "utf8");
-    for (const match of src.matchAll(/text-\[(#[0-9a-fA-F]{6})\]/g)) {
-      const colour = match[1].toLowerCase();
+    for (const match of src.matchAll(/\btext-([a-z][a-z-]*)\b/g)) {
+      const colour = THEME.get(match[1]);
+      if (!colour) continue; // text-sm, text-white, text-center …
+      checked++;
       if (clearsFamily(colour, LIGHT_SURFACES) || clearsFamily(colour, DARK_SURFACES) || contrastRatio(colour, FEATURE_SURFACE) >= AA_NORMAL) continue;
-      failures.push(`${path.relative(root, file)}: ${colour} — ${bestRatio(colour, LIGHT_SURFACES).toFixed(2)}:1 on cream, ${bestRatio(colour, DARK_SURFACES).toFixed(2)}:1 on green`);
+      failures.push(`${path.relative(root, file)}: ${match[1]} (${colour}) — ${bestRatio(colour, LIGHT_SURFACES).toFixed(2)}:1 on cream, ${bestRatio(colour, DARK_SURFACES).toFixed(2)}:1 on green`);
     }
   }
+  assert.ok(checked > 0, "no tokenised text colours found — the scan is not reaching the public pages");
   assert.deepEqual(failures, [], `Below the 4.5:1 AA threshold on both surface families:\n${failures.join("\n")}`);
 });

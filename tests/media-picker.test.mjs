@@ -80,7 +80,7 @@ test("MediaPicker shows Remove button only when not required", () => {
 
 test("MediaPicker displays Selected indicator on current image", () => {
   assert.ok(src.includes('Selected'));
-  assert.ok(src.includes('text-[#47714d]'));
+  assert.ok(src.includes('text-leaf-ink'));
 });
 
 test("the empty state tells the operator uploading is the only step", () => {
@@ -106,6 +106,6 @@ test("MediaPicker includes accessibility attributes", () => {
 
 test("MediaPicker visual selection uses ring and not color-only", () => {
   assert.ok(src.includes('ring-2'));
-  assert.ok(src.includes('ring-[#47714d]'));
+  assert.ok(src.includes('ring-leaf-ink'));
   assert.ok(src.includes('Selected'));
 });

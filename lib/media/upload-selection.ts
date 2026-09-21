@@ -1,4 +1,9 @@
-export const MAX_MEDIA_SELECTION_FILES = 20;
+// A78: this file used to declare its own `MAX_MEDIA_SELECTION_FILES = 20`,
+// independent of the limit the server enforced. Both are now the same
+// constant. Re-exported under the old name so the dropzone keeps working.
+import { MAX_MEDIA_UPLOAD_FILES } from "./upload-limits";
+
+export const MAX_MEDIA_SELECTION_FILES = MAX_MEDIA_UPLOAD_FILES;
 
 export type MediaUploadSelectionItem<TFile = File> = {
   id: string;

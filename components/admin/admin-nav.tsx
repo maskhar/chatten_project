@@ -21,7 +21,7 @@ function NavLink({ href, label, current, onNavigate }: { href: string; label: st
       href={href}
       onClick={onNavigate}
       aria-current={current ? "page" : undefined}
-      className={`rounded-md px-3 py-2 text-sm ${current ? "bg-[#edf1ea] font-semibold text-[#1f3426]" : "text-[#4b584d] hover:bg-[#edf1ea]"}`}
+      className={`rounded-md px-3 py-2 text-sm ${current ? "bg-paper font-semibold text-forest" : "text-ink hover:bg-paper"}`}
     >
       {label}
     </Link>
@@ -34,7 +34,7 @@ export function AdminNavLinks({ groups, isAdmin, onNavigate }: { groups: readonl
     <nav className="mt-8 grid gap-6">
       {groups.map(([group, links]) => (
         <div key={group}>
-          <p className="px-2 text-[10px] font-semibold uppercase tracking-[.16em] text-[#768075]">{group}</p>
+          <p className="px-2 text-[10px] font-semibold uppercase tracking-[.16em] text-ink-muted">{group}</p>
           <div className="mt-2 grid gap-1">
             {links.map(([label, href]) => (
               <NavLink key={href} href={href} label={label} current={isCurrent(pathname, href)} onNavigate={onNavigate} />
@@ -43,7 +43,7 @@ export function AdminNavLinks({ groups, isAdmin, onNavigate }: { groups: readonl
         </div>
       ))}
       <div>
-        <p className="px-2 text-[10px] font-semibold uppercase tracking-[.16em] text-[#768075]">Administration</p>
+        <p className="px-2 text-[10px] font-semibold uppercase tracking-[.16em] text-ink-muted">Administration</p>
         <div className="mt-2 grid gap-1">
           {isAdmin ? <NavLink href="/admin/users" label="Users & Roles" current={isCurrent(pathname, "/admin/users")} onNavigate={onNavigate} /> : null}
           <NavLink href="/admin/account" label="My Account" current={isCurrent(pathname, "/admin/account")} onNavigate={onNavigate} />
@@ -57,14 +57,14 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <Link href="/admin" onClick={onNavigate} className="font-serif text-2xl tracking-[.12em]">CHATTEN</Link>
-      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[.18em] text-[#9b5a42]">Website manager</p>
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[.18em] text-clay">Website manager</p>
     </>
   );
 }
 
 export function AdminSidebar({ groups, isAdmin }: { groups: readonly NavGroup[]; isAdmin: boolean }) {
   return (
-    <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto border-r border-[#dde0d7] bg-white p-5 lg:block">
+    <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto border-r border-mist bg-white p-5 lg:block">
       <Brand />
       <AdminNavLinks groups={groups} isAdmin={isAdmin} />
     </aside>
@@ -95,11 +95,11 @@ export function AdminMobileNav({ groups, isAdmin }: { groups: readonly NavGroup[
         aria-label="Open navigation menu"
         aria-expanded={open}
         aria-controls="admin-mobile-nav"
-        className="rounded border border-[#1f3426] p-2 lg:hidden"
+        className="rounded border border-forest p-2 lg:hidden"
       >
-        <span aria-hidden className="block h-0.5 w-5 bg-[#1f3426]" />
-        <span aria-hidden className="mt-1 block h-0.5 w-5 bg-[#1f3426]" />
-        <span aria-hidden className="mt-1 block h-0.5 w-5 bg-[#1f3426]" />
+        <span aria-hidden className="block h-0.5 w-5 bg-forest" />
+        <span aria-hidden className="mt-1 block h-0.5 w-5 bg-forest" />
+        <span aria-hidden className="mt-1 block h-0.5 w-5 bg-forest" />
       </button>
 
       {open ? (
@@ -115,7 +115,7 @@ export function AdminMobileNav({ groups, isAdmin }: { groups: readonly NavGroup[
             role="dialog"
             aria-modal="true"
             aria-label="CMS navigation"
-            className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-[#dde0d7] bg-white p-5"
+            className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-mist bg-white p-5"
           >
             <div className="flex items-start justify-between gap-3">
               <div><Brand onNavigate={() => setOpen(false)} /></div>
@@ -123,7 +123,7 @@ export function AdminMobileNav({ groups, isAdmin }: { groups: readonly NavGroup[
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close navigation menu"
-                className="rounded border border-[#1f3426] px-2 py-1 text-sm font-semibold"
+                className="rounded border border-forest px-2 py-1 text-sm font-semibold"
               >
                 ✕
               </button>

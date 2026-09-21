@@ -47,7 +47,7 @@ export function ExperienceEditForm({
       <div className="mb-6">
         <Link
           href="/admin/experiences"
-          className="text-sm text-[#657064] hover:text-[#1f3426]"
+          className="text-sm text-ink-muted hover:text-forest"
         >
           ← Back to Experiences
         </Link>
@@ -55,7 +55,7 @@ export function ExperienceEditForm({
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-clay">
             Edit Experience
           </p>
           <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{experience.name}</h1>
@@ -88,7 +88,7 @@ export function ExperienceEditForm({
                 defaultValue={experience.slug}
                 className={field}
               />
-              <span className="mt-1 block text-xs text-[#657064]">
+              <span className="mt-1 block text-xs text-ink-muted">
                 URL-friendly identifier (e.g., morning-coffee)
               </span>
             </label>
@@ -139,12 +139,12 @@ export function ExperienceEditForm({
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <SubmitButton className="rounded bg-[#1f3426] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2a4735]">
+            <SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white hover:bg-forest-soft">
               Save Changes
             </SubmitButton>
             <Link
               href="/admin/experiences"
-              className="rounded border border-[#1f3426] px-6 py-3 text-sm font-semibold text-[#1f3426] hover:bg-[#f7f5f0]"
+              className="rounded border border-forest px-6 py-3 text-sm font-semibold text-forest hover:bg-paper"
             >
               Cancel
             </Link>

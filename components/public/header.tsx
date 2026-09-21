@@ -8,7 +8,7 @@ import { FOCUS_RING, TAP_TARGET } from "@/components/ui/control";
 
 // A75: the header sits on a photograph, so the ring needs an offset colour of
 // its own — the transparent header has no background to borrow.
-const HEADER_FOCUS = `${FOCUS_RING} focus-visible:ring-[#efb38f] focus-visible:ring-offset-[#1c3025]`;
+const HEADER_FOCUS = `${FOCUS_RING} focus-visible:ring-peach-light focus-visible:ring-offset-forest`;
 
 export function Header({ navigation }: { navigation: NavItem[] }) {
   const [open, setOpen] = useState(false);
@@ -32,9 +32,9 @@ export function Header({ navigation }: { navigation: NavItem[] }) {
         </nav>
       </div>
       {open ? (
-        <nav id="mobile-nav" aria-label="Main" className="mx-4 grid gap-1 border border-white/20 bg-[#1c3025]/95 p-3 text-sm md:hidden">
+        <nav id="mobile-nav" aria-label="Main" className="mx-4 grid gap-1 border border-white/20 bg-forest/95 p-3 text-sm md:hidden">
           {links.map((link) => <Link className="flex min-h-11 items-center px-3 aria-[current=page]:font-semibold" key={link.href} href={link.href} aria-current={current(link.href)} onClick={() => setOpen(false)}>{link.label}</Link>)}
-          <Link className="flex min-h-11 items-center px-3 font-semibold text-[#f3c4a6]" href="/visit" onClick={() => setOpen(false)}>Plan Your Visit</Link>
+          <Link className="flex min-h-11 items-center px-3 font-semibold text-peach-light" href="/visit" onClick={() => setOpen(false)}>Plan Your Visit</Link>
         </nav>
       ) : null}
     </header>

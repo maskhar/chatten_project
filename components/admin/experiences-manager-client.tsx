@@ -83,10 +83,10 @@ export function ExperiencesManagerClient({
               className="h-12 w-16 flex-shrink-0 rounded object-cover"
             />
           ) : (
-            <div className="h-12 w-16 flex-shrink-0 rounded bg-[#405542]" />
+            <div className="h-12 w-16 flex-shrink-0 rounded bg-moss" />
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-[#657064]">/{experience.slug}</p>
+            <p className="text-xs text-ink-muted">/{experience.slug}</p>
             <div className="mt-1 flex gap-2">
               <span
                 className={`rounded px-2 py-0.5 text-xs font-semibold ${
@@ -142,28 +142,28 @@ export function ExperiencesManagerClient({
     <section>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-clay">
             Website
           </p>
           <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">Experiences</h1>
-          <p className="mt-3 max-w-2xl text-[#657064]">
+          <p className="mt-3 max-w-2xl text-ink-muted">
             Manage experiences visitors can discover at Chatten.
           </p>
         </div>
         <a
           href="#add-experience"
-          className="rounded bg-[#1f3426] px-4 py-2 text-sm font-semibold text-white"
+          className="rounded bg-forest px-4 py-2 text-sm font-semibold text-white"
         >
           + Add Experience
         </a>
       </div>
 
       {experiences.length === 0 ? (
-        <div className="mt-10 rounded border border-[#dde0d7] bg-white p-12 text-center">
-          <p className="text-[#657064]">No experiences have been added yet.</p>
+        <div className="mt-10 rounded border border-mist bg-white p-12 text-center">
+          <p className="text-ink-muted">No experiences have been added yet.</p>
           <a
             href="#add-experience"
-            className="mt-4 inline-block rounded bg-[#1f3426] px-4 py-2 text-sm font-semibold text-white"
+            className="mt-4 inline-block rounded bg-forest px-4 py-2 text-sm font-semibold text-white"
           >
             Add Experience
           </a>
@@ -180,7 +180,7 @@ export function ExperiencesManagerClient({
       <form
         id="add-experience"
         action={saveExperience}
-        className="mt-8 max-w-2xl rounded border border-[#c9bfa8] bg-[#e8dfca] p-6"
+        className="mt-8 max-w-2xl rounded border border-line bg-sand p-6"
       >
         <h2 className="font-serif text-2xl sm:text-3xl">Add Experience</h2>
         
@@ -192,7 +192,7 @@ export function ExperiencesManagerClient({
         <label className="mt-4 block text-sm font-semibold">
           Slug
           <input name="slug" required className={field} />
-          <span className="mt-1 block text-xs text-[#657064]">
+          <span className="mt-1 block text-xs text-ink-muted">
             URL-friendly identifier (e.g., morning-coffee)
           </span>
         </label>
@@ -221,7 +221,7 @@ export function ExperiencesManagerClient({
           </label>
         </div>
 
-        <SubmitButton className="mt-6 w-full rounded bg-[#b65d40] px-4 py-3 text-sm font-semibold text-white hover:bg-[#9b5a42]" pendingLabel="Creating…">
+        <SubmitButton className="mt-6 w-full rounded bg-terracotta px-4 py-3 text-sm font-semibold text-white hover:bg-clay" pendingLabel="Creating…">
           Create Experience
         </SubmitButton>
       </form>

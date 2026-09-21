@@ -22,7 +22,7 @@ export async function PublicShell({ children, navigation, socials }: { children:
   // async and covers /admin too, where a business card is meaningless.
   const jsonLd = restaurantJsonLd({ identity: shell.identity, contact: shell.contact, hours: shell.hours, socials: socialLinks, appUrl: process.env.NEXT_PUBLIC_APP_URL });
   return (
-    <div className="min-h-screen bg-[#f4eedf] text-[#1e3024]">
+    <div className="min-h-screen bg-cream text-forest">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SkipToContent />
       <Header navigation={links} />
@@ -33,7 +33,7 @@ export async function PublicShell({ children, navigation, socials }: { children:
           drawn `ring-inset` because the container is the full page width and an
           outset ring would sit off-screen on the left and right edges; the
           offset colour is the shell background it is painted over. */}
-      <div id={SKIP_TARGET_ID} tabIndex={-1} className={`pt-0 ${FOCUS_RING} focus-visible:ring-inset focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f4eedf]`}>{children}</div>
+      <div id={SKIP_TARGET_ID} tabIndex={-1} className={`pt-0 ${FOCUS_RING} focus-visible:ring-inset focus-visible:ring-forest focus-visible:ring-offset-cream`}>{children}</div>
       <PublicFooter navigation={links} socials={socialLinks} />
     </div>
   );

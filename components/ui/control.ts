@@ -32,17 +32,17 @@ export const FOCUS_RING =
  * items-center` so the label stays centred in the taller box.
  */
 export const ROW_ACTION =
-  `inline-flex min-h-11 items-center justify-center gap-1 rounded px-3 text-xs font-medium transition-colors ${FOCUS_RING} focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f7f5f0]`;
+  `inline-flex min-h-11 items-center justify-center gap-1 rounded px-3 text-xs font-medium transition-colors ${FOCUS_RING} focus-visible:ring-forest focus-visible:ring-offset-paper`;
 
 /** `ROW_ACTION` with the default border, for the neutral actions. */
-export const ROW_ACTION_BORDERED = `${ROW_ACTION} border border-[#c9bfa8] bg-white hover:bg-[#f5f7f3] disabled:opacity-40`;
+export const ROW_ACTION_BORDERED = `${ROW_ACTION} border border-line bg-white hover:bg-paper disabled:opacity-40`;
 
 /** `ROW_ACTION` for a destructive action. Colour is not the only signal — the
  *  label always says Delete. */
-export const ROW_ACTION_DANGER = `${ROW_ACTION} border border-[#c26a52] text-[#8f3a22] hover:bg-[#fdf4f1] focus-visible:ring-[#8f3a22]`;
+export const ROW_ACTION_DANGER = `${ROW_ACTION} border border-terracotta text-rust hover:bg-blush focus-visible:ring-rust`;
 
 /** `ROW_ACTION` for the one primary action in a row. */
-export const ROW_ACTION_PRIMARY = `${ROW_ACTION} bg-[#1f3426] text-white hover:bg-[#2a4732]`;
+export const ROW_ACTION_PRIMARY = `${ROW_ACTION} bg-forest text-white hover:bg-forest-soft`;
 
 /**
  * A public text link that stands alone as a call to action — the underlined
@@ -50,11 +50,11 @@ export const ROW_ACTION_PRIMARY = `${ROW_ACTION} bg-[#1f3426] text-white hover:b
  * they never got its `min-h-11` and measured 25px.
  */
 export const TEXT_LINK =
-  `inline-flex min-h-11 items-center border-b border-[#1e3024] pb-1 text-sm font-semibold ${FOCUS_RING} focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f4eedf]`;
+  `inline-flex min-h-11 items-center border-b border-forest pb-1 text-sm font-semibold ${FOCUS_RING} focus-visible:ring-forest focus-visible:ring-offset-cream`;
 
 /** `TEXT_LINK` for dark surfaces, where the cream offset would glow. */
 export const TEXT_LINK_ON_DARK =
-  `inline-flex min-h-11 items-center border-b border-white/70 pb-1 text-sm font-semibold ${FOCUS_RING} focus-visible:ring-white focus-visible:ring-offset-[#17271d]`;
+  `inline-flex min-h-11 items-center border-b border-white/70 pb-1 text-sm font-semibold ${FOCUS_RING} focus-visible:ring-white focus-visible:ring-offset-forest-deep`;
 
 /**
  * A wordmark or nav link whose own box is shorter than 44px. Adds the height

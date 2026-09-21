@@ -7,12 +7,12 @@ export default function AdminLoading() {
   return (
     <section aria-busy="true" aria-live="polite" className="animate-pulse">
       <span className="sr-only">Loading…</span>
-      <div className="h-3 w-24 rounded bg-[#e2e6dd]" />
-      <div className="mt-4 h-10 w-72 max-w-full rounded bg-[#e2e6dd]" />
-      <div className="mt-4 h-4 w-96 max-w-full rounded bg-[#e9ece5]" />
+      <div className="h-3 w-24 rounded bg-mist" />
+      <div className="mt-4 h-10 w-72 max-w-full rounded bg-mist" />
+      <div className="mt-4 h-4 w-96 max-w-full rounded bg-mist" />
       <div className="mt-10 grid gap-4">
         {[0, 1, 2, 3].map((row) => (
-          <div key={row} className="h-20 rounded border border-[#e2e6dd] bg-white" />
+          <div key={row} className="h-20 rounded border border-mist bg-white" />
         ))}
       </div>
     </section>

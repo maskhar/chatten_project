@@ -17,18 +17,18 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
   const isGeneric = !message || message.toLowerCase().startsWith("an error occurred in the server components render");
 
   return (
-    <section className="border border-[#c9bfa8] bg-[#ede3d0] p-6 sm:p-8">
+    <section className="border border-line bg-sand p-6 sm:p-8">
       <h1 className="font-serif text-3xl sm:text-4xl">CMS action failed.</h1>
-      <p className="mt-3 text-[#4d5649]">No changes were applied.</p>
+      <p className="mt-3 text-ink">No changes were applied.</p>
       {isGeneric ? (
-        <p className="mt-2 text-[#4d5649]">Check the form and try again.</p>
+        <p className="mt-2 text-ink">Check the form and try again.</p>
       ) : (
-        <p role="alert" className="mt-4 break-words border-l-4 border-[#b65d40] bg-white px-4 py-3 text-sm text-[#5a2f20]">
+        <p role="alert" className="mt-4 break-words border-l-4 border-terracotta bg-white px-4 py-3 text-sm text-rust">
           {message}
         </p>
       )}
-      {error.digest ? <p className="mt-3 text-xs text-[#768075]">Reference: {error.digest}</p> : null}
-      <button className="mt-6 bg-[#1f3426] px-4 py-2 text-sm font-semibold text-white" onClick={() => reset()}>Try again</button>
+      {error.digest ? <p className="mt-3 text-xs text-ink-muted">Reference: {error.digest}</p> : null}
+      <button className="mt-6 bg-forest px-4 py-2 text-sm font-semibold text-white" onClick={() => reset()}>Try again</button>
     </section>
   );
 }

@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyOrder } from "@/lib/admin/reorder";
 import { parseStatus, uuidSchema } from "@/lib/admin/form-schema";
-export async function reorderGalleryItems(ids:string[]){await requireAdmin();if(!ids.length)throw new Error("Invalid Gallery order.");const supabase=await createServerSupabaseClient();const {data,error}=await supabase.from("gallery_items").select("id").in("id",ids);if(error||data?.length!==ids.length)throw new Error("Unknown Gallery item.");await applyOrder("gallery_items", ids, 0, "Gallery order");revalidatePath("/admin/gallery");revalidatePath("/gallery");}
+export async function reorderGalleryItems(ids:string[]){await requireAdmin();if(!ids.length)throw new Error("The new Gallery order was not received. Reload the page and try reordering again.");const supabase=await createServerSupabaseClient();const {data,error}=await supabase.from("gallery_items").select("id").in("id",ids);if(error||data?.length!==ids.length)throw new Error("One of the reordered Gallery items no longer exists. Reload the page to see the current list.");await applyOrder("gallery_items", ids, 0, "Gallery order");revalidatePath("/admin/gallery");revalidatePath("/gallery");}
 // Alt text is optional: an operator who leaves it blank gets the caption, and
 // failing that the media row's own alt text, rather than a rejected save. The
 // image itself is still required — a gallery tile with no image is nothing.

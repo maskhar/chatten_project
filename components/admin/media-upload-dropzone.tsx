@@ -87,10 +87,15 @@ export function MediaUploadDropzone() {
 
   const canModifyQueue = !uploading && !hasResults;
 
-  return <form onSubmit={handleSubmit} className="h-fit grid gap-4 border border-[#c9bfa8] bg-[#e8dfca] p-6">
+  return <form onSubmit={handleSubmit} className="h-fit grid gap-4 border border-line bg-sand p-6">
     <div>
       <h2 className="font-serif text-2xl sm:text-3xl">Upload images</h2>
-      <p className="mt-1 text-sm text-[#4d5649]">New uploads default to Needs Review.</p>
+      {/* A77. This used to read "New uploads default to Needs Review." That
+          was true until A67 removed the approval gate; afterwards it was a
+          promise the system no longer kept — `processMediaUploadFile` returns
+          status "uploaded" and the image is usable at once. "needs_review"
+          now appears nowhere else in the codebase. */}
+      <p className="mt-1 text-sm text-ink">Uploaded images are added to the Media Library and can be used right away.</p>
     </div>
     <label
       htmlFor="media-upload-files"
@@ -98,12 +103,12 @@ export function MediaUploadDropzone() {
       onDragOver={(event) => event.preventDefault()}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`grid min-h-52 cursor-pointer place-content-center gap-2 border-2 border-dashed px-5 py-8 text-center outline-none transition ${dragging ? "border-[#1f3426] bg-white shadow-[inset_0_0_0_3px_#1f3426]" : "border-[#9b8f74] bg-[#f7f1e5]"}`}
+      className={`grid min-h-52 cursor-pointer place-content-center gap-2 border-2 border-dashed px-5 py-8 text-center outline-none transition ${dragging ? "border-forest bg-white shadow-[inset_0_0_0_3px_var(--color-forest)]" : "border-line-deep bg-cream"}`}
     >
       <input ref={inputRef} id="media-upload-files" name="files" type="file" multiple accept={acceptedTypes} onChange={handleInputChange} disabled={!canModifyQueue} className="sr-only" />
       <span className="font-semibold">{dragging ? "Release to add images" : "Drag images here or choose files"}</span>
-      <span className="text-sm text-[#4d5649]">JPEG, PNG, WebP, or AVIF. Up to 10 MB per image.</span>
-      <span className="text-xs font-semibold uppercase tracking-[.12em] text-[#76503f]">Maximum {MAX_MEDIA_SELECTION_FILES} files per upload</span>
+      <span className="text-sm text-ink">JPEG, PNG, WebP, or AVIF. Up to 10 MB per image.</span>
+      <span className="text-xs font-semibold uppercase tracking-[.12em] text-clay">Maximum {MAX_MEDIA_SELECTION_FILES} files per upload</span>
     </label>
     {queueItems.length ? <div aria-live="polite" className="grid gap-3">
       <div className="flex items-center justify-between gap-3">
@@ -113,23 +118,23 @@ export function MediaUploadDropzone() {
       <ul className="grid max-h-96 gap-2 overflow-y-auto">
         {queueItems.map((item) => {
           const statusLabel = item.status === "ready" ? "Ready" : item.status === "uploading" ? "Uploading" : item.status === "complete" ? "Complete" : "Failed";
-          const statusColor = item.status === "complete" ? "text-green-800" : item.status === "failed" ? "text-red-800" : "text-[#4d5649]";
-          return <li key={item.id} className="grid gap-1 border border-[#d6c8ad] bg-white px-3 py-2">
+          const statusColor = item.status === "complete" ? "text-green-800" : item.status === "failed" ? "text-red-800" : "text-ink";
+          return <li key={item.id} className="grid gap-1 border border-line-soft bg-white px-3 py-2">
             <div className="flex min-w-0 items-center justify-between gap-3">
               <span className="truncate text-sm font-medium" title={item.file.name}>{item.file.name}</span>
               {item.status === "ready" ? <button type="button" onClick={() => removeItem(item.id)} disabled={!canModifyQueue} className="shrink-0 text-sm text-red-800 underline disabled:cursor-not-allowed disabled:opacity-60">Remove</button> : null}
             </div>
             <div className="flex items-center justify-between gap-3 text-xs">
-              <span className="text-[#4d5649]">{formatFileSize(item.file.size)}</span>
+              <span className="text-ink">{formatFileSize(item.file.size)}</span>
               <span className={`font-semibold ${statusColor}`}>{statusLabel}</span>
             </div>
             {item.status === "failed" && item.message ? <p className="text-xs text-red-800">{item.message}</p> : null}
           </li>;
         })}
       </ul>
-    </div> : <p className="text-sm text-[#4d5649]">No files selected.</p>}
+    </div> : <p className="text-sm text-ink">No files selected.</p>}
     {selection.message ? <p role="alert" className="border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">{selection.message}</p> : null}
-    {hasResults ? <p role="status" className="border border-[#c9bfa8] bg-white px-3 py-2 text-sm font-medium">{summarizeQueueResults(queueItems)}</p> : null}
-    <button type="submit" disabled={!selection.canSubmit || uploading || hasResults} className="bg-[#b65d40] px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55">{uploading ? "Uploading..." : "Upload Images"}</button>
+    {hasResults ? <p role="status" className="border border-line bg-white px-3 py-2 text-sm font-medium">{summarizeQueueResults(queueItems)}</p> : null}
+    <button type="submit" disabled={!selection.canSubmit || uploading || hasResults} className="bg-terracotta px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55">{uploading ? "Uploading..." : "Upload Images"}</button>
   </form>;
 }

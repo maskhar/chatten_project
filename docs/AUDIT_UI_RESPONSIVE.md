@@ -545,9 +545,10 @@ teks dan palet, yang sebaiknya dikonfirmasi ke pemilik sebelum diubah.
 
 ## 8. Status implementasi (21 September 2026)
 
-Butir 1–6 dari daftar urutan di atas sudah dikerjakan dan diverifikasi. Butir
-7–9 sengaja ditahan karena menyentuh palet warna dan teks yang dibaca operator,
-yang perlu konfirmasi pemilik dulu.
+Seluruh butir 1–9 dari daftar urutan di atas sudah dikerjakan dan diverifikasi.
+Butir 7–9 sempat ditahan karena menyentuh palet warna dan teks yang dibaca
+operator; keduanya kini dikerjakan dengan default konservatif pada dua
+pertanyaan yang memang milik pemilik — lihat §9.6.
 
 | Item | Status | Bukti verifikasi |
 |---|---|---|
@@ -559,9 +560,9 @@ yang perlu konfirmasi pemilik dulu.
 | A73 tinggi hero | selesai | `min-h-[70svh] sm:min-h-[760px]`, feature band bertingkat 380/480/560px |
 | A75 `focus-visible` | selesai | dikunci test: file yang memakai `focus:outline-none` wajib punya `focus-visible:ring` |
 | A76 label form users | selesai | tiga `<label>` terpasang, grid 2 kolom pada 1024px, hint UUID tampil |
-| A74 palet | **ditahan** | perlu keputusan pemilik soal warna |
-| A77 salinan teks | **ditahan** | perlu keputusan pemilik soal kata-kata |
-| A78 batas upload | **ditahan** | perlu konfirmasi nilai batas yang benar |
+| A74 palet | selesai | 96 hex → 30 token `@theme`; `getComputedStyle` `.text-ink` = `rgb(77, 86, 73)`; 8 halaman publik 200, nol class warna arbitrer |
+| A77 salinan teks | selesai | `?error=unauthorized` kini terbaca dan tampil di HTML; empat pesan server action ditulis ulang |
+| A78 batas upload | selesai | satu modul `upload-limits.ts`; dua test menuntut nilai yang **sama**, bukan "keduanya 20" |
 
 ### Yang berubah secara struktural
 
@@ -642,3 +643,130 @@ kotak setinggi 20px; sekarang setiap link adalah kotak 44px dengan tinta 20px di
 tengahnya, sehingga dua baris bertumpuk sudah menyisakan ~24px ruang kosong.
 Mempertahankan `gap-y-3` hanya akan menambah tinggi footer di ponsel tanpa
 menambah ukuran target.
+
+## 9. Konsolidasi palet, copy operator, dan batas unggah (21 September 2026)
+
+Tiga temuan terakhir yang masih terbuka — A74, A77, A78 — selesai dalam satu
+putaran. Ketiganya sudah lolos gerbang verifikasi penuh (typecheck, lint, 267
+test lulus / 0 gagal, build produksi) dan sudah dicek langsung di browser.
+
+### 9.1 A74 — 96 hex menjadi 30 token
+
+`app/globals.css` sekarang membuka dengan blok `@theme` Tailwind v4 berisi 30
+token `--color-*`. Seluruh `text-[#…]`, `bg-[#…]`, dan `border-[#…]` di `app/`
+dan `components/` ditulis ulang menjadi utility token lewat codemod. Hasilnya
+**66 hex terserap**, dan pemindaian HTML kedelapan halaman publik yang sudah
+dirender memastikan tidak ada satu pun class warna nilai-arbitrer yang tersisa.
+
+Pengelompokan memakai jarak perseptual CIE Lab (ΔE), tetapi **jarak saja dua
+kali memberi jawaban yang salah**, dan yang harus diperbaiki adalah metodenya,
+bukan angkanya:
+
+1. **Jarak tidak bisa melihat peran.** Tiga hex peach yang terpisah ΔE 15–22
+   bukan tiga warna — itu satu tombol dengan state fill, hover, dan focus ring.
+   Menggabungkannya justru menghapus perbedaan state yang memang disengaja.
+   Begitu juga `#fdf4f1`: itu tint hover aksi destruktif, bukan kertas netral.
+2. **Satu ambang ΔE tidak bisa menilai empat operasi berbeda.** Sebuah
+   **merge** harus tidak terlihat (ΔE < ~3). Sebuah **penggelapan demi AA**
+   justru terlihat *menurut definisinya* — menilainya dengan ambang merge
+   menghasilkan kegagalan palsu. Sebuah **fold** dinilai dari peran, dan
+   **focus ring** terikat 3:1 oleh WCAG 1.4.11, bukan 4.5:1. Setelah validator
+   dipecah menjadi `merge`/`darken`/`fold`/`ring`, laporan turun dari 5 masalah
+   menjadi 0.
+
+Enam penggelapan demi AA, semuanya diukur, bukan dikira-kira:
+`#768075 → #5c665b`, `#b75e42 → #a04e33`, `#b26043 → #8a3a21`, ditambah empty
+state media-picker yang **kedua** warna sumbernya gagal jauh (3.55:1 dan
+2.67:1) sehingga runtuh menjadi satu token `--color-bark`. Penggelapan menjaga
+hue — L\* diturunkan dengan a/b ditahan — sehingga tidak ada warna yang bergeser
+dari hangat ke dingin. Sumbu b\* Lab inilah alasan krem hangat (`#f4eedf`)
+**tidak** digabung ke putih-dingin (`#f7f5f0`) meski ΔE-nya kecil.
+
+Satu hal yang sudah diukur lalu **sengaja tidak diubah**: scrim hero `#122117`
+hanya berjarak ΔE 2.9 dari `--color-forest-deep`, cukup dekat untuk digabung
+kalau dinilai dari jarak — tetapi penukaran itu membuat kontras teks putih
+justru **memburuk** (3.96 → 3.81). Jadi dibiarkan. Dicatat sebagai keputusan,
+bukan kelalaian.
+
+### 9.2 Tiga test penjaga baru, dan satu test yang diam-diam kosong
+
+`tests/palette.test.mjs` (4 test) sengaja menulis ulang matematika WCAG dan CIE
+alih-alih mengimpor helper aplikasi: test yang mengimpor fungsi kontras milik
+implementasi akan tetap lulus meskipun fungsi itu sendiri salah. Pada
+**eksekusi pertamanya test ini gagal dengan benar**, menangkap `--color-bark`
+yang saya rujuk tetapi belum saya deklarasikan di `@theme`.
+
+Yang lebih penting: `tests/public-contrast.test.mjs` ternyata **lulus karena
+tidak memeriksa apa pun**. Test itu memindai pola `text-[#rrggbb]` — bentuk yang
+justru dihapus habis oleh A74 — sehingga ia lulus dengan menemukan nol
+pekerjaan. Ini hijau palsu yang akan menyembunyikan regresi kontras apa pun di
+situs publik ke depan. Sekarang warnanya diresolusi lewat blok `@theme`, plus
+`assert.ok(checked > 0, …)` dan satu test tambahan yang menjaga penjaganya.
+
+Verifikasi mutasi dijalankan, dan **mutasi pertama tidak tertangkap**. Alih-alih
+menganggapnya wajar, penyebabnya ditelusuri: `--color-clay` hanya dipakai di
+`admin/`, sedangkan test itu memang sengaja melewati direktori `admin/`.
+Diulang dengan `--color-ink` (dipakai publik) dan tertangkap persis seperti
+seharusnya.
+
+### 9.3 Verifikasi di browser, bukan hanya di build
+
+A68 justru adalah kasus di mana nama class hadir di HTML tetapi tidak ada aturan
+CSS yang cocok — jadi build yang lolos tidak membuktikan apa pun. Karena itu
+dicek langsung: `getComputedStyle` pada paragraf `.text-ink` yang hidup
+mengembalikan `rgb(77, 86, 73)` = `#4d5649`, dan `bg-forest`, `bg-cream`,
+`bg-sand`, `border-line`, serta `text-rust` semuanya resolve ke nilai yang
+dideklarasikan. Kedelapan halaman publik merespons 200. Tangkapan layar 375px
+memastikan teks, tombol peach, dan eyebrow semuanya terbaca.
+
+### 9.4 A77 — satu bug nyata di balik masalah kata-kata
+
+Form login menyimpan cacat sungguhan, bukan sekadar diksi buruk. `requireAdmin`
+mengarahkan ke `/admin/login?error=unauthorized` ketika password **diterima**
+tetapi akun tidak punya baris di `user_roles` — dan form tidak pernah membaca
+parameter itu. Operator hanya melihat layar login kosong dan satu-satunya yang
+bisa ia lakukan adalah mengulang password yang sebenarnya sudah benar.
+
+Kedua keadaan ini butuh kata yang berbeda karena butuh **tindakan** yang
+berbeda: "periksa yang Anda ketik" versus "kredensial Anda tidak bermasalah,
+mintalah akses ke administrator".
+
+Pesan gagal masuk tetap dibuat kabur **dengan sengaja** — Supabase memang
+mengembalikan satu pesan untuk password salah dan email tidak dikenal, karena
+membedakan keduanya memberi penyerang cara mengenumerasi akun. Yang berubah:
+pesannya kini menyebut dua hal yang perlu diperiksa, bukan sekadar "check
+credentials". Alasan ini ditulis sebagai komentar agar pembaca berikutnya tidak
+"memperbaikinya" menjadi celah enumerasi.
+
+Empat pesan server action ditulis ulang dari keadaan internal menjadi tindakan,
+dan `media-upload-dropzone.tsx` berhenti menjanjikan "New uploads default to
+Needs Review" — benar sampai A67 mencabut gerbang persetujuan, setelah itu
+menjadi janji yang tidak lagi ditepati sistem (`needs_review` kini tidak muncul
+di mana pun lagi dalam kode).
+
+### 9.5 A78 — kenapa perbaikan yang jelas justru tidak bisa dipakai
+
+Solusi yang terlihat jelas — satu konstanta mengimpor yang lain — tidak bisa
+dipakai di sini, dan menemukan alasannya adalah inti pekerjaannya:
+`upload-core.ts` mengimpor `node:crypto` sehingga client component tidak boleh
+menariknya, sementara `media-upload-dropzone.tsx` adalah `"use client"`
+sehingga server pun tidak bisa menariknya. Karena itu dibuat modul ketiga tanpa
+dependensi, `lib/media/upload-limits.ts`, yang diimpor kedua sisi.
+
+Pemisahan yang sama ternyata juga ada pada batas **byte**, dan ini tidak ada di
+temuan awal: `upload-core.ts` menegakkan `10 * 1024 * 1024` sementara dropzone
+menuliskan string "10 MB" secara manual. `formatMediaSizeLimit()` kini
+menurunkan teksnya dari angka yang ditegakkan.
+
+Dua test penjaga memastikan kedua batas adalah **nilai yang sama**, bukan
+"keduanya 20" — menulis "keduanya 20" sama saja membangun ulang dengan tangan
+kopling yang sedang dihapus.
+
+### 9.6 Dua pertanyaan terbuka, dijawab konservatif
+
+Keduanya keputusan pemilik, bukan efek samping dari perapian kode:
+
+1. **Copy dashboard tetap berbahasa Inggris.** Mencampur bahasa di tengah
+   antarmuka lebih buruk daripada memilih salah satunya.
+2. **Batas unggah tetap 20 berkas.** Menaikkannya adalah keputusan kapasitas
+   server.

@@ -54,8 +54,8 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
     label: space.name,
     detail: (
       <div className="mt-1 flex items-center gap-3">
-        {imageUrl(space.image_media_id) ? <Image src={imageUrl(space.image_media_id) as string} alt={space.name} width={80} height={60} className="h-12 w-16 rounded object-cover" /> : <div className="h-12 w-16 rounded bg-[#405542]" />}
-        <div className="min-w-0"><p className="text-xs text-[#657064]">/{space.slug}</p><div className="mt-1 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded bg-[#eef1ea] px-2 py-1">{space.status === "published" ? "Published" : "Draft"}</span><span className="rounded bg-[#eef1ea] px-2 py-1">{space.is_active ? "Active" : "Hidden"}</span></div>{space.description ? <p className="mt-1 line-clamp-1 text-xs text-[#4d5649]">{space.description}</p> : null}</div>
+        {imageUrl(space.image_media_id) ? <Image src={imageUrl(space.image_media_id) as string} alt={space.name} width={80} height={60} className="h-12 w-16 rounded object-cover" /> : <div className="h-12 w-16 rounded bg-moss" />}
+        <div className="min-w-0"><p className="text-xs text-ink-muted">/{space.slug}</p><div className="mt-1 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded bg-paper px-2 py-1">{space.status === "published" ? "Published" : "Draft"}</span><span className="rounded bg-paper px-2 py-1">{space.is_active ? "Active" : "Hidden"}</span></div>{space.description ? <p className="mt-1 line-clamp-1 text-xs text-ink">{space.description}</p> : null}</div>
       </div>
     ),
     actions: (
@@ -71,32 +71,32 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
     <section>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">Website</p>
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-clay">Website</p>
           <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">Spaces</h1>
-          <p className="mt-3 max-w-2xl text-[#4d5649]">Manage the spaces guests can discover and use at Chatten.</p>
+          <p className="mt-3 max-w-2xl text-ink">Manage the spaces guests can discover and use at Chatten.</p>
         </div>
-        <a href="#add-space" className="rounded bg-[#b65d40] px-5 py-3 text-sm font-semibold text-white">+ Add Space</a>
+        <a href="#add-space" className="rounded bg-terracotta px-5 py-3 text-sm font-semibold text-white">+ Add Space</a>
       </div>
 
       <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-4">
           {spaces.length ? <SortableList items={sortableItems} onSave={reorderSpaces} /> : (
-            <div className="rounded border border-dashed border-[#c9bfa8] bg-white p-10 text-center">
+            <div className="rounded border border-dashed border-line bg-white p-10 text-center">
               <p className="font-serif text-2xl sm:text-3xl">No spaces have been added yet.</p>
-              <a href="#add-space" className="mt-5 inline-block rounded bg-[#b65d40] px-5 py-3 text-sm font-semibold text-white">Add Space</a>
+              <a href="#add-space" className="mt-5 inline-block rounded bg-terracotta px-5 py-3 text-sm font-semibold text-white">Add Space</a>
             </div>
           )}
         </div>
 
-        <form id="add-space" action={saveSpace} className="h-fit grid gap-4 rounded border border-[#c9bfa8] bg-[#e8dfca] p-6">
+        <form id="add-space" action={saveSpace} className="h-fit grid gap-4 rounded border border-line bg-sand p-6">
           <h2 className="font-serif text-2xl sm:text-3xl">Add Space</h2>
           <label className="text-sm font-semibold">Space Name<input name="name" required className={field} /></label>
-          <label className="text-sm font-semibold">Slug<input name="slug" className={field} /><span className="mt-1 block text-xs font-normal text-[#657064]">Leave blank to generate from name.</span></label>
+          <label className="text-sm font-semibold">Slug<input name="slug" className={field} /><span className="mt-1 block text-xs font-normal text-ink-muted">Leave blank to generate from name.</span></label>
           <label className="text-sm font-semibold">Description<textarea name="description" rows={5} className={field} /></label>
           <MediaPicker name="image_media_id" media={media} />
           <label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked />Active</label>
           <label className="text-sm font-semibold">Status<select name="status" defaultValue="draft" className={field}><option value="draft">Draft</option><option value="published">Published</option></select></label>
-          <SubmitButton className="rounded bg-[#1f3426] px-5 py-3 text-sm font-semibold text-white" pendingLabel="Creating…">Create Space</SubmitButton>
+          <SubmitButton className="rounded bg-forest px-5 py-3 text-sm font-semibold text-white" pendingLabel="Creating…">Create Space</SubmitButton>
         </form>
       </div>
     </section>

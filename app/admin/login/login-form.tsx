@@ -15,10 +15,30 @@ function safeNext(raw: string | null) {
   return raw;
 }
 
+// A77. `requireAdmin` redirects here with `?error=unauthorized` when the
+// password was accepted but the account has no row in `user_roles`. The form
+// never read that parameter, so the sign-in appeared to silently fail: the
+// operator was returned to a blank login screen with no message, and retrying
+// the same correct password could only produce the same result.
+//
+// These two states need different words because they need different actions —
+// one is "check what you typed", the other is "your credentials are fine, ask
+// an administrator for access". "Sign-in failed. Check credentials." was wrong
+// for the second, and sent people to re-type a password that already worked.
+function initialError(reason: string | null) {
+  if (reason === "unauthorized") {
+    return "Your sign-in worked, but this account has no CMS access yet. Ask an administrator to grant your account a role, then sign in again.";
+  }
+  if (reason === "forbidden") {
+    return "Your account does not have permission for that page.";
+  }
+  return undefined;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | undefined>(() => initialError(params.get("error")));
   // A23: the button gave no feedback while the network round-trip was in
   // flight, so a slow sign-in invited repeated submits.
   const [pending, startTransition] = useTransition();
@@ -30,16 +50,23 @@ export function LoginForm() {
       email: String(formData.get("email")),
       password: String(formData.get("password")),
     });
-    if (signInError) { setError("Sign-in failed. Check credentials."); return; }
+    if (signInError) {
+      // Supabase returns "Invalid login credentials" for both a wrong password
+      // and an unknown email, deliberately — distinguishing them would let an
+      // attacker enumerate accounts. The copy stays vague for the same reason,
+      // but says which two things to check rather than just "check credentials".
+      setError("That email and password did not match. Check both and try again.");
+      return;
+    }
     const destination = safeNext(params.get("next"));
     startTransition(() => { router.replace(destination); router.refresh(); });
   }
 
   return (
     <form action={submit} className="mt-8 grid max-w-sm gap-4">
-      <label>Email<input required disabled={pending} name="email" type="email" autoComplete="email" className="mt-1 block w-full border border-[#ded1b8] bg-white px-3 py-2 disabled:opacity-60" /></label>
-      <label>Password<input required disabled={pending} name="password" type="password" autoComplete="current-password" className="mt-1 block w-full border border-[#ded1b8] bg-white px-3 py-2 disabled:opacity-60" /></label>
-      {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
+      <label>Email<input required disabled={pending} name="email" type="email" autoComplete="email" className="mt-1 block w-full border border-sand-deep bg-white px-3 py-2 disabled:opacity-60" /></label>
+      <label>Password<input required disabled={pending} name="password" type="password" autoComplete="current-password" className="mt-1 block w-full border border-sand-deep bg-white px-3 py-2 disabled:opacity-60" /></label>
+      {error ? <p role="alert" className="border-l-4 border-terracotta bg-blush px-3 py-2 text-sm text-rust">{error}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Signing in…" : "Sign in"}</Button>
     </form>
   );

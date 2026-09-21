@@ -28,8 +28,8 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
       <PageHero eyebrow="Event at Chatten" title={event.title} description={event.summary ?? undefined} image={image} />
       <main className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
         <MediaImage media={image} alt={image?.alt_text ?? event.title} sizes="(min-width: 768px) 48rem, 100vw" className="mb-10 aspect-[3/2] w-full" />
-        <p className="text-sm font-semibold text-[#8a3a21]">{eventDate(event.starts_at)}</p>
-        {event.body ? <p className="mt-8 text-lg leading-8 text-[#4d5649]">{event.body}</p> : null}
+        <p className="text-sm font-semibold text-rust">{eventDate(event.starts_at)}</p>
+        {event.body ? <p className="mt-8 text-lg leading-8 text-ink">{event.body}</p> : null}
         <CtaLink href="/visit" className="mt-10">Plan Your Visit</CtaLink>
       </main>
     </PublicShell>

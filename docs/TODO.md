@@ -501,7 +501,7 @@ work items; the audit document holds the evidence.
       so any non-zero inner base is pure dead space on a phone — the content
       plus `p-8` already fills the 380px outer. Font sizes untouched.
 
-- [ ] **A74** Consolidate the palette. `--forest`, `--olive`, `--terracotta`
+- [x] **A74** Consolidate the palette. `--forest`, `--olive`, `--terracotta`
       and `--sand` in `globals.css` are referenced nowhere in `app/` or
       `components/`; every surface hardcodes a near-miss hex instead
       (`#1f3426` vs `--forest: #254632`). That is why the colours read as
@@ -509,6 +509,49 @@ work items; the audit document holds the evidence.
       wherever it is body text (3.23–4.11:1) and `--terracotta: #b75e42` works
       neither under white text (4.47:1) nor as text on cream (4.04:1); both
       need darkening before the variables are adopted.
+      **Done.** 96 distinct hardcoded hexes are now 30 tokens in a Tailwind v4
+      `@theme` block — 66 absorbed. Every `text-[#…]`/`bg-[#…]`/`border-[#…]`
+      in `app/` and `components/` was rewritten to the token utility by a
+      codemod; a grep of all eight rendered public pages confirms zero
+      arbitrary-value colour classes remain.
+
+      Grouping was done by measured CIE Lab ΔE, but **distance alone got it
+      wrong twice** and the method had to change, not just the numbers:
+      - Clustering by ΔE cannot see *role*. Three peach hexes sitting 15–22
+        apart are not three colours; they are one button's fill, hover and
+        focus ring, and merging them would flatten the button's states.
+        `#fdf4f1` is the destructive-hover tint, not a neutral paper.
+      - One ΔE threshold cannot judge four different operations. A **merge**
+        must be invisible (ΔE < ~3); a deliberate **AA darkening** is visible
+        *by definition*, so scoring it against a merge threshold manufactures
+        fake failures; a **role fold** is judged by role; a **focus ring** is
+        held to 3:1 by WCAG 1.4.11, not 4.5:1. Splitting the validator into
+        `merge`/`darken`/`fold`/`ring` took the report from 5 problems to 0.
+
+      Six deliberate AA darkenings, all measured, not guessed:
+      `#768075 → #5c665b`, `#b75e42 → #a04e33`, `#b26043 → #8a3a21`,
+      and the media-picker empty state where **both** source colours failed
+      badly (3.55:1 and 2.67:1) and collapse to one darkened `--color-bark`.
+      Darkening is hue-preserving — L\* walked down with a/b held — so nothing
+      shifts warm-to-cool. The Lab b\* axis is why warm cream (`#f4eedf`) is
+      **not** merged into cool near-white (`#f7f5f0`) despite the small ΔE.
+
+      One thing measured and then deliberately **not** changed: the hero scrim
+      `#122117` is ΔE 2.9 from `--color-forest-deep`, close enough to merge on
+      distance — but the swap makes white-text contrast *worse* (3.96 → 3.81),
+      so it stays. Recorded as a decision, not an oversight.
+
+      Guarded by `tests/palette.test.mjs` (4 tests). It re-implements the WCAG
+      and CIE maths rather than importing the app's helpers — a test that
+      imported the implementation's own contrast function would still pass if
+      that function were wrong. Its first run **failed correctly**, catching
+      `--color-bark` referenced but never declared.
+
+      Verified in the browser, not just at build time: A68 was exactly the
+      failure where class names are present in the HTML and no CSS rule
+      matches. `getComputedStyle` on a live `.text-ink` paragraph returns
+      `rgb(77, 86, 73)` = `#4d5649`, and `bg-forest`, `bg-cream`, `bg-sand`,
+      `border-line` and `text-rust` all resolve to their declared values.
 
 - [x] **A75** Make `focus-visible` the standard. `cta.tsx:15` was the only
       file in the repo using `focus-visible:ring`. `header.tsx:23,25` stripped
@@ -548,7 +591,7 @@ work items; the audit document holds the evidence.
       Verified in the browser at 1024px: grid resolves to two columns, all
       three labels present and associated, hint text rendering.
 
-- [ ] **A77** Rewrite operator-facing error and empty-state copy. Several
+- [x] **A77** Rewrite operator-facing error and empty-state copy. Several
       messages state internal state rather than an action ("No order
       supplied.", "Invalid Gallery order."), and `event-actions.ts:13` throws
       into an error boundary that replaces the whole page, discarding typed
@@ -559,14 +602,68 @@ work items; the audit document holds the evidence.
       The dead `empty` prop on `experiences-manager-client.tsx:176` — line 161
       already branched on the empty case — was removed alongside A71/A72, since
       that file was being edited anyway and the prop was unambiguously unused.
+      **Done.** The login form held a real defect, not just bad wording:
+      `requireAdmin` redirects to `/admin/login?error=unauthorized` when the
+      password is *accepted* but the account has no `user_roles` row — and the
+      form never read that parameter. The operator saw a blank login screen and
+      could only retry a password that had already worked. `initialError()` now
+      reads it, and the two states get different words because they need
+      different actions: "check what you typed" versus "your credentials are
+      fine, ask an administrator for access".
 
-- [ ] **A78** Reconcile the two upload limits.
+      Sign-in failure is now "That email and password did not match. Check both
+      and try again." It stays vague on purpose — Supabase returns one message
+      for wrong-password and unknown-email deliberately, since distinguishing
+      them lets an attacker enumerate accounts — but it names the two things to
+      check instead of just "check credentials". A comment records that reason
+      so a future reader does not "improve" it into an enumeration oracle.
+
+      Four server-action messages rewritten from internal state to an action:
+      `"No order supplied."` → "The new order was not received. Reload the page
+      and try reordering again."; `"Invalid content request"` → "This item could
+      not be identified. Reload the page and try again."; and the two Gallery
+      equivalents, where "One of the reordered Gallery items no longer exists"
+      says what actually happened rather than "Unknown Gallery item."
+
+      `media-upload-dropzone.tsx` claimed "New uploads default to Needs
+      Review." — true until A67 removed the gate, and a promise the system no
+      longer keeps: `processMediaUploadFile` returns status `uploaded` and the
+      image is usable at once. `needs_review` now appears nowhere else in the
+      codebase. Replaced with what the system does do.
+
+      **Open question, answered conservatively:** the dashboard copy stays in
+      English. Mixing languages mid-interface is worse than either choice, and
+      switching the whole CMS to Indonesian is the owner's call, not a
+      side-effect of a copy pass. Flag if Indonesian is wanted.
+
+- [x] **A78** Reconcile the two upload limits.
       `media-upload-dropzone.tsx:106` shows `MAX_MEDIA_SELECTION_FILES` while
       `upload-core.ts:118` enforces `MAX_MEDIA_UPLOAD_FILES` — two constants
       for one limit, so the helper text is wrong the moment they diverge. Also
       verify whether "New uploads default to Needs Review" still means
       anything after A67 removed the approval gate, given that the gallery and
       menu managers both submit `status="published"` regardless.
+      **Done.** The obvious fix — have one constant import the other — does not
+      work here, and finding out why was the substance of the task:
+      `upload-core.ts` imports `node:crypto`, so a client component cannot pull
+      from it, and `media-upload-dropzone.tsx` is `"use client"`, so the server
+      cannot pull from it either. Hence a third, dependency-free module,
+      `lib/media/upload-limits.ts`, that both sides import.
+
+      The same latent split existed in the **byte** limit and was not in the
+      original finding: `upload-core.ts` enforced `10 * 1024 * 1024` while the
+      dropzone hardcoded the string "10 MB". `formatMediaSizeLimit()` now
+      derives the words from the enforced number, so the copy cannot drift.
+
+      Guarded by two tests that assert the two limits are the **same value**,
+      not that both are 20 — writing "both are 20" would re-create by hand the
+      exact coupling being removed. Nothing was visibly broken before this, and
+      nothing would have been until someone changed one number, at which point
+      the dropzone would accept a selection the server then rejected, after the
+      operator had already chosen the files.
+
+      **Open question, answered conservatively:** the limit stays at 20 files.
+      Raising it is a server-capacity decision, not a copy fix.
 
 ## Migration process note
 

@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 
-export const MAX_MEDIA_UPLOAD_BYTES = 10 * 1024 * 1024;
-export const MAX_MEDIA_UPLOAD_FILES = 20;
+// A78: the limits live in upload-limits.ts so the browser can import the same
+// numbers this module enforces. Re-exported because callers already import
+// them from here.
+import { MAX_MEDIA_UPLOAD_BYTES, MAX_MEDIA_UPLOAD_FILES, formatMediaSizeLimit } from "./upload-limits";
+
+export { MAX_MEDIA_UPLOAD_BYTES, MAX_MEDIA_UPLOAD_FILES };
 
 const mediaExtensions: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -77,7 +81,7 @@ function failure(filename: string, code: Extract<MediaUploadFileResult, { ok: fa
 }
 
 export async function processMediaUploadFile(file: MediaUploadFile, adapter: MediaUploadAdapter, metadata: MediaUploadMetadata = {}): Promise<MediaUploadFileResult> {
-  if (file.size > MAX_MEDIA_UPLOAD_BYTES) return failure(file.name, "FILE_TOO_LARGE", "Each image must be 10 MB or smaller.");
+  if (file.size > MAX_MEDIA_UPLOAD_BYTES) return failure(file.name, "FILE_TOO_LARGE", `Each image must be ${formatMediaSizeLimit()} or smaller.`);
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
   const mimeType = detectedMime(bytes);

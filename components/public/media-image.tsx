@@ -50,7 +50,7 @@ export function MediaImage({
   // decided by their order in the generated stylesheet, not by the order
   // written here, so the default is dropped when the caller supplies its own.
   const positioned = /\b(absolute|fixed|sticky|relative)\b/.test(className);
-  const wrapper = `${positioned ? "" : "relative "}overflow-hidden bg-[#405542] ${className}`;
+  const wrapper = `${positioned ? "" : "relative "}overflow-hidden bg-moss ${className}`;
 
   if (!src) return <div className={wrapper} aria-hidden="true" />;
 

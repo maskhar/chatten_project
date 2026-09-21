@@ -3,8 +3,21 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import ts from "typescript";
 
-const src = fs.readFileSync(new URL("../lib/media/upload-core.ts", import.meta.url), "utf8");
-const js = ts.transpileModule(src, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+// upload-core.ts is loaded as a data: module so it can be exercised without a
+// bundler. A relative specifier cannot resolve from a data: URL, so its one
+// import — the shared limits module (A78) — is inlined as a data: URL of its
+// own before the transpiled source is handed to import().
+const read = (name) => fs.readFileSync(new URL(`../lib/media/${name}.ts`, import.meta.url), "utf8");
+const compile = (name) => ts.transpileModule(read(name), {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
+}).outputText;
+
+// Kept as raw source: one test below asserts on the text of upload-core.ts
+// itself, not on its behaviour.
+const src = read("upload-core");
+
+const limitsUrl = "data:text/javascript," + encodeURIComponent(compile("upload-limits"));
+const js = compile("upload-core").replace(/from\s*"\.\/upload-limits"/g, `from "${limitsUrl}"`);
 const { MAX_MEDIA_UPLOAD_BYTES, MAX_MEDIA_UPLOAD_FILES, processMediaUploadBatch } = await import("data:text/javascript," + encodeURIComponent(js));
 
 function bytes(values, length = values.length) {

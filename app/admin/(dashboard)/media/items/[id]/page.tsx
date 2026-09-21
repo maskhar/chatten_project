@@ -26,7 +26,7 @@ type MediaItem = {
   height: number | null;
 };
 
-const field = "mt-1 block w-full rounded border border-[#c9bfa8] bg-white px-3 py-2 text-sm";
+const field = "mt-1 block w-full rounded border border-line bg-white px-3 py-2 text-sm";
 const labelText = "block text-sm font-semibold";
 
 function fileSizeLabel(bytes: number | null) {
@@ -51,46 +51,46 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
 
   return (
     <section>
-      <Link href="/admin/media" className="text-sm text-[#657064]">← Back to Media Library</Link>
-      <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">Media</p>
+      <Link href="/admin/media" className="text-sm text-ink-muted">← Back to Media Library</Link>
+      <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-clay">Media</p>
       <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{item.title ?? item.original_filename ?? "Untitled image"}</h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-        <aside className="h-fit rounded border border-[#dde0d7] bg-white p-4">
+        <aside className="h-fit rounded border border-mist bg-white p-4">
           {/* A29: the screen had no preview at all, so alt text had to be
               judged from a filename. The preview honours the focal point
               below, which makes the effect of changing it visible immediately
               after a save. */}
           {href ? (
-            <div className="relative aspect-[4/3] overflow-hidden rounded bg-[#e2e6dd]">
+            <div className="relative aspect-[4/3] overflow-hidden rounded bg-mist">
               <Image src={href} alt={item.alt_text ?? item.title ?? "Media preview"} fill sizes="320px" className="object-cover" style={{ objectPosition: focalObjectPosition(item) }} />
             </div>
           ) : null}
           <dl className="mt-4 grid gap-2 text-sm">
-            <div className="flex justify-between gap-3"><dt className="text-[#657064]">File</dt><dd className="min-w-0 break-words text-right">{item.original_filename ?? "—"}</dd></div>
-            <div className="flex justify-between gap-3"><dt className="text-[#657064]">Type</dt><dd>{item.mime_type ?? "—"}</dd></div>
-            <div className="flex justify-between gap-3"><dt className="text-[#657064]">Size</dt><dd>{fileSizeLabel(item.file_size)}</dd></div>
-            <div className="flex justify-between gap-3"><dt className="text-[#657064]">Dimensions</dt><dd>{item.width && item.height ? `${item.width} × ${item.height}` : "—"}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-muted">File</dt><dd className="min-w-0 break-words text-right">{item.original_filename ?? "—"}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-muted">Type</dt><dd>{item.mime_type ?? "—"}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-muted">Size</dt><dd>{fileSizeLabel(item.file_size)}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-muted">Dimensions</dt><dd>{item.width && item.height ? `${item.width} × ${item.height}` : "—"}</dd></div>
           </dl>
         </aside>
 
-        <form action={saveMediaDetails} className="grid max-w-2xl gap-5 rounded border border-[#c9bfa8] bg-[#e8dfca] p-6">
+        <form action={saveMediaDetails} className="grid max-w-2xl gap-5 rounded border border-line bg-sand p-6">
           <UnsavedChangesGuard />
           <input type="hidden" name="id" value={item.id} />
           <label className={labelText}>Title<input name="title" defaultValue={item.title ?? ""} className={field} /></label>
-          <label className={labelText}>Alt text <span className="font-normal text-[#657064]">— optional</span><input name="alt_text" defaultValue={item.alt_text ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-[#657064]">Describes the image for screen readers and for search engines. Worth a sentence when you have one; the image works either way.</span></label>
+          <label className={labelText}>Alt text <span className="font-normal text-ink-muted">— optional</span><input name="alt_text" defaultValue={item.alt_text ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-ink-muted">Describes the image for screen readers and for search engines. Worth a sentence when you have one; the image works either way.</span></label>
           <label className={labelText}>Caption<textarea name="caption" rows={3} defaultValue={item.caption ?? ""} className={field} /></label>
           <div className="grid gap-5 sm:grid-cols-2">
             <label className={labelText}>Category<input name="category" defaultValue={item.category ?? ""} className={field} /></label>
-            <label className={labelText}>Tags<input name="tags" defaultValue={item.tags?.join(", ") ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-[#657064]">Comma separated.</span></label>
+            <label className={labelText}>Tags<input name="tags" defaultValue={item.tags?.join(", ") ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-ink-muted">Comma separated.</span></label>
           </div>
 
-          <fieldset className="grid gap-3 rounded border border-[#c9bfa8] bg-white/60 p-4">
+          <fieldset className="grid gap-3 rounded border border-line bg-white/60 p-4">
             <legend className="px-1 text-sm font-semibold">Focal point</legend>
             {/* A28: these columns have existed since the rights-metadata
                 migration but nothing wrote them, so every crop fell back to
                 centre and a subject near an edge was cut off. */}
-            <p className="text-xs text-[#657064]">Where the crop should keep in frame. 0 is left/top, 1 is right/bottom. Leave both empty to centre.</p>
+            <p className="text-xs text-ink-muted">Where the crop should keep in frame. 0 is left/top, 1 is right/bottom. Leave both empty to centre.</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className={labelText}>Horizontal<input name="focal_x" type="number" min={0} max={1} step={0.01} defaultValue={item.focal_x ?? ""} className={field} /></label>
               <label className={labelText}>Vertical<input name="focal_y" type="number" min={0} max={1} step={0.01} defaultValue={item.focal_y ?? ""} className={field} /></label>
@@ -98,20 +98,20 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
           </fieldset>
 
           <div className="flex flex-wrap gap-3">
-            <SubmitButton className="rounded bg-[#1f3426] px-6 py-3 text-sm font-semibold text-white">Save changes</SubmitButton>
-            <Link href="/admin/media" className="rounded border border-[#1f3426] px-6 py-3 text-sm font-semibold">Cancel</Link>
+            <SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white">Save changes</SubmitButton>
+            <Link href="/admin/media" className="rounded border border-forest px-6 py-3 text-sm font-semibold">Cancel</Link>
           </div>
         </form>
       </div>
 
-      <section className="mt-8 max-w-2xl rounded border border-[#c9bfa8] bg-white p-5" aria-labelledby="media-used-in-heading">
+      <section className="mt-8 max-w-2xl rounded border border-line bg-white p-5" aria-labelledby="media-used-in-heading">
         <h2 id="media-used-in-heading" className="font-serif text-2xl sm:text-3xl">Used In</h2>
-        {usage.summary ? <p className="mt-2 text-sm text-[#4d5649]">{usage.summary}</p> : null}
-        {usage.emptyMessage ? <p className="mt-3 text-sm text-[#4d5649]">{usage.emptyMessage}</p> : null}
+        {usage.summary ? <p className="mt-2 text-sm text-ink">{usage.summary}</p> : null}
+        {usage.emptyMessage ? <p className="mt-3 text-sm text-ink">{usage.emptyMessage}</p> : null}
         {usage.count ? (
           <ul className="mt-4 grid gap-2" aria-label={usage.summary ?? undefined}>
             {usage.references.map((reference, index) => (
-              <li className="min-w-0 border-t border-[#e3dbc9] pt-2" key={reference.resource + "-" + reference.mediaId + "-" + index}>
+              <li className="min-w-0 border-t border-sand pt-2" key={reference.resource + "-" + reference.mediaId + "-" + index}>
                 {reference.href ? <Link href={reference.href} className="block break-words underline">{reference.label} — {reference.title}</Link> : <span className="block break-words">{reference.label} — {reference.title}</span>}
               </li>
             ))}

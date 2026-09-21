@@ -3,8 +3,15 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import ts from "typescript";
 
-const source = fs.readFileSync(new URL("../lib/media/upload-selection.ts", import.meta.url), "utf8");
-const javascript = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+// A78: upload-selection.ts now imports the shared limits module. A relative
+// specifier cannot resolve from a data: URL, so it is inlined as one.
+const compile = (name) => ts.transpileModule(
+  fs.readFileSync(new URL(`../lib/media/${name}.ts`, import.meta.url), "utf8"),
+  { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } },
+).outputText;
+
+const limitsUrl = "data:text/javascript," + encodeURIComponent(compile("upload-limits"));
+const javascript = compile("upload-selection").replace(/from\s*"\.\/upload-limits"/g, `from "${limitsUrl}"`);
 const selection = await import("data:text/javascript," + encodeURIComponent(javascript));
 
 const file = (name) => ({ name });
@@ -62,4 +69,23 @@ test("media upload component wires native multiple input, drag drop, queue state
   assert.match(component, /uploadMediaBatch/);
   assert.match(component, /buildMediaUploadFormData/);
   assert.match(page, /MediaUploadDropzone/);
+});
+
+// A78. Before this, the browser's limit and the server's limit were two
+// unrelated constants that both happened to be 20. Nothing was visibly wrong,
+// and nothing would have been wrong until someone changed one of them — at
+// which point the dropzone would accept a selection the server then rejected,
+// after the operator had already chosen the files.
+//
+// Asserting "both are 20" would re-create the same coupling by hand. These
+// assert they are the SAME VALUE, whatever it becomes.
+test("the selection limit is the limit the server enforces", async () => {
+  const limits = await import("data:text/javascript," + encodeURIComponent(compile("upload-limits")));
+  assert.equal(selection.MAX_MEDIA_SELECTION_FILES, limits.MAX_MEDIA_UPLOAD_FILES);
+});
+
+test("the size limit shown to operators is derived from the enforced value", async () => {
+  const limits = await import("data:text/javascript," + encodeURIComponent(compile("upload-limits")));
+  const megabytes = limits.MAX_MEDIA_UPLOAD_BYTES / (1024 * 1024);
+  assert.equal(limits.formatMediaSizeLimit(), `${megabytes} MB`);
 });

@@ -1,5 +1,97 @@
 @import "tailwindcss";
-:root { --background: #f8f3e8; --foreground: #202920; --forest: #254632; --olive: #3c4734; --terracotta: #b75e42; --sand: #ded1b8; --font-display: Georgia, "Times New Roman", serif; --font-body: Arial, Helvetica, sans-serif; }
+
+/* A74. Before this block the codebase had 66 distinct hardcoded hexes across
+   403 `bg-[#...]` / `text-[#...]` / `border-[#...]` uses, and the four colour
+   variables declared in `:root` below had zero references anywhere in `app/`
+   or `components/` — they described a palette nothing actually used.
+
+   Clustering those 66 by CIE Lab ΔE showed most were the same colour typed
+   twice: `#1f3426` `#1e3024` `#1c3025` `#253526` `#233b2a` `#1f2c22` are six
+   spellings of one green, 62 uses between them. They collapse to 30 tokens.
+
+   Three things this grouping is careful about, because perceptual distance
+   alone gets each of them wrong:
+
+   1. `--color-cream` and `--color-paper` sit ΔE 5 apart and stay separate.
+      One is warm (Lab b* 8.0), one is neutral (b* 2.6), and the admin shell
+      paints them as adjacent panels, where that difference is the whole point.
+
+   2. `--color-peach`, `--color-peach-deep` and `--color-peach-light` are not
+      three near-duplicate colours. They are the fill, the hover fill and the
+      focus ring of one button. Merging by distance would have deleted its
+      hover state.
+
+   3. Six of these values are NOT what the codebase used before. They are
+      minimal hue-preserving darkenings — walked down L* in Lab holding a/b —
+      applied because the original failed WCAG 4.5:1 as body text:
+
+        #657064 + #768075 -> #5c665b   3.91 / 3.10 -> 4.52   (47 uses)
+        #98a096            -> #6b7369   2.47        -> 4.50
+        #47714d            -> #436c49   4.24        -> 4.55
+        #9b5a42            -> #92523b   4.03        -> 4.54
+        #8b6f47 + #9b8563 -> #795f38   3.55 / 2.67 -> 4.52
+
+      `#657064` and `#768075` were two tiers of "muted grey", but both failed,
+      and any lighter tier that passes lands on top of the darker one — so the
+      tier distinction was never realisable. It existed only as long as one of
+      the two stayed unreadable. Hence one token, not two.
+
+   Contrast is checked against the surface each colour is actually painted on,
+   not against white: `--color-peach-pale` is only ever ink on the rust feature
+   band, and `--color-ink-dim` only ever on white and paper. tests/palette.test.mjs
+   enforces both that list and the no-raw-hex rule. */
+@theme {
+  /* greens */
+  --color-forest: #1f3426;
+  --color-forest-deep: #17271d;
+  --color-forest-soft: #2a4732;
+  --color-moss: #405542;
+  --color-olive: #3c4734;
+  --color-leaf: #28623a;
+  --color-leaf-ink: #436c49;
+  --color-sage: #a8b6a5;
+  --color-sage-deep: #8b9d83;
+
+  /* ink */
+  --color-ink: #4d5649;
+  --color-ink-muted: #5c665b;
+  --color-ink-dim: #6b7369;
+
+  /* warm surfaces */
+  --color-cream: #f4eedf;
+  --color-paper: #f7f5f0;
+  --color-sand: #e8dfca;
+  --color-sand-deep: #ded1b8;
+  --color-mist: #dde0d7;
+
+  /* lines */
+  --color-line: #c9bfa8;
+  --color-line-soft: #d9c9aa;
+  --color-line-deep: #a89778;
+
+  /* rust / terracotta */
+  --color-rust: #8a3a21;
+  --color-clay: #92523b;
+  --color-terracotta: #b65d40;
+  --color-terracotta-deep: #a04e33;
+  --color-blush: #fdf4f1;
+  /* Media-picker empty state. Both source colours failed AA badly (3.55 and
+     2.67), so this is one darkened token rather than the two it replaces. */
+  --color-bark: #795f38;
+
+  /* peach: one button's states, plus the eyebrow tints */
+  --color-peach: #e2a07a;
+  --color-peach-deep: #d78f66;
+  --color-peach-light: #f3c4a6;
+  --color-peach-pale: #ffe8d9;
+}
+
+:root {
+  --background: var(--color-cream);
+  --foreground: #202920;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: Arial, Helvetica, sans-serif;
+}
 * { box-sizing: border-box; }
 html { background: var(--background); }
 body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); }

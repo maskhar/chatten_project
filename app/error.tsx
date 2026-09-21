@@ -15,12 +15,12 @@ export default function PublicError({ error, reset }: { error: Error & { digest?
   }, [error]);
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f4eedf] px-6 text-center text-[#1e3024]">
+    <main className="grid min-h-screen place-items-center bg-cream px-6 text-center text-forest">
       <div>
-        <p className="text-xs uppercase tracking-[.22em] text-[#8a3a21]">Something went wrong</p>
+        <p className="text-xs uppercase tracking-[.22em] text-rust">Something went wrong</p>
         <h1 className="mt-5 font-serif text-4xl sm:text-6xl">This view did not load.</h1>
-        <p className="mt-5 text-[#4d5649]">Try again in a moment, or take another path through Chatten.</p>
-        {error.digest ? <p className="mt-2 text-xs text-[#4d5649]">Reference: {error.digest}</p> : null}
+        <p className="mt-5 text-ink">Try again in a moment, or take another path through Chatten.</p>
+        {error.digest ? <p className="mt-2 text-xs text-ink">Reference: {error.digest}</p> : null}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <CtaButton type="button" onClick={reset}>Try again</CtaButton>
           <CtaLink href="/" variant="outline">Back Home</CtaLink>

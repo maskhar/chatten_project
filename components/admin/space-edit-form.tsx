@@ -18,8 +18,8 @@ export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }
 
   return (
     <section>
-      <Link href="/admin/spaces" className="text-sm text-[#657064] hover:text-[#1f3426]">← Back to Spaces</Link>
-      <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-[#9b5a42]">Edit Space</p>
+      <Link href="/admin/spaces" className="text-sm text-ink-muted hover:text-forest">← Back to Spaces</Link>
+      <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-clay">Edit Space</p>
       <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{space.name}</h1>
       <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <form action={saveSpace} className="grid gap-6">
@@ -33,7 +33,7 @@ export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }
             <label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked={space.is_active} />Active</label>
             <label className="flex items-center gap-2 text-sm">Status<select name="status" defaultValue={space.status} className="rounded border px-2 py-1"><option value="draft">Draft</option><option value="published">Published</option></select></label>
           </div>
-          <div className="flex flex-wrap gap-3"><SubmitButton className="rounded bg-[#1f3426] px-6 py-3 text-sm font-semibold text-white">Save Changes</SubmitButton><Link href="/admin/spaces" className="rounded border border-[#1f3426] px-6 py-3 text-sm font-semibold">Cancel</Link></div>
+          <div className="flex flex-wrap gap-3"><SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white">Save Changes</SubmitButton><Link href="/admin/spaces" className="rounded border border-forest px-6 py-3 text-sm font-semibold">Cancel</Link></div>
         </form>
         {image ? <aside className="h-fit rounded border bg-white p-4"><p className="text-sm font-semibold">Current Image</p><Image src={image} alt={space.name} width={320} height={240} className="mt-3 w-full rounded object-cover" /></aside> : null}
       </div>

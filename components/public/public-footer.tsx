@@ -16,7 +16,7 @@ const FOOTER_LINK = `${TAP_TARGET} text-white/75 hover:text-white`;
 export function PublicFooter({ navigation = [], socials = [] }: { navigation?: NavItem[]; socials?: PublicSocial[] }) {
   const links = navigationLinks(navigation);
   return (
-    <footer className="bg-[#17271d] py-14 text-white">
+    <footer className="bg-forest-deep py-14 text-white">
       <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-6 md:flex-row lg:px-12">
         <div>
           <Link href="/" className={`${TAP_TARGET} font-serif text-3xl tracking-[.14em]`}>CHATTEN</Link>

@@ -16,13 +16,13 @@ const BASE = "inline-flex min-h-11 items-center justify-center px-5 py-3 text-sm
 
 const VARIANTS: Record<CtaVariant, string> = {
   // Cream and sand surfaces.
-  solid: "bg-[#1f3426] text-white hover:bg-[#2a4732] focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f4eedf]",
-  outline: "border border-[#1f3426] text-[#1e3024] hover:bg-[#1f3426] hover:text-white focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f4eedf]",
+  solid: "bg-forest text-white hover:bg-forest-soft focus-visible:ring-forest focus-visible:ring-offset-cream",
+  outline: "border border-forest text-forest hover:bg-forest hover:text-white focus-visible:ring-forest focus-visible:ring-offset-cream",
   // Green bands and photographs: the offset colour is the band, so the ring
   // reads as a ring rather than as a halo.
-  onDark: "border border-white/70 text-white hover:bg-white/10 focus-visible:ring-white focus-visible:ring-offset-[#1f3426]",
+  onDark: "border border-white/70 text-white hover:bg-white/10 focus-visible:ring-white focus-visible:ring-offset-forest",
   // The single peach hero button.
-  accent: "bg-[#e2a07a] text-[#253526] hover:bg-[#d78f66] focus-visible:ring-[#f3c4a6] focus-visible:ring-offset-[#233b2a]",
+  accent: "bg-peach text-forest hover:bg-peach-deep focus-visible:ring-peach-light focus-visible:ring-offset-forest",
 };
 
 export function ctaClassName(variant: CtaVariant = "solid", className = "") {
