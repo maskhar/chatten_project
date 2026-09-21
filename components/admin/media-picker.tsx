@@ -3,13 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { mediaHrefById } from "@/lib/media/url";
+import { filterPickerMedia, pickerCategories } from "@/lib/media/picker-filter";
 
 type Media = {
   id: string;
   title: string | null;
   alt_text: string | null;
   category: string | null;
-  rights_status: string;
   width: number | null;
   height: number | null;
   bucket: string;
@@ -31,25 +31,10 @@ export function MediaPicker({
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selected, setSelected] = useState(value ?? "");
 
-  const categories = useMemo(() => {
-    const uniqueCategories = new Set<string>();
-    media.forEach((item) => {
-      const cat = item.category?.trim();
-      if (cat) {
-        uniqueCategories.add(cat);
-      }
-    });
-    return Array.from(uniqueCategories).sort();
-  }, [media]);
+  const categories = useMemo(() => pickerCategories(media), [media]);
 
   const filtered = useMemo(
-    () =>
-      media.filter((item) => {
-        const searchText = `${item.title ?? ""} ${item.alt_text ?? ""} ${item.category ?? ""}`.toLowerCase();
-        const matchesSearch = query ? searchText.includes(query.toLowerCase()) : true;
-        const matchesCategory = categoryFilter ? item.category?.trim() === categoryFilter : true;
-        return matchesSearch && matchesCategory;
-      }),
+    () => filterPickerMedia(media, query, categoryFilter),
     [media, query, categoryFilter],
   );
 
@@ -109,7 +94,7 @@ export function MediaPicker({
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search approved images..."
+          placeholder="Search images..."
           className="rounded border border-[#c9bfa8] bg-white px-3 py-2 text-sm"
         />
         <select
@@ -136,9 +121,9 @@ export function MediaPicker({
       </div>
       {media.length === 0 ? (
         <div className="rounded border border-[#e4d6bd] bg-[#fffaf0] p-6 text-center">
-          <p className="font-medium text-[#8b6f47]">No approved images yet</p>
+          <p className="font-medium text-[#8b6f47]">No images yet</p>
           <p className="mt-2 text-sm text-[#9b8563]">
-            Upload and approve images in the Media Library before selecting them here.
+            Upload an image in the Media Library and it appears here straight away.
           </p>
           <Link
             href="/admin/media"

@@ -33,7 +33,6 @@ export type MediaUploadRecord = {
   alt_text: string | null;
   title: string;
   source_type: "operator-upload";
-  rights_status: "unknown";
   sha256: string;
   tags: string[];
 };
@@ -101,7 +100,6 @@ export async function processMediaUploadFile(file: MediaUploadFile, adapter: Med
     alt_text: metadata.altText?.trim() || null,
     title: metadata.title?.trim() || file.name,
     source_type: "operator-upload",
-    rights_status: "unknown",
     sha256,
     tags: [],
   });

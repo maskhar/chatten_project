@@ -47,12 +47,10 @@ export default async function AdminPage() {
           <p className="mt-3 font-serif text-4xl">{media.total}</p>
           <p className="mt-3 text-xs font-semibold text-[#47714d]">Open library</p>
         </Link>
-        <Link href="/admin/media" className={`rounded-lg border p-5 shadow-sm hover:border-[#a8b6a5] ${media.pending ? "border-[#e4c1b3] bg-[#fdf3ef]" : "border-[#dde0d7] bg-white"}`}>
-          <p className="text-sm text-[#657064]">Awaiting rights approval</p>
-          <p className="mt-3 font-serif text-4xl">{media.pending}</p>
-          {/* A6 made this consequential: an unapproved asset is not served to
-              the public site at all, so it renders as a placeholder. */}
-          <p className="mt-3 text-xs font-semibold text-[#9b5a42]">{media.pending ? "These images will not render publicly" : "All assets cleared"}</p>
+        <Link href="/admin/media?usage=unused" className="rounded-lg border border-[#dde0d7] bg-white p-5 shadow-sm hover:border-[#a8b6a5]">
+          <p className="text-sm text-[#657064]">Unused images</p>
+          <p className="mt-3 font-serif text-4xl">{media.unused}</p>
+          <p className="mt-3 text-xs font-semibold text-[#47714d]">{media.unused ? "Uploaded but not placed on a page yet" : "Every image is in use"}</p>
         </Link>
       </div>
 

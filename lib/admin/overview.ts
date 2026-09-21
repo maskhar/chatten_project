@@ -1,6 +1,7 @@
 import "server-only";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { editorialTables, mergeActivity, toActivityEntries, type ActivityEntry, type DraftGroup } from "@/lib/admin/overview-tables";
+import { loadMediaUsageMap } from "@/lib/media/usage-server";
 import type { StatusTableName } from "@/types/tables";
 
 export type { ActivityEntry, DraftGroup };
@@ -41,13 +42,17 @@ export async function loadRecentActivity(limit = 8): Promise<ActivityEntry[]> {
   return mergeActivity(perTable, limit);
 }
 
+// The tile used to count media awaiting rights approval. 20260921000500
+// removed that gate — an uploaded image is publishable — so the count was
+// always zero and told the operator nothing. What is worth surfacing instead
+// is the opposite gap: images sitting in the library that no content row
+// points at, which is the actual reason a section still looks empty.
 export async function loadMediaHealth() {
   const supabase = await createServerSupabaseClient();
-  const [total, pending] = await Promise.all([
+  const [total, usage] = await Promise.all([
     supabase.from("media").select("id", { count: "exact", head: true }),
-    // Anything not explicitly approved is not served to the public site at all
-    // since A6, so it is the number worth surfacing — not the library total.
-    supabase.from("media").select("id", { count: "exact", head: true }).neq("rights_status", "approved"),
+    loadMediaUsageMap(),
   ]);
-  return { total: total.count ?? 0, pending: pending.count ?? 0 };
+  const count = total.count ?? 0;
+  return { total: count, unused: Math.max(0, count - usage.size) };
 }

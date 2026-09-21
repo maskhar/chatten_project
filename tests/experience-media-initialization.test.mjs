@@ -1,82 +1,27 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
-test("initializes media picker with current experience image", () => {
-  const experience = {
-    id: "550e8400-e29b-41d4-a716-446655440000",
-    name: "Morning Coffee",
-    slug: "morning-coffee",
-    description: "Start your day with panoramic views.",
-    image_media_id: "660e8400-e29b-41d4-a716-446655440001",
-    is_active: true,
-    status: "published",
-  };
+// These tests used to filter an inline array by rights_status and assert the
+// result, which exercised Array.prototype.filter rather than anything in the
+// repository. They now read the files they are named after: the picker query
+// and the edit form are what actually decide which images an operator sees.
 
-  const approvedMedia = [
-    {
-      id: "660e8400-e29b-41d4-a716-446655440001",
-      title: "Sunrise view",
-      alt_text: "Morning panorama",
-      category: "experiences",
-      rights_status: "approved",
-    },
-    {
-      id: "660e8400-e29b-41d4-a716-446655440002",
-      title: "Coffee setup",
-      alt_text: "Coffee on table",
-      category: "food",
-      rights_status: "approved",
-    },
-  ];
+const listPage = fs.readFileSync("app/admin/(dashboard)/experiences/page.tsx", "utf8");
+const editPage = fs.readFileSync("app/admin/(dashboard)/experiences/items/[id]/page.tsx", "utf8");
+const editForm = fs.readFileSync("components/admin/experience-edit-form.tsx", "utf8");
 
-  const currentSelection = experience.image_media_id;
-  const selectedMedia = approvedMedia.find((m) => m.id === currentSelection);
-
-  assert.ok(selectedMedia);
-  assert.equal(selectedMedia.id, "660e8400-e29b-41d4-a716-446655440001");
-  assert.equal(selectedMedia.title, "Sunrise view");
-  assert.equal(selectedMedia.rights_status, "approved");
+test("the experience media picker offers every uploaded image", () => {
+  // 20260921000500 removed the approval gate: an image is usable the moment
+  // it is uploaded, so a picker that filtered would hide images the operator
+  // had just added with nothing on screen to explain why.
+  for (const [name, source] of [["list", listPage], ["edit", editPage]]) {
+    assert.match(source, /from\("media"\)/, `the ${name} page no longer loads media`);
+    assert.ok(!/rights_status/.test(source), `the ${name} page filters or selects rights_status again`);
+  }
 });
 
-test("handles experience with no image", () => {
-  const experience = {
-    id: "550e8400-e29b-41d4-a716-446655440000",
-    name: "Golden Hour",
-    slug: "golden-hour",
-    description: "Sunset experience.",
-    image_media_id: null,
-    is_active: true,
-    status: "draft",
-  };
-
-  const approvedMedia = [
-    {
-      id: "660e8400-e29b-41d4-a716-446655440001",
-      title: "Sunrise view",
-      alt_text: "Morning panorama",
-      category: "experiences",
-      rights_status: "approved",
-    },
-  ];
-
-  const currentSelection = experience.image_media_id;
-  const selectedMedia = approvedMedia.find((m) => m.id === currentSelection);
-
-  assert.equal(currentSelection, null);
-  assert.equal(selectedMedia, undefined);
-});
-
-test("filters only approved media for experience picker", () => {
-  const allMedia = [
-    { id: "660e8400-e29b-41d4-a716-446655440001", rights_status: "approved" },
-    { id: "660e8400-e29b-41d4-a716-446655440002", rights_status: "needs_review" },
-    { id: "660e8400-e29b-41d4-a716-446655440003", rights_status: "restricted" },
-    { id: "660e8400-e29b-41d4-a716-446655440004", rights_status: "approved" },
-  ];
-
-  const approvedOnly = allMedia.filter((m) => m.rights_status === "approved");
-
-  assert.equal(approvedOnly.length, 2);
-  assert.equal(approvedOnly[0].id, "660e8400-e29b-41d4-a716-446655440001");
-  assert.equal(approvedOnly[1].id, "660e8400-e29b-41d4-a716-446655440004");
+test("the edit form starts on the experience's current image", () => {
+  assert.match(editForm, /MediaPicker/);
+  assert.match(editForm, /image_media_id/);
 });

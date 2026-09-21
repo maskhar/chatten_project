@@ -37,8 +37,8 @@
 - [ ] Operator-assisted Auth login/session/browser smoke verification
 - [x] Add guarded temporary Auth provision/session/cleanup tooling
 
-- [ ] Add operator-approved Chatten photography to content/chatten-media-import.json and map Hero, Moments, Gallery, Spaces, and Experiences
-- [x] Add rights-aware media metadata and approved manifest importer
+- [ ] Add real Chatten photography to content/chatten-media-import.json and map Hero, Moments, Gallery, Spaces, and Experiences
+- [x] Add media metadata and manifest importer
 
 ## Phase 6 — CMS Experience Refactor
 - [x] Complete dedicated domain editors, visual media manager, and operator-facing ordering across all CMS areas
@@ -49,8 +49,6 @@
 - [x] Complete dedicated Gallery management ordering, editing, visibility, and safe deletion
 
 - [x] Add Media Search to Media Library
-
-- [x] Add Media Rights Filter
 
 - [x] Add Media Usage Filter
 
@@ -347,13 +345,39 @@ stable references for commits and verification notes.
 - [x] **A65** Document the `prevent_last_super_admin_removal` cascade behaviour:
       deleting the last super_admin's auth user fails the whole cascade with a raw
       trigger exception.
-- [ ] **A66** Approve rights status on existing media (data, not code). All 3
-      rows in `chatten_cafe.media` are `rights_status = 'unknown'` as of
-      2026-09-21 — found while verifying A5. `public_media` and the app's
-      `.eq("rights_status", "approved")` filters are working as designed, but
-      with zero approved rows the homepage, Events, and Promotions media
-      pickers render with no images until someone reviews and approves media
-      in the CMS Media Library.
+- [~] **A66** Void — superseded by A67. This asked an operator to approve the
+      3 `rights_status = 'unknown'` rows in `chatten_cafe.media` so the pickers
+      would stop rendering empty. A67 removed the gate instead, so there is
+      nothing left to approve. The pickers were fixed by that change; what is
+      still outstanding is the *content* task above — there are only 3 images
+      in the library and every content row still has `image_media_id IS NULL`.
+- [x] **A67** Remove the media rights-approval gate
+      (`20260921000500_remove_media_rights_approval.sql`). The gate was four
+      layers deep: an `.eq("rights_status","approved")` filter on every public
+      query and every picker query, the `public_media` RLS predicate, a
+      `storage.objects` predicate joining back to `chatten_cafe.media`, and six
+      server actions that refused to save a row pointing at an unapproved
+      image. The premise was a shared photo library where provenance must be
+      cleared before publication; Chatten is a single-cafe landing page edited
+      by the people who took the photos, so the gate only ever stood between an
+      operator and the image they had just uploaded — with nothing on screen
+      explaining why it would not appear.
+
+      Alt text became optional in the same pass (`gallery_items.alt_text` is
+      now nullable); a blank falls back to the row's title, so it adds SEO
+      value when filled and blocks nothing when not. The Media Library's rights
+      filter, its "Rights:" tile line, the rights/provenance fieldset and the
+      dashboard's "Awaiting rights approval" tile all went with it — the tile
+      was replaced with "Unused images", which counts library images no content
+      row points at and is the metric that actually explains an empty section.
+
+      **Not removed:** the `chatten-media` bucket stays private
+      (`public = f`) and bytes still go through `app/api/media/[id]`, so
+      storage paths remain unguessable. That layer costs the operator nothing —
+      no step, no field, no button. `tests/media-approval-removed.test.mjs`
+      scans the whole source tree for any returning `rights_status` reference
+      and asserts the bucket flip in `…000400` is still in place, so neither
+      half can be undone silently.
 
 ## Migration process note
 

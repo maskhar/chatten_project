@@ -28,19 +28,7 @@ export async function saveExperience(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   
   const imageMediaId = String(formData.get("image_media_id") ?? "") || null;
-  
-  // Validate approved media if provided
-  if (imageMediaId) {
-    const { data, error } = await supabase
-      .from("media")
-      .select("rights_status")
-      .eq("id", imageMediaId)
-      .maybeSingle();
-    if (error || data?.rights_status !== "approved") {
-      throw new Error("Experience image must be an approved media item.");
-    }
-  }
-  
+
   const payload = {
     name,
     slug,

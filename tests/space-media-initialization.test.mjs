@@ -1,10 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 
-test("space media picker initializes current approved image", () => {
-  const current = "660e8400-e29b-41d4-a716-446655440001";
-  const media = [{ id: current, rights_status: "approved" }, { id: "restricted", rights_status: "restricted" }];
-  const approved = media.filter((item) => item.rights_status === "approved");
-  assert.equal(approved.find((item) => item.id === current)?.id, current);
-  assert.equal(approved.some((item) => item.id === "restricted"), false);
+const listPage = fs.readFileSync("app/admin/(dashboard)/spaces/page.tsx", "utf8");
+const editPage = fs.readFileSync("app/admin/(dashboard)/spaces/items/[id]/page.tsx", "utf8");
+const editForm = fs.readFileSync("components/admin/space-edit-form.tsx", "utf8");
+
+test("the space media picker offers every uploaded image", () => {
+  for (const [name, source] of [["list", listPage], ["edit", editPage]]) {
+    assert.match(source, /from\("media"\)/, `the ${name} page no longer loads media`);
+    assert.ok(!/rights_status/.test(source), `the ${name} page filters or selects rights_status again`);
+  }
+});
+
+test("the edit form starts on the space's current image", () => {
+  assert.match(editForm, /MediaPicker/);
+  assert.match(editForm, /image_media_id/);
 });

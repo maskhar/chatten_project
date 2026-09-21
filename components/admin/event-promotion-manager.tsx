@@ -2,7 +2,7 @@
 import Image from "next/image"; import Link from "next/link"; import { MediaPicker } from "@/components/admin/media-picker"; import { deleteEvent, saveEvent, setEventActive } from "@/lib/admin/event-actions"; import { deletePromotion, savePromotion, setPromotionActive } from "@/lib/admin/promotion-actions";;
 import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
-type Media={id:string;title:string|null;alt_text:string|null;category:string|null;rights_status:string;width:number|null;height:number|null;bucket:string;storage_path:string};
+type Media={id:string;title:string|null;alt_text:string|null;category:string|null;width:number|null;height:number|null;bucket:string;storage_path:string};
 type Row={id:string;title:string;slug:string;summary:string|null;body:string|null;image_media_id:string|null;starts_at:string|null;ends_at:string|null;is_active:boolean;status:string};
 const field="mt-1 w-full rounded border px-3 py-2";
 function dateLabel(value:string|null){return value?new Intl.DateTimeFormat("id-ID",{dateStyle:"medium",timeStyle:"short"}).format(new Date(value)):"No date set"}

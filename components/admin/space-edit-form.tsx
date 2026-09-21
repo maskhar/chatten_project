@@ -9,7 +9,7 @@ import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
 
 type Space = { id: string; name: string; slug: string; description: string | null; image_media_id: string | null; is_active: boolean; status: string };
-type Media = { id: string; title: string | null; alt_text: string | null; category: string | null; rights_status: string; width: number | null; height: number | null; bucket: string; storage_path: string };
+type Media = { id: string; title: string | null; alt_text: string | null; category: string | null; width: number | null; height: number | null; bucket: string; storage_path: string };
 const field = "mt-1 w-full rounded border px-3 py-2";
 
 export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }) {

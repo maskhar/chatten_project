@@ -13,7 +13,7 @@ import { MediaPicker } from "@/components/admin/media-picker";
 import { ResourceReorder } from "@/components/admin/resource-reorder";
 import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
 
-type MediaOption = { id: string; title: string | null; alt_text: string | null; category: string | null; rights_status: string; width: number | null; height: number | null; bucket: string; storage_path: string };
+type MediaOption = { id: string; title: string | null; alt_text: string | null; category: string | null; width: number | null; height: number | null; bucket: string; storage_path: string };
 
 function rowLabel(row: Record<string, unknown>) { return String(row.title ?? row.name ?? row.site_name ?? row.page_key ?? row.author_name ?? row.id); }
 function inputValue(value: unknown) { if (value === null || value === undefined) return ""; if (typeof value === "boolean") return undefined; if (typeof value === "number") return String(value); return String(value); }
@@ -99,7 +99,7 @@ export default async function AdminResourcePage({ params, searchParams }: { para
 
   const [result, mediaResult] = await Promise.all([
     rowQuery,
-    supabase.from("media").select("id,title,alt_text,category,rights_status,width,height,bucket,storage_path").eq("rights_status", "approved").order("created_at", { ascending: false }),
+    supabase.from("media").select("id,title,alt_text,category,width,height,bucket,storage_path").order("created_at", { ascending: false }),
   ]);
   const media = (mediaResult.data ?? []) as MediaOption[];
   const rows = (result.data ?? []) as unknown as Record<string, unknown>[];

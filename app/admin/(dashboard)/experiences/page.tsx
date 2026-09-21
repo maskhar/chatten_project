@@ -10,8 +10,8 @@ export default async function ExperiencesManager() {
     supabase.from("experiences").select("*").order("sort_order"),
     supabase
       .from("media")
-      .select("id,title,alt_text,category,rights_status,width,height,bucket,storage_path")
-      .eq("rights_status", "approved")
+      .select("id,title,alt_text,category,width,height,bucket,storage_path")
+      
       .order("created_at", { ascending: false }),
   ]);
 

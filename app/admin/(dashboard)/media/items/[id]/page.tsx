@@ -17,10 +17,6 @@ type MediaItem = {
   caption: string | null;
   category: string | null;
   tags: string[] | null;
-  source_type: string | null;
-  source_reference: string | null;
-  attribution: string | null;
-  rights_status: string;
   focal_x: number | null;
   focal_y: number | null;
   original_filename: string | null;
@@ -44,7 +40,7 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
   const [itemResult, usageMap] = await Promise.all([
-    supabase.from("media").select("id,title,alt_text,caption,category,tags,source_type,source_reference,attribution,rights_status,focal_x,focal_y,original_filename,mime_type,file_size,width,height").eq("id", id).maybeSingle(),
+    supabase.from("media").select("id,title,alt_text,caption,category,tags,focal_x,focal_y,original_filename,mime_type,file_size,width,height").eq("id", id).maybeSingle(),
     loadMediaUsageMap(),
   ]);
   if (itemResult.error) throw new Error("Unable to load Media item.");
@@ -61,8 +57,8 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
         <aside className="h-fit rounded border border-[#dde0d7] bg-white p-4">
-          {/* A29: the screen had no preview at all, so rights and alt text had
-              to be judged from a filename. The preview honours the focal point
+          {/* A29: the screen had no preview at all, so alt text had to be
+              judged from a filename. The preview honours the focal point
               below, which makes the effect of changing it visible immediately
               after a save. */}
           {href ? (
@@ -76,18 +72,13 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
             <div className="flex justify-between gap-3"><dt className="text-[#657064]">Size</dt><dd>{fileSizeLabel(item.file_size)}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-[#657064]">Dimensions</dt><dd>{item.width && item.height ? `${item.width} × ${item.height}` : "—"}</dd></div>
           </dl>
-          {item.rights_status !== "approved" ? (
-            <p role="status" className="mt-4 rounded border-l-4 border-[#b65d40] bg-[#fdf3ef] px-3 py-2 text-xs text-[#5a2f20]">
-              This image is not approved, so the public site will not render it.
-            </p>
-          ) : null}
         </aside>
 
         <form action={saveMediaDetails} className="grid max-w-2xl gap-5 rounded border border-[#c9bfa8] bg-[#e8dfca] p-6">
           <UnsavedChangesGuard />
           <input type="hidden" name="id" value={item.id} />
           <label className={labelText}>Title<input name="title" defaultValue={item.title ?? ""} className={field} /></label>
-          <label className={labelText}>Alt text<input name="alt_text" defaultValue={item.alt_text ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-[#657064]">Describes the image for screen readers and for anyone whose images fail to load.</span></label>
+          <label className={labelText}>Alt text <span className="font-normal text-[#657064]">— optional</span><input name="alt_text" defaultValue={item.alt_text ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-[#657064]">Describes the image for screen readers and for search engines. Worth a sentence when you have one; the image works either way.</span></label>
           <label className={labelText}>Caption<textarea name="caption" rows={3} defaultValue={item.caption ?? ""} className={field} /></label>
           <div className="grid gap-5 sm:grid-cols-2">
             <label className={labelText}>Category<input name="category" defaultValue={item.category ?? ""} className={field} /></label>
@@ -104,23 +95,6 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
               <label className={labelText}>Horizontal<input name="focal_x" type="number" min={0} max={1} step={0.01} defaultValue={item.focal_x ?? ""} className={field} /></label>
               <label className={labelText}>Vertical<input name="focal_y" type="number" min={0} max={1} step={0.01} defaultValue={item.focal_y ?? ""} className={field} /></label>
             </div>
-          </fieldset>
-
-          <fieldset className="grid gap-3 rounded border border-[#c9bfa8] bg-white/60 p-4">
-            <legend className="px-1 text-sm font-semibold">Rights and provenance</legend>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className={labelText}>Source type<input name="source_type" defaultValue={item.source_type ?? ""} className={field} /></label>
-              <label className={labelText}>Source reference<input name="source_reference" defaultValue={item.source_reference ?? ""} className={field} /></label>
-            </div>
-            <label className={labelText}>Attribution<input name="attribution" defaultValue={item.attribution ?? ""} className={field} /></label>
-            <label className={labelText}>Rights
-              <select name="rights_status" defaultValue={item.rights_status} className={field}>
-                <option value="unknown">Needs Review</option>
-                <option value="approved">Approved</option>
-                <option value="restricted">Restricted</option>
-              </select>
-              <span className="mt-1 block text-xs font-normal text-[#657064]">Only administrators can move an image away from Needs Review.</span>
-            </label>
           </fieldset>
 
           <div className="flex flex-wrap gap-3">

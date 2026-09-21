@@ -17,8 +17,8 @@ export default async function ExperienceEditPage({
     supabase.from("experiences").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("media")
-      .select("id,title,alt_text,category,rights_status,width,height,bucket,storage_path")
-      .eq("rights_status", "approved")
+      .select("id,title,alt_text,category,width,height,bucket,storage_path")
+      
       .order("created_at", { ascending: false }),
   ]);
 

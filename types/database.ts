@@ -194,7 +194,7 @@ export type Database = {
       }
       gallery_items: {
         Row: {
-          alt_text: string
+          alt_text: string | null
           created_at: string
           id: string
           image_media_id: string | null
@@ -205,7 +205,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          alt_text: string
+          alt_text?: string | null
           created_at?: string
           id?: string
           image_media_id?: string | null
@@ -216,7 +216,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          alt_text?: string
+          alt_text?: string | null
           created_at?: string
           id?: string
           image_media_id?: string | null
@@ -329,7 +329,6 @@ export type Database = {
           id: string
           mime_type: string
           original_filename: string
-          rights_status: string
           sha256: string | null
           source_reference: string | null
           source_type: string | null
@@ -354,7 +353,6 @@ export type Database = {
           id?: string
           mime_type: string
           original_filename: string
-          rights_status?: string
           sha256?: string | null
           source_reference?: string | null
           source_type?: string | null
@@ -379,7 +377,6 @@ export type Database = {
           id?: string
           mime_type?: string
           original_filename?: string
-          rights_status?: string
           sha256?: string | null
           source_reference?: string | null
           source_type?: string | null

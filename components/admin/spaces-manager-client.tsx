@@ -23,7 +23,6 @@ type Media = {
   title: string | null;
   alt_text: string | null;
   category: string | null;
-  rights_status: string;
   width: number | null;
   height: number | null;
   bucket: string;

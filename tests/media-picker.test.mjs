@@ -3,119 +3,69 @@ import { test } from "node:test";
 import ts from "typescript";
 import fs from "node:fs/promises";
 
+// Three tests here used to eval a hand-copied string of the component's filter
+// and assert the result. That exercised the copy, not the component: the two
+// could drift apart and every test would still pass. They now import the real
+// predicate, so a change to the picker's filtering is a test failure.
+
 const src = await fs.readFile("components/admin/media-picker.tsx", "utf-8");
-const js = ts.transpileModule(src, {
+ts.transpileModule(src, {
   compilerOptions: {
     target: ts.ScriptTarget.ES2022,
     module: ts.ModuleKind.ESNext,
     jsx: ts.JsxEmit.ReactJSX,
   },
+});
+
+const filterSrc = await fs.readFile("lib/media/picker-filter.ts", "utf-8");
+const filterJs = ts.transpileModule(filterSrc, {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
 }).outputText;
+const { pickerCategories, filterPickerMedia } = await import(`data:text/javascript,${encodeURIComponent(filterJs)}`);
 
-test("MediaPicker extracts unique categories from approved media", () => {
-  const categoryLogic = `
-    const media = [
-      { id: "1", category: "panorama", title: "A", alt_text: null, rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "2", category: "panorama", title: "B", alt_text: null, rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "3", category: "food", title: "C", alt_text: null, rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "4", category: "  space  ", title: "D", alt_text: null, rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "5", category: null, title: "E", alt_text: null, rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "6", category: "", title: "F", alt_text: null, rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-    ];
-    const uniqueCategories = new Set();
-    media.forEach((item) => {
-      const cat = item.category?.trim();
-      if (cat) {
-        uniqueCategories.add(cat);
-      }
-    });
-    const categories = Array.from(uniqueCategories).sort();
-  `;
-  const result = eval(categoryLogic + "; categories");
-  assert.deepEqual(result, ["food", "panorama", "space"]);
+function image(id, category, title, alt) {
+  return { id, category, title, alt_text: alt ?? null, width: 100, height: 100, bucket: "b", storage_path: "p" };
+}
+
+test("the picker lists every distinct category, trimmed, and ignores blanks", () => {
+  const media = [
+    image("1", "panorama", "A"),
+    image("2", "panorama", "B"),
+    image("3", "food", "C"),
+    image("4", "  space  ", "D"),
+    image("5", null, "E"),
+    image("6", "", "F"),
+  ];
+  assert.deepEqual(pickerCategories(media), ["food", "panorama", "space"]);
 });
 
-test("MediaPicker filters by search and category with AND logic", () => {
-  const filterLogic = `
-    const media = [
-      { id: "1", category: "panorama", title: "Sunset View", alt_text: "Beautiful sunset", rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "2", category: "panorama", title: "Mountain Peak", alt_text: "High mountain", rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "3", category: "food", title: "Sunset Coffee", alt_text: "Coffee at sunset", rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "4", category: "food", title: "Breakfast", alt_text: "Morning meal", rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-    ];
-    
-    const filterMedia = (query, categoryFilter) => media.filter((item) => {
-      const searchText = \`\${item.title ?? ""} \${item.alt_text ?? ""} \${item.category ?? ""}\`.toLowerCase();
-      const matchesSearch = query ? searchText.includes(query.toLowerCase()) : true;
-      const matchesCategory = categoryFilter ? item.category?.trim() === categoryFilter : true;
-      return matchesSearch && matchesCategory;
-    });
-  `;
-  
-  const searchOnly = eval(filterLogic + '; filterMedia("sunset", "")');
-  assert.equal(searchOnly.length, 2);
-  assert.equal(searchOnly[0].id, "1");
-  assert.equal(searchOnly[1].id, "3");
-  
-  const categoryOnly = eval(filterLogic + '; filterMedia("", "panorama")');
-  assert.equal(categoryOnly.length, 2);
-  assert.equal(categoryOnly[0].id, "1");
-  assert.equal(categoryOnly[1].id, "2");
-  
-  const both = eval(filterLogic + '; filterMedia("sunset", "panorama")');
-  assert.equal(both.length, 1);
-  assert.equal(both[0].id, "1");
-  
-  const noMatch = eval(filterLogic + '; filterMedia("sunset", "space")');
-  assert.equal(noMatch.length, 0);
-  
-  const allMedia = eval(filterLogic + '; filterMedia("", "")');
-  assert.equal(allMedia.length, 4);
+test("search and category narrow together, not separately", () => {
+  const media = [
+    image("1", "panorama", "Sunset View", "Beautiful sunset"),
+    image("2", "panorama", "Mountain Peak", "High mountain"),
+    image("3", "food", "Sunset Coffee", "Coffee at sunset"),
+    image("4", "food", "Breakfast", "Morning meal"),
+  ];
+  assert.deepEqual(filterPickerMedia(media, "sunset", "").map((item) => item.id), ["1", "3"]);
+  assert.deepEqual(filterPickerMedia(media, "", "panorama").map((item) => item.id), ["1", "2"]);
+  assert.deepEqual(filterPickerMedia(media, "sunset", "panorama").map((item) => item.id), ["1"]);
+  assert.equal(filterPickerMedia(media, "sunset", "space").length, 0);
+  assert.equal(filterPickerMedia(media, "", "").length, 4);
 });
 
-test("MediaPicker search is case-insensitive and searches title, alt, and category", () => {
-  const filterLogic = `
-    const media = [
-      { id: "1", category: "Panorama", title: "SUNSET View", alt_text: "beautiful sunset", rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-      { id: "2", category: "food", title: "Coffee", alt_text: "Morning BREW", rights_status: "approved", width: 100, height: 100, bucket: "b", storage_path: "p" },
-    ];
-    
-    const filterMedia = (query) => media.filter((item) => {
-      const searchText = \`\${item.title ?? ""} \${item.alt_text ?? ""} \${item.category ?? ""}\`.toLowerCase();
-      return query ? searchText.includes(query.toLowerCase()) : true;
-    });
-  `;
-  
-  const titleMatch = eval(filterLogic + '; filterMedia("sunset")');
-  assert.equal(titleMatch.length, 1);
-  assert.equal(titleMatch[0].id, "1");
-  
-  const altMatch = eval(filterLogic + '; filterMedia("BREW")');
-  assert.equal(altMatch.length, 1);
-  assert.equal(altMatch[0].id, "2");
-  
-  const categoryMatch = eval(filterLogic + '; filterMedia("panorama")');
-  assert.equal(categoryMatch.length, 1);
-  assert.equal(categoryMatch[0].id, "1");
+test("search is case-insensitive across title, alt text and category", () => {
+  const media = [
+    image("1", "Panorama", "SUNSET View", "beautiful sunset"),
+    image("2", "food", "Coffee", "Morning BREW"),
+  ];
+  assert.deepEqual(filterPickerMedia(media, "sunset", "").map((item) => item.id), ["1"]);
+  assert.deepEqual(filterPickerMedia(media, "BREW", "").map((item) => item.id), ["2"]);
+  assert.deepEqual(filterPickerMedia(media, "panorama", "").map((item) => item.id), ["1"]);
 });
 
-test("MediaPicker clear filters resets both search and category", () => {
-  const clearLogic = `
-    let query = "sunset";
-    let categoryFilter = "panorama";
-    
-    const clearFilters = () => {
-      query = "";
-      categoryFilter = "";
-    };
-    
-    clearFilters();
-  `;
-  
-  const state = {};
-  eval(clearLogic + '; state.query = query; state.categoryFilter = categoryFilter;');
-  assert.equal(state.query, "");
-  assert.equal(state.categoryFilter, "");
+test("the picker uses the shared filter rather than its own copy", () => {
+  assert.ok(src.includes("filterPickerMedia"), "the picker filters inline again");
+  assert.ok(src.includes("pickerCategories"), "the picker derives categories inline again");
 });
 
 test("MediaPicker shows Replace button for current selection", () => {
@@ -133,9 +83,13 @@ test("MediaPicker displays Selected indicator on current image", () => {
   assert.ok(src.includes('text-[#47714d]'));
 });
 
-test("MediaPicker shows empty state with Open Media Library link", () => {
-  assert.ok(src.includes('No approved images yet'));
-  assert.ok(src.includes('Upload and approve images in the Media Library'));
+test("the empty state tells the operator uploading is the only step", () => {
+  // There is no approval step left to mention: an uploaded image reaches the
+  // picker immediately, and the old copy promised a second action that no
+  // longer exists.
+  assert.ok(src.includes('No images yet'));
+  assert.ok(src.includes('it appears here straight away'));
+  assert.ok(!/approve/i.test(src), "the picker mentions approving an image again");
   assert.ok(src.includes('href="/admin/media"'));
   assert.ok(src.includes('Open Media Library'));
 });

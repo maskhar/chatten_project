@@ -45,7 +45,7 @@ async function publicVisibleRows<T>(table: VisibleTable, order = "sort_order") {
 export async function publicMedia() {
   return guard(async () => {
     const supabase = await createServerSupabaseClient();
-    const result = await supabase.from("media").select("*").eq("rights_status", "approved");
+    const result = await supabase.from("media").select("*");
     return mediaMap(result.data ?? []);
   }, {} as Record<string, PublicMedia>);
 }
@@ -73,7 +73,7 @@ export async function publicMediaById(id: string | null | undefined) {
   if (!id) return null;
   return guard(async () => {
     const supabase = await createServerSupabaseClient();
-    const result = await supabase.from("media").select("*").eq("id", id).eq("rights_status", "approved").maybeSingle();
+    const result = await supabase.from("media").select("*").eq("id", id).maybeSingle();
     return (result.data as PublicMedia | null) ?? null;
   }, null as PublicMedia | null);
 }

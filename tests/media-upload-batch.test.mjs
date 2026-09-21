@@ -39,7 +39,7 @@ test("batch accepts JPEG, PNG, WebP, and AVIF with per-file results", async () =
   assert.equal(result.error, undefined);
   assert.deepEqual(result.results.map((item) => item.ok), [true, true, true, true]);
   assert.deepEqual(target.records.map((record) => record.mime_type), ["image/jpeg", "image/png", "image/webp", "image/avif"]);
-  assert.ok(target.records.every((record) => record.rights_status === "unknown" && record.source_type === "operator-upload"));
+  assert.ok(target.records.every((record) => record.source_type === "operator-upload"));
   assert.equal(target.records[0].original_filename, "one.jpg");
   assert.equal(target.records[0].title, "one.jpg");
   assert.equal(target.records[0].file_size, jpeg().length);
@@ -99,15 +99,17 @@ test("Storage failure and DB failure return per-file results and exact cleanup",
   assert.equal(target.insertAttempts.length, 2);
   assert.equal(target.removals.length, 1);
   assert.equal(target.removals[0], target.uploads[1].path);
-  assert.equal(target.insertAttempts[0].rights_status, "unknown");
-  assert.equal(target.records[0].rights_status, "unknown");
 });
 
-test("upload server path keeps normal uploads at unknown rights", () => {
+// 20260921000500 removed rights_status: an upload is publishable by the act of
+// uploading it. What still matters here is that the server action goes through
+// the shared batch processor rather than building its own insert, and that it
+// takes no rights field back from the form.
+test("upload server path goes through the shared batch processor", () => {
   const action = fs.readFileSync(new URL("../lib/admin/media-actions.ts", import.meta.url), "utf8");
   const uploadSource = action.slice(0, action.indexOf("export async function deleteMediaWithFeedback"));
   assert.match(uploadSource, /uploadMediaBatch/);
   assert.match(uploadSource, /processMediaUploadBatch/);
-  assert.match(src, /rights_status: "unknown"/);
-  assert.doesNotMatch(uploadSource, /formData\.get\("rights_status"\)/);
+  assert.ok(!/rights_status/.test(src), "upload-core writes rights_status again");
+  assert.ok(!/rights_status/.test(uploadSource), "the upload action reads rights_status again");
 });
