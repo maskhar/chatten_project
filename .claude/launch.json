@@ -9,6 +9,11 @@
         "dev"
       ],
       "autoPort": true
+    },
+    {
+      "name": "docker",
+      "port": 3010,
+      "url": "http://localhost:3010"
     }
   ]
 }
