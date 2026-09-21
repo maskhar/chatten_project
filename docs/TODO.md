@@ -379,6 +379,114 @@ stable references for commits and verification notes.
       and asserts the bucket flip in `…000400` is still in place, so neither
       half can be undone silently.
 
+## Phase 7 — Layout, Responsiveness & UI/UX Audit
+
+Full findings, with measurements and contrast ratios, live in
+[`docs/AUDIT_UI_RESPONSIVE.md`](AUDIT_UI_RESPONSIVE.md). This list tracks the
+work items; the audit document holds the evidence.
+
+- [x] **A68** Fix the cascade-layer bug that discarded every colour utility on
+      every link. `app/globals.css` reset anchors with an *unlayered*
+      `a { color: inherit; text-decoration: none; }`. Tailwind v4 places all
+      utilities inside `@layer utilities`, and unlayered CSS outranks every
+      cascade layer regardless of specificity — so a bare element selector beat
+      `.text-white` on every `<a>`/`<Link>` in the repo while leaving
+      `<button>` untouched. That asymmetry is exactly what the operator saw:
+      "Save changes" (a `<button>`) readable, "Get Directions" (an `<a>`)
+      dark-on-dark at 1.05:1.
+
+      Moving the identical rule inside `@layer base` fixes it repo-wide in one
+      line. Browser-verified on `/`: `Get Directions` went 1.05:1 → 13.31:1,
+      `Explore Chatten` 2.2:1 → 5.91:1, anchors below AA on the page 2 → 0.
+      The default `solid` CtaLink variant, the `outline` hover state, the skip
+      link's focus state and seven admin anchors all recovered with it.
+
+      `tests/anchor-cascade.test.mjs` reads `app/globals.css`, rejects an
+      unlayered `a { color: … }` and any other unlayered element rule setting
+      `color`. Verified by mutation: re-adding the unlayered rule fails the
+      test with the right message.
+
+- [ ] **A69** Change `lg:` to `xl:` on three admin grids. At exactly 1024px the
+      content box is `1024 − 256 (lg:pl-64) − 64 (lg:p-8) = 704px`, yet
+      `menu-manager-client.tsx`, `space-edit-form.tsx:24` and
+      `experience-edit-form.tsx:65` all add a 22rem column at `lg:` — leaving
+      the *primary* column at 320–328px, narrower than the image aside beside
+      it, from 1024px to 1279px. `[resource]/page.tsx:156` already does this
+      correctly with `xl:`; the three files copied the pattern and got the
+      breakpoint wrong. Fixing this also resolves the MediaPicker's
+      container-vs-viewport mismatch, since the picker is embedded in those
+      columns.
+
+- [ ] **A70** Give the menu category popover a positioned ancestor. The
+      `absolute z-20 mt-2 w-72` edit form in `menu-manager-client.tsx` has no
+      positioned ancestor anywhere up to `layout.tsx` — `sortable-list.tsx:11`
+      only applies `relative` while a row is being dragged. The popover
+      resolves against the initial containing block and renders detached from
+      its trigger at every viewport width. The only defect that is broken at
+      all widths.
+
+- [ ] **A71** Raise touch targets to 44px. `px-2 py-1 text-xs` is the house
+      style for every row action across all six admin managers and yields
+      ~24px — 45% under the minimum. `sortable-list.tsx:12`'s drag handle has
+      zero vertical padding. On the public side, `cta.tsx:15` already carries
+      `min-h-11`, so every failure there is a raw anchor bypassing the
+      component: three underlined links on the homepage (25px), the header and
+      footer logos (32/35px) and eight footer links (20px, separated by only
+      12px of `gap-y-3`).
+
+- [ ] **A72** Add `flex-wrap` to seven admin rows and one public header. Each
+      admin row pairs a checkbox label with a Status `<select>`, or a
+      `px-6 py-3` Save with a `px-6 py-3` Cancel; both overflow 375px.
+      `app/(public)/page.tsx:36` (gallery header) is missing the `flex-wrap`
+      its sibling on line 32 has.
+
+- [ ] **A73** Bring the hero down to phone height. `min-h-[760px]` measures
+      1.14× an iPhone SE viewport, so nothing below the hero is reachable
+      without scrolling and `items-end` puts the h1 at `top: 352px`. `pt-44`
+      (176px) has no mobile step-down. The `min-h-[560px]` + `min-h-[430px]`
+      pair on the feature band stacks the same way. The h1 itself does **not**
+      clip — measured `scrollWidth` 327 against `clientWidth` 327 at 375px, so
+      that earlier claim is withdrawn.
+
+- [ ] **A74** Consolidate the palette. `--forest`, `--olive`, `--terracotta`
+      and `--sand` in `globals.css` are referenced nowhere in `app/` or
+      `components/`; every surface hardcodes a near-miss hex instead
+      (`#1f3426` vs `--forest: #254632`). That is why the colours read as
+      inconsistent — there is no single source of truth. `#768075` fails AA
+      wherever it is body text (3.23–4.11:1) and `--terracotta: #b75e42` works
+      neither under white text (4.47:1) nor as text on cream (4.04:1); both
+      need darkening before the variables are adopted.
+
+- [ ] **A75** Make `focus-visible` the standard. `cta.tsx:15` is the only file
+      in the repo using `focus-visible:ring`. `header.tsx:23,25` strip the
+      native outline unconditionally and replace it with a `focus:ring` that
+      has no offset, over a transparent header on a photo. The skip link's
+      destination (`public-shell.tsx:30`) removes its outline with no
+      replacement, so a keyboard jump gives no visual confirmation.
+
+- [ ] **A76** Label the Users form fields. `users/page.tsx` asks for a raw
+      UUID with no `<label>` at all and no hint where to obtain it; the
+      placeholder is the only label and disappears on input. The adjacent
+      email field is labelled "verify identity" but is not `required` and is
+      never used for lookup.
+
+- [ ] **A77** Rewrite operator-facing error and empty-state copy. Several
+      messages state internal state rather than an action ("No order
+      supplied.", "Invalid Gallery order."), and `event-actions.ts:13` throws
+      into an error boundary that replaces the whole page, discarding typed
+      form values. `login-form.tsx:33` offers no recovery path and cannot
+      distinguish a wrong password from a valid Supabase account with no
+      `user_roles` row. `experiences-manager-client.tsx:176` passes an `empty`
+      prop that is dead code — line 161 already branches on the empty case.
+
+- [ ] **A78** Reconcile the two upload limits.
+      `media-upload-dropzone.tsx:106` shows `MAX_MEDIA_SELECTION_FILES` while
+      `upload-core.ts:118` enforces `MAX_MEDIA_UPLOAD_FILES` — two constants
+      for one limit, so the helper text is wrong the moment they diverge. Also
+      verify whether "New uploads default to Needs Review" still means
+      anything after A67 removed the approval gate, given that the gallery and
+      menu managers both submit `status="published"` regardless.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

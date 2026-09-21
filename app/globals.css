@@ -3,4 +3,13 @@
 * { box-sizing: border-box; }
 html { background: var(--background); }
 body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-body); }
-a { color: inherit; text-decoration: none; }
+/* This rule has to live in `base`. Unlayered CSS beats every cascade layer in
+   Tailwind v4 regardless of specificity, so an unlayered `a { color: inherit }`
+   silently discarded `text-white` (and every other colour utility) on every
+   <a>/<Link> in the codebase while leaving <button> alone — which is why
+   "Save changes" stayed readable and "Get Directions" rendered dark-on-dark.
+   Inside `base` the default still applies to anchors that declare no colour,
+   and a colour utility now wins. */
+@layer base {
+  a { color: inherit; text-decoration: none; }
+}
