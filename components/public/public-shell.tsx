@@ -6,6 +6,7 @@ import type { NavItem } from "@/lib/homepage/types";
 import { getShellData } from "@/lib/public-data/shell";
 import { restaurantJsonLd } from "@/lib/public-data/structured-data";
 import type { PublicSocial } from "@/lib/public-data/types";
+import { FOCUS_RING } from "@/components/ui/control";
 
 // A33: the shell now loads its own chrome. Callers that already have the data
 // (the homepage, which fetches everything in one pass) may still pass it in to
@@ -26,8 +27,13 @@ export async function PublicShell({ children, navigation, socials }: { children:
       <SkipToContent />
       <Header navigation={links} />
       {/* A48: the skip link's destination. tabIndex -1 makes it focusable by
-          the jump without putting it in the tab order. */}
-      <div id={SKIP_TARGET_ID} tabIndex={-1} className="pt-0 focus:outline-none">{children}</div>
+          the jump without putting it in the tab order.
+          A75: it had `focus:outline-none` and nothing in its place, so the jump
+          landed with no visible confirmation of where focus went. The ring is
+          drawn `ring-inset` because the container is the full page width and an
+          outset ring would sit off-screen on the left and right edges; the
+          offset colour is the shell background it is painted over. */}
+      <div id={SKIP_TARGET_ID} tabIndex={-1} className={`pt-0 ${FOCUS_RING} focus-visible:ring-inset focus-visible:ring-[#1f3426] focus-visible:ring-offset-[#f4eedf]`}>{children}</div>
       <PublicFooter navigation={links} socials={socialLinks} />
     </div>
   );

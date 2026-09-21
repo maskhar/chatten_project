@@ -540,3 +540,105 @@ penanda visual atau tekstual, jadi operator baru tahu bedanya saat submit.
 
 Butir 2–6 murni presentasi dan tidak menyentuh data; butir 7–9 menyentuh salinan
 teks dan palet, yang sebaiknya dikonfirmasi ke pemilik sebelum diubah.
+
+---
+
+## 8. Status implementasi (21 September 2026)
+
+Butir 1–6 dari daftar urutan di atas sudah dikerjakan dan diverifikasi. Butir
+7–9 sengaja ditahan karena menyentuh palet warna dan teks yang dibaca operator,
+yang perlu konfirmasi pemilik dulu.
+
+| Item | Status | Bukti verifikasi |
+|---|---|---|
+| A68 cascade layer | selesai | `Get Directions` 1.05:1 → 13.31:1; anchor di bawah AA pada `/` dari 2 → 0 |
+| A69 grid `lg:` → `xl:` | selesai | kolom utama `/admin/menu` 328px → **689px** pada 1024px; thumbnail MediaPicker ~100px → **193px** |
+| A70 popover kategori | selesai | `offsetParent` kini `DETAILS.relative`, `dx: 0`, `dy: 8` |
+| A71 target sentuh 44px | selesai | homepage: 0 elemen di bawah 44px; ~30 kontrol admin memakai kelas bersama |
+| A72 `flex-wrap` | selesai | tidak ada overflow horizontal pada 375px (`scrollWidth` = `innerWidth` = 375) |
+| A73 tinggi hero | selesai | `min-h-[70svh] sm:min-h-[760px]`, feature band bertingkat 380/480/560px |
+| A75 `focus-visible` | selesai | dikunci test: file yang memakai `focus:outline-none` wajib punya `focus-visible:ring` |
+| A76 label form users | selesai | tiga `<label>` terpasang, grid 2 kolom pada 1024px, hint UUID tampil |
+| A74 palet | **ditahan** | perlu keputusan pemilik soal warna |
+| A77 salinan teks | **ditahan** | perlu keputusan pemilik soal kata-kata |
+| A78 batas upload | **ditahan** | perlu konfirmasi nilai batas yang benar |
+
+### Yang berubah secara struktural
+
+Perbaikan terbesar bukan di masing-masing halaman, melainkan di
+`components/ui/control.ts`. Dua pola sebelumnya disalin tangan ke seluruh
+codebase tanpa pernah diberi nama:
+
+1. `px-2 py-1 text-xs` — gaya baku setiap aksi baris di keenam manager admin.
+   Tingginya ~24px (teks 12px + line box 16px + padding 8px), 45% di bawah
+   minimum 44px.
+2. `focus:outline-none` tanpa pengganti yang dapat diandalkan. Hanya `cta.tsx`
+   yang memakai `focus-visible:ring`; sisanya menghapus outline bawaan tanpa
+   menggantinya, atau menggantinya dengan `focus:ring` tanpa offset yang juga
+   menyala saat diklik mouse.
+
+Menamainya satu kali di satu file itulah yang membuat keduanya bisa diperbaiki:
+satu suntingan menggeser semua kontrol sekaligus, dan test dapat memindai
+kemunculan string mentahnya lagi.
+
+### Test yang mengunci hasilnya
+
+- `tests/anchor-cascade.test.mjs` — `a { color: … }` wajib berada di dalam
+  `@layer base`, dan tidak boleh ada aturan elemen tanpa layer lain yang
+  menyetel `color`.
+- `tests/touch-target.test.mjs` — empat test: konstanta bersama masih ada dan
+  masih `min-h-11`; tidak ada kontrol admin yang memakai pola ~24px; tidak ada
+  `<a>`/`<Link>` publik yang menulis ulang gaya garis bawah tanpa tinggi; dan
+  setiap file yang menghapus outline wajib memasang `focus-visible:ring`.
+- `tests/absolute-positioning.test.mjs` — `<details>` popover kategori wajib
+  `relative`, dan `relative z-10` pada baris sortable harus tetap kondisional
+  saat drag.
+
+Ketiganya diverifikasi dengan mutasi: implementasinya dirusak dulu, dipastikan
+test gagal dengan pesan yang benar, baru dikembalikan.
+
+### Dua klaim yang dicabut setelah diukur
+
+Audit ini sempat memuat dua temuan yang ternyata salah, dan keduanya dicabut
+setelah diukur langsung di browser, bukan disimpulkan dari membaca kode:
+
+1. **"Navigasi mobile dashboard rusak"** — salah. `AdminMobileNav` adalah
+   hamburger + drawer lengkap dengan handler Escape, penguncian scroll body,
+   penutupan lewat backdrop, dan penutupan per-link. Diverifikasi dengan klik
+   sungguhan pada 375px.
+2. **"h1 hero terpotong diam-diam oleh `overflow-x-hidden`"** — salah.
+   `scrollWidth` 327 lawan `clientWidth` 327 pada 375px; teksnya membungkus
+   dengan benar.
+
+Satu lagi yang perlu dicatat sebagai pelajaran metode: sapuan kontras pertama
+menghasilkan 12 positif palsu (semua link nav pada 1.16:1) karena menelusuri
+ancestor DOM, padahal header dipasang `position: absolute` di atas hero.
+Pengukuran ulang memakai `document.elementsFromPoint()` menurunkannya menjadi 2
+kegagalan asli.
+
+### Satu test yang sengaja dihapus
+
+Test ketiga sempat ditulis di `absolute-positioning.test.mjs`: "tidak ada file
+yang memakai `absolute` tanpa punya `relative`/`fixed`/`sticky` sendiri". Test
+itu menandai `header.tsx` dan `skip-to-content.tsx`, dan keduanya benar — header
+memang elemen yang diposisikan absolut (sengaja melayang di atas hero), dan
+`focus:absolute` pada skip link memang dimaksudkan menempel ke viewport.
+Pemindaian statis tidak bisa membedakan "memposisikan diri terhadap ancestor
+yang disediakan pemanggil" dari "lupa ancestor-nya", dan test yang butuh daftar
+pengecualian yang terus bertambah adalah test yang orang tambahi, bukan
+perbaiki. Jadi yang dipertahankan adalah penjaga yang spesifik pada popover yang
+benar-benar rusak.
+
+### Perubahan visual yang perlu diketahui
+
+Pemetaan aksi admin dilakukan berdasarkan **apa yang dijalankan handler**, bukan
+warna lamanya. Akibatnya tombol Edit di manager spaces/experiences/events
+berubah dari outline `#1f3426` menjadi solid `#1f3426` dengan teks putih. Ini
+konsisten dengan lima manager lain, tetapi tetap pergeseran palet yang sebaiknya
+diketahui saat A74 dikerjakan.
+
+`gap-y-3` pada nav footer turun ke `gap-y-1`. Gap 12px itu dulu mengompensasi
+kotak setinggi 20px; sekarang setiap link adalah kotak 44px dengan tinta 20px di
+tengahnya, sehingga dua baris bertumpuk sudah menyisakan ~24px ruang kosong.
+Mempertahankan `gap-y-3` hanya akan menambah tinggi footer di ponsel tanpa
+menambah ukuran target.

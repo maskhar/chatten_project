@@ -7,6 +7,7 @@ import { SortableList } from "@/components/admin/sortable-list";
 import { saveExperience, reorderExperiences, setExperienceActive, deleteExperience } from "@/lib/admin/experience-actions";
 import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { ROW_ACTION_BORDERED, ROW_ACTION_DANGER, ROW_ACTION_PRIMARY } from "@/components/ui/control";
 
 type Experience = {
   id: string;
@@ -114,13 +115,13 @@ export function ExperiencesManagerClient({
           <button
             type="button"
             onClick={() => handleVisibility(experience.id, !experience.is_active)}
-            className="rounded border border-[#768075] px-2 py-1 text-xs font-semibold text-[#768075] hover:bg-[#768075] hover:text-white"
+            className={ROW_ACTION_BORDERED}
           >
             {experience.is_active ? "Hide" : "Show"}
           </button>
           <Link
             href={`/admin/experiences/items/${experience.id}`}
-            className="rounded border border-[#1f3426] px-2 py-1 text-xs font-semibold text-[#1f3426] hover:bg-[#1f3426] hover:text-white"
+            className={ROW_ACTION_PRIMARY}
           >
             Edit
           </Link>
@@ -128,7 +129,7 @@ export function ExperiencesManagerClient({
             type="button"
             onClick={() => handleDelete(experience.id)}
             disabled={deleting === experience.id}
-            className="rounded border border-[#b65d40] px-2 py-1 text-xs font-semibold text-[#b65d40] hover:bg-[#b65d40] hover:text-white disabled:opacity-50"
+            className={`${ROW_ACTION_DANGER} disabled:opacity-50`}
           >
             {deleting === experience.id ? "Deleting..." : "Delete"}
           </button>
@@ -172,7 +173,6 @@ export function ExperiencesManagerClient({
           <SortableList
             items={sortableItems}
             onSave={reorderExperiences}
-            empty="No experiences yet."
           />
         </div>
       )}
@@ -206,7 +206,7 @@ export function ExperiencesManagerClient({
           <MediaPicker name="image_media_id" media={media} />
         </div>
 
-        <div className="mt-4 flex gap-4">
+        <div className="mt-4 flex flex-wrap gap-4">
           <label className="flex items-center gap-2 text-sm">
             <input name="is_active" type="checkbox" defaultChecked />
             Active

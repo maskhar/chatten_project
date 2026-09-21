@@ -3,15 +3,16 @@ import { DndContext, PointerSensor, TouchSensor, closestCenter, useSensor, useSe
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useState, type ReactNode } from "react";
+import { ROW_ACTION_BORDERED, TAP_TARGET } from "@/components/ui/control";
 
 type SortableItem = { id: string; label: string; detail?: ReactNode; actions?: ReactNode };
 type Props = { items: SortableItem[]; onSave: (ids: string[]) => Promise<void>; empty?: string };
 function Row({ item, index, count, move }: { item: SortableItem; index: number; count: number; move: (from: number, to: number) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   return <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`flex flex-wrap items-center gap-3 border border-[#d9c9aa] bg-white p-3 ${isDragging ? "relative z-10 shadow-lg" : ""}`}>
-    <button type="button" {...attributes} {...listeners} className="cursor-grab touch-none px-2 text-lg text-[#768075] active:cursor-grabbing" aria-label={`Drag ${item.label}`}>⋮⋮</button>
+    <button type="button" {...attributes} {...listeners} className={`${TAP_TARGET} cursor-grab touch-none px-2 text-lg text-[#768075] active:cursor-grabbing`} aria-label={`Drag ${item.label}`}>⋮⋮</button>
     <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.label}</p>{item.detail}</div>
-    <div className="flex flex-wrap items-center gap-2"><button type="button" className="rounded border px-2 py-1 text-xs disabled:opacity-40" disabled={index===0} onClick={()=>move(index,index-1)} aria-label={`Move ${item.label} up`}>↑</button><button type="button" className="rounded border px-2 py-1 text-xs disabled:opacity-40" disabled={index===count-1} onClick={()=>move(index,index+1)} aria-label={`Move ${item.label} down`}>↓</button>{item.actions}</div>
+    <div className="flex flex-wrap items-center gap-2"><button type="button" className={ROW_ACTION_BORDERED} disabled={index===0} onClick={()=>move(index,index-1)} aria-label={`Move ${item.label} up`}>↑</button><button type="button" className={ROW_ACTION_BORDERED} disabled={index===count-1} onClick={()=>move(index,index+1)} aria-label={`Move ${item.label} down`}>↓</button>{item.actions}</div>
   </div>;
 }
 export function SortableList({ items, onSave, empty = "No items yet." }: Props) {

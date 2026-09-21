@@ -7,6 +7,7 @@ import { deleteSpace, reorderSpaces, saveSpace, setSpaceActive } from "@/lib/adm
 import { SortableList } from "@/components/admin/sortable-list";
 import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { ROW_ACTION_BORDERED, ROW_ACTION_DANGER, ROW_ACTION_PRIMARY } from "@/components/ui/control";
 
 type Space = {
   id: string;
@@ -59,9 +60,9 @@ export function SpacesManagerClient({ spaces, media }: { spaces: Space[]; media:
     ),
     actions: (
       <>
-        <button type="button" onClick={() => handleVisibility(space.id, !space.is_active)} className="rounded border border-[#768075] px-2 py-1 text-xs font-semibold text-[#768075]">{space.is_active ? "Hide" : "Show"}</button>
-        <Link href={`/admin/spaces/items/${space.id}`} className="rounded border border-[#1f3426] px-2 py-1 text-xs font-semibold text-[#1f3426]">Edit</Link>
-        <button type="button" onClick={() => handleDelete(space.id, space.name)} className="rounded border border-[#b65d40] px-2 py-1 text-xs font-semibold text-[#b65d40]">Delete</button>
+        <button type="button" onClick={() => handleVisibility(space.id, !space.is_active)} className={ROW_ACTION_BORDERED}>{space.is_active ? "Hide" : "Show"}</button>
+        <Link href={`/admin/spaces/items/${space.id}`} className={ROW_ACTION_PRIMARY}>Edit</Link>
+        <button type="button" onClick={() => handleDelete(space.id, space.name)} className={ROW_ACTION_DANGER}>Delete</button>
       </>
     ),
   }));

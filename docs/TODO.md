@@ -406,47 +406,100 @@ work items; the audit document holds the evidence.
       `color`. Verified by mutation: re-adding the unlayered rule fails the
       test with the right message.
 
-- [ ] **A69** Change `lg:` to `xl:` on three admin grids. At exactly 1024px the
+- [x] **A69** Change `lg:` to `xl:` on three admin grids. At exactly 1024px the
       content box is `1024 − 256 (lg:pl-64) − 64 (lg:p-8) = 704px`, yet
       `menu-manager-client.tsx`, `space-edit-form.tsx:24` and
-      `experience-edit-form.tsx:65` all add a 22rem column at `lg:` — leaving
+      `experience-edit-form.tsx:65` all added a 22rem column at `lg:` — leaving
       the *primary* column at 320–328px, narrower than the image aside beside
-      it, from 1024px to 1279px. `[resource]/page.tsx:156` already does this
+      it, from 1024px to 1279px. `[resource]/page.tsx:156` already did this
       correctly with `xl:`; the three files copied the pattern and got the
-      breakpoint wrong. Fixing this also resolves the MediaPicker's
-      container-vs-viewport mismatch, since the picker is embedded in those
-      columns.
+      breakpoint wrong.
+      **Done.** All three moved to `xl:`. `media/page.tsx` also had its fixed
+      `22rem` track changed to `minmax(0,22rem)` (a bare `22rem` track cannot
+      shrink, so a wide child pushes the grid past its container) and its
+      `lg:grid-cols-3` to `xl:grid-cols-3`; `preview/page.tsx` gained an
+      `sm:grid-cols-2` step so it is not a single column all the way to `xl`.
+      Verified in the browser at 1024×800: the menu primary column now resolves
+      to **689px** (was 328px), and the MediaPicker embedded in it reflows from
+      ~100px thumbnails to **193px** — the knock-on fix this item predicted.
 
-- [ ] **A70** Give the menu category popover a positioned ancestor. The
-      `absolute z-20 mt-2 w-72` edit form in `menu-manager-client.tsx` has no
+- [x] **A70** Give the menu category popover a positioned ancestor. The
+      `absolute z-20 mt-2 w-72` edit form in `menu-manager-client.tsx` had no
       positioned ancestor anywhere up to `layout.tsx` — `sortable-list.tsx:11`
       only applies `relative` while a row is being dragged. The popover
-      resolves against the initial containing block and renders detached from
-      its trigger at every viewport width. The only defect that is broken at
+      resolved against the initial containing block and rendered detached from
+      its trigger at every viewport width. The only defect that was broken at
       all widths.
+      **Done.** `<details>` → `<details className="relative">`. The row was
+      deliberately *not* made permanently `relative`: its `relative z-10` while
+      dragging exists so the dragged row paints above its neighbours, and a
+      permanent `relative` would make that `z-10` compete with static siblings.
+      Verified in the browser: the popover's `offsetParent` is now
+      `DETAILS.relative`, at `dx: 0, dy: 8` from its trigger (the `mt-2`).
+      Guarded by `tests/absolute-positioning.test.mjs`, which asserts both the
+      `relative` and that the drag-only `z-10` survived. Mutation-verified.
 
-- [ ] **A71** Raise touch targets to 44px. `px-2 py-1 text-xs` is the house
+- [x] **A71** Raise touch targets to 44px. `px-2 py-1 text-xs` was the house
       style for every row action across all six admin managers and yields
-      ~24px — 45% under the minimum. `sortable-list.tsx:12`'s drag handle has
-      zero vertical padding. On the public side, `cta.tsx:15` already carries
-      `min-h-11`, so every failure there is a raw anchor bypassing the
+      ~24px — 45% under the minimum. `sortable-list.tsx:12`'s drag handle had
+      zero vertical padding. On the public side `cta.tsx:15` already carried
+      `min-h-11`, so every failure there was a raw anchor bypassing the
       component: three underlined links on the homepage (25px), the header and
       footer logos (32/35px) and eight footer links (20px, separated by only
       12px of `gap-y-3`).
+      **Done.** The fix was to name the pattern once rather than retype a
+      height 30 times: `components/ui/control.ts` now exports `ROW_ACTION`
+      (+ `_BORDERED`/`_DANGER`/`_PRIMARY`), `TEXT_LINK`, `TEXT_LINK_ON_DARK`
+      and `TAP_TARGET`, all built on `min-h-11` (2.75rem = 44px exactly) with
+      `inline-flex items-center` so the label stays centred — the target grows,
+      the ink does not. Admin actions were mapped **by what the handler does**,
+      not by their old colour: anything calling a `delete*` action became
+      `ROW_ACTION_DANGER`, the one navigating action per row became
+      `ROW_ACTION_PRIMARY`, reversible toggles became `ROW_ACTION_BORDERED`.
+      `sortable-list.tsx` keeps `touch-none` on the drag handle — the dnd-kit
+      `TouchSensor` stops working without it.
+      Public: the three homepage anchors → `TEXT_LINK`; both logos and the
+      header/footer nav links → `TAP_TARGET`. The footer's `gap-y-3` dropped to
+      `gap-y-1`: 12px of gap was compensating for 20px boxes, but a 44px box
+      with 20px of ink already puts ~24px of empty space between stacked
+      labels, so keeping both would have inflated the mobile footer for no
+      gain. `gap-x-5` unchanged — horizontal neighbours are label-width and
+      still need real separation.
+      Guarded by `tests/touch-target.test.mjs`, which scans the source tree for
+      the raw string rather than asserting about any one file, because the
+      defect was never in one file — it was a convention. Mutation-verified.
+      **Not changed, deliberately:** the `<span>Explore experience</span>` in
+      `app/experience/page.tsx` carries the underline style but is *not* a
+      target — the whole card is one ~350px-tall `<a>`. Giving it `TEXT_LINK`
+      would nest a second focus ring inside a single link. The test was
+      narrowed to match `<a>`/`<Link>` tags rather than className alone so it
+      stops reporting it.
 
-- [ ] **A72** Add `flex-wrap` to seven admin rows and one public header. Each
-      admin row pairs a checkbox label with a Status `<select>`, or a
-      `px-6 py-3` Save with a `px-6 py-3` Cancel; both overflow 375px.
-      `app/(public)/page.tsx:36` (gallery header) is missing the `flex-wrap`
+- [x] **A72** Add `flex-wrap` to the admin rows and the public gallery
+      header. Each admin row paired a checkbox label with a Status `<select>`,
+      or a `px-6 py-3` Save with a `px-6 py-3` Cancel; both overflowed 375px.
+      `app/(public)/page.tsx:36` (gallery header) was missing the `flex-wrap`
       its sibling on line 32 has.
+      **Done** in `space-edit-form.tsx`, `experience-edit-form.tsx`,
+      `experiences-manager-client.tsx`, `event-promotion-manager.tsx` and the
+      gallery header. The event/promotion card title also picked up `truncate`,
+      and `[resource]/page.tsx:160`'s `<summary>` `break-words` — a long
+      untruncated title was the thing actually forcing those rows wide.
 
-- [ ] **A73** Bring the hero down to phone height. `min-h-[760px]` measures
-      1.14× an iPhone SE viewport, so nothing below the hero is reachable
-      without scrolling and `items-end` puts the h1 at `top: 352px`. `pt-44`
-      (176px) has no mobile step-down. The `min-h-[560px]` + `min-h-[430px]`
-      pair on the feature band stacks the same way. The h1 itself does **not**
+- [x] **A73** Bring the hero down to phone height. `min-h-[760px]` measures
+      1.14× an iPhone SE viewport, so nothing below the hero was reachable
+      without scrolling and `items-end` put the h1 at `top: 352px`. `pt-44`
+      (176px) had no mobile step-down. The `min-h-[560px]` + `min-h-[430px]`
+      pair on the feature band stacked the same way. The h1 itself does **not**
       clip — measured `scrollWidth` 327 against `clientWidth` 327 at 375px, so
       that earlier claim is withdrawn.
+      **Done.** Hero → `min-h-[70svh] sm:min-h-[760px]` and `pt-28 sm:pt-44`.
+      `svh` rather than `vh` so the mobile browser toolbar shrinking does not
+      leave the section taller than the visible viewport. Feature band →
+      `min-h-[380px] sm:min-h-[480px] lg:min-h-[560px]`, and its inner column
+      to `min-h-0 sm:min-h-[350px] lg:min-h-[430px]`: the two minimums stack,
+      so any non-zero inner base is pure dead space on a phone — the content
+      plus `p-8` already fills the 380px outer. Font sizes untouched.
 
 - [ ] **A74** Consolidate the palette. `--forest`, `--olive`, `--terracotta`
       and `--sand` in `globals.css` are referenced nowhere in `app/` or
@@ -457,18 +510,43 @@ work items; the audit document holds the evidence.
       neither under white text (4.47:1) nor as text on cream (4.04:1); both
       need darkening before the variables are adopted.
 
-- [ ] **A75** Make `focus-visible` the standard. `cta.tsx:15` is the only file
-      in the repo using `focus-visible:ring`. `header.tsx:23,25` strip the
-      native outline unconditionally and replace it with a `focus:ring` that
-      has no offset, over a transparent header on a photo. The skip link's
-      destination (`public-shell.tsx:30`) removes its outline with no
-      replacement, so a keyboard jump gives no visual confirmation.
+- [x] **A75** Make `focus-visible` the standard. `cta.tsx:15` was the only
+      file in the repo using `focus-visible:ring`. `header.tsx:23,25` stripped
+      the native outline unconditionally and replaced it with a `focus:ring`
+      that has no offset, over a transparent header on a photo. The skip link's
+      destination (`public-shell.tsx:30`) removed its outline with no
+      replacement, so a keyboard jump gave no visual confirmation.
+      **Done.** `FOCUS_RING` in `components/ui/control.ts` is now the one
+      definition; `focus:outline-none` is only ever written together with a
+      `focus-visible` ring, so a mouse click no longer draws one. `header.tsx`
+      uses a file-local `HEADER_FOCUS` that reuses the existing `#efb38f` and
+      the header's own `#1c3025` as the offset colour — no new palette entry.
+      The skip target uses `ring-inset`: that div is the full page width, so an
+      outset ring would paint 2px past the left and right viewport edges and
+      raise a horizontal scrollbar.
+      Guarded by the fourth test in `tests/touch-target.test.mjs`: any file
+      containing `focus:outline-none` must also contain `focus-visible:ring`.
+      **Known gap:** the experience card anchor in `app/experience/page.tsx`
+      has no `focus-visible` treatment — it does not strip its outline, so it
+      still gets the browser default and is not a regression, but it is the one
+      public link surface not yet on this standard.
 
-- [ ] **A76** Label the Users form fields. `users/page.tsx` asks for a raw
+- [x] **A76** Label the Users form fields. `users/page.tsx` asked for a raw
       UUID with no `<label>` at all and no hint where to obtain it; the
-      placeholder is the only label and disappears on input. The adjacent
-      email field is labelled "verify identity" but is not `required` and is
+      placeholder was the only label and disappeared on input. The adjacent
+      email field was labelled "verify identity" but is not `required` and is
       never used for lookup.
+      **Done.** Real `<label>` elements for user_id, email and role, following
+      the wrapping-label pattern `spaces-manager-client.tsx:92-97` already
+      used, each with a `text-xs` hint below the field name. The UUID hint
+      names where to get it: "Copy this from the Supabase Auth dashboard under
+      Authentication / Users." The grid also went `md:grid-cols-4` →
+      `sm:grid-cols-2 xl:grid-cols-4` (four columns at `md` gave each field
+      ~160px, too narrow for a 36-character UUID), the email cell gained
+      `break-words`, and the submit button `h-fit self-end` so it aligns with
+      the inputs rather than stretching to the tallest label.
+      Verified in the browser at 1024px: grid resolves to two columns, all
+      three labels present and associated, hint text rendering.
 
 - [ ] **A77** Rewrite operator-facing error and empty-state copy. Several
       messages state internal state rather than an action ("No order
@@ -476,8 +554,11 @@ work items; the audit document holds the evidence.
       into an error boundary that replaces the whole page, discarding typed
       form values. `login-form.tsx:33` offers no recovery path and cannot
       distinguish a wrong password from a valid Supabase account with no
-      `user_roles` row. `experiences-manager-client.tsx:176` passes an `empty`
-      prop that is dead code — line 161 already branches on the empty case.
+      `user_roles` row. Still open: this one rewrites operator-facing text, so
+      it waits for the owner's wording.
+      The dead `empty` prop on `experiences-manager-client.tsx:176` — line 161
+      already branched on the empty case — was removed alongside A71/A72, since
+      that file was being edited anyway and the prop was unambiguously unused.
 
 - [ ] **A78** Reconcile the two upload limits.
       `media-upload-dropzone.tsx:106` shows `MAX_MEDIA_SELECTION_FILES` while

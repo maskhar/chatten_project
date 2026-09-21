@@ -157,7 +157,7 @@ export default async function AdminResourcePage({ params, searchParams }: { para
         <div className="grid gap-4">
           {rows.length ? rows.map((row) => (
             <details className="border border-[#c9bfa8] bg-[#ede3d0] p-5" key={String(row.id)}>
-              <summary className="cursor-pointer font-serif text-xl sm:text-2xl">{rowLabel(row)}</summary>
+              <summary className="cursor-pointer break-words font-serif text-xl sm:text-2xl">{rowLabel(row)}</summary>
               <form action={saveResource} className="mt-6 grid gap-4">
                 <UnsavedChangesGuard />
                 <input type="hidden" name="resource" value={resource.key} />

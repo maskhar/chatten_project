@@ -62,7 +62,7 @@ export function ExperienceEditForm({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <form action={saveExperience} className="grid gap-6">
           <UnsavedChangesGuard />
           <input type="hidden" name="id" value={experience.id} />
@@ -115,7 +115,7 @@ export function ExperienceEditForm({
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input
                 name="is_active"
@@ -138,7 +138,7 @@ export function ExperienceEditForm({
             </label>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <SubmitButton className="rounded bg-[#1f3426] px-6 py-3 text-sm font-semibold text-white hover:bg-[#2a4735]">
               Save Changes
             </SubmitButton>
