@@ -25,6 +25,33 @@ build error instead.
 - `ALLOW_MISSING_APP_URL=1 npm run build` builds without it, for a CI step
   that only needs to know the code compiles.
 
+## The Chatwoot widget is configured at build time
+
+The live-chat widget is optional and driven by two variables, which must be set
+together or not at all:
+
+```
+NEXT_PUBLIC_CHATWOOT_BASE_URL=https://chatwoot.example.com
+NEXT_PUBLIC_CHATWOOT_TOKEN=<inbox website token>
+```
+
+Setting only one fails the build rather than shipping a chat bubble that never
+appears; `lib/env/chatwoot.ts` holds that check and `next.config.ts` runs it.
+
+Both are `NEXT_PUBLIC_*`, so — exactly like the Supabase pair — they are
+compiled into the browser bundle and must be present **at image build time**.
+`docker compose --env-file .env.local build` passes them through; the compose
+`env_file` alone only reaches runtime and cannot patch a built bundle. The
+website token is public by design: it appears in the page source of every site
+running the widget and only identifies which inbox a message lands in.
+
+The values also decide the CSP the runtime serves. `next.config.ts` adds the
+Chatwoot origin to `script-src` (the SDK), `frame-src` (the widget iframe),
+`connect-src` (its API plus the `wss://…/cable` websocket — a separate origin
+to a CSP), `img-src` and `style-src`. Build without them and the policy stays
+exactly as it was. Build the image against one Chatwoot origin and point it at
+another at runtime, and the browser will block the widget.
+
 ## Database types are generated, not hand-written (audit item A52)
 
 `types/database.ts` is generated from the live `chatten_cafe` schema and must

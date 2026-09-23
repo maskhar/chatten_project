@@ -9,6 +9,10 @@ services:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        # Optional: both together enable the Chatwoot live-chat widget, and
+        # also widen the CSP to admit its origin. Neither set ships without it.
+        NEXT_PUBLIC_CHATWOOT_BASE_URL: ${NEXT_PUBLIC_CHATWOOT_BASE_URL:-}
+        NEXT_PUBLIC_CHATWOOT_TOKEN: ${NEXT_PUBLIC_CHATWOOT_TOKEN:-}
     env_file:
       - .env.local
     ports:

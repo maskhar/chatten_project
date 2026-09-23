@@ -14,12 +14,20 @@ COPY . .
 # reaches runtime, which fixes server code but cannot patch an already-built
 # bundle. Only public values are passed here; SUPABASE_SERVICE_ROLE_KEY is
 # deliberately absent so it can never reach a browser bundle.
+# The two Chatwoot values are read the same way, and additionally decide the
+# CSP the runtime serves — next.config.ts adds the Chatwoot origin to
+# script-src/frame-src/connect-src only when they are present at build time.
+# Leave them unset to ship without the live-chat widget.
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_CHATWOOT_BASE_URL
+ARG NEXT_PUBLIC_CHATWOOT_TOKEN
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
-    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_CHATWOOT_BASE_URL=$NEXT_PUBLIC_CHATWOOT_BASE_URL \
+    NEXT_PUBLIC_CHATWOOT_TOKEN=$NEXT_PUBLIC_CHATWOOT_TOKEN
 RUN npm run build
 FROM node:24-alpine AS runner
 WORKDIR /app
