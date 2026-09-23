@@ -2,8 +2,13 @@
 .codegraph/
 node_modules
 .next
+# Every env file except the committed template. Listing `.env` and `.env.local`
+# by name left `.env.production`, `.env.staging` and any `.env.local.bak`
+# committable — one careless `git add -A` away from publishing the
+# service-role key.
 .env
-.env.local
+.env.*
+!.env.example
 *.tsbuildinfo
 
 .e2e/
