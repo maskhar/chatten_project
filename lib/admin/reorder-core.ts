@@ -18,8 +18,6 @@ export const REORDERABLE_TABLES = [
   "menu_items",
   "gallery_items",
   "testimonials",
-  "promotions",
-  "events",
   "social_links",
   "navigation_items",
   "homepage_sections",

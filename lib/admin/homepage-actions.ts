@@ -3,10 +3,80 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyOrder } from "@/lib/admin/reorder";
+import { parseField, uuidSchema } from "@/lib/admin/form-schema";
 
-export async function toggleHomepageSection(formData: FormData) { await requireAdmin(); const id=String(formData.get("id") ?? ""); const visible=String(formData.get("visible")) === "true"; const supabase=await createServerSupabaseClient(); const {error}=await supabase.from("homepage_sections").update({is_visible:visible}).eq("id",id); if(error) throw new Error("Unable to update homepage section."); revalidatePath("/"); revalidatePath("/admin/homepage"); }
-export async function moveHomepageSection(formData: FormData) { await requireAdmin(); const id=String(formData.get("id") ?? ""); const direction=String(formData.get("direction")); const supabase=await createServerSupabaseClient(); const {data:rows,error}=await supabase.from("homepage_sections").select("id,sort_order").order("sort_order"); if(error) throw new Error("Unable to load homepage order."); const ordered=(rows??[]) as {id:string;sort_order:number}[]; const current=ordered.findIndex(row=>row.id===id); const target=direction === "up" ? current-1 : current+1; if(current < 0 || target < 0 || target >= ordered.length) return; const changes=await Promise.all([supabase.from("homepage_sections").update({sort_order:ordered[target].sort_order}).eq("id",ordered[current].id),supabase.from("homepage_sections").update({sort_order:ordered[current].sort_order}).eq("id",ordered[target].id)]); if(changes.some(change=>change.error)) throw new Error("Unable to save homepage order."); revalidatePath("/"); revalidatePath("/admin/homepage"); }
+/**
+ * The ten fixed homepage sections. Mirrors the CHECK constraint on
+ * chatten_cafe.homepage_sections.section_key: the table is a layout registry,
+ * not a collection, so rows are never created or deleted through the CMS.
+ */
+const SECTION_KEYS = new Set([
+  "hero",
+  "moments",
+  "about",
+  "menu",
+  "spaces",
+  "experiences",
+  "feature",
+  "gallery",
+  "testimonials",
+  "visit",
+]);
 
-export async function reorderHomepageSections(ids: string[]) { await requireAdmin(); const allowed = new Set(['hero','moments','about','menu','spaces','experiences','feature','gallery','testimonials','visit']); if (!ids.length) throw new Error('Invalid homepage order.'); const supabase = await createServerSupabaseClient(); const { data, error } = await supabase.from('homepage_sections').select('id,section_key').in('id', ids); if (error || data?.length !== ids.length || data.some((row) => !allowed.has(String(row.section_key)))) throw new Error('Unknown homepage section.'); await applyOrder('homepage_sections', ids, 0, 'homepage order'); revalidatePath('/'); revalidatePath('/admin/homepage'); }
+export async function toggleHomepageSection(formData: FormData) {
+  await requireAdmin();
+  // A81: the id went straight into .eq() as a raw string and `visible` was
+  // read as `String(...) === "true"`, so any other posted value silently meant
+  // "hide". Both are now rejected rather than reinterpreted.
+  const id = parseField(uuidSchema, formData.get("id"), "ID bagian");
+  const raw = String(formData.get("visible") ?? "");
+  if (raw !== "true" && raw !== "false") {
+    throw new Error("Status tampil tidak valid.");
+  }
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await supabase
+    .from("homepage_sections")
+    .update({ is_visible: raw === "true" }, { count: "exact" })
+    .eq("id", id);
+  if (error) throw new Error("Gagal memperbarui bagian homepage.");
+  // RLS returns success with zero rows for a caller who may not write, which
+  // would otherwise render as a state change that reverts on the next load.
+  if (!count) throw new Error("Bagian homepage tidak ditemukan atau tidak boleh diubah.");
+  revalidatePath("/");
+  revalidatePath("/admin/homepage");
+}
 
+/**
+ * Persists a complete homepage order.
+ *
+ * A79: the list must be the full current section set, not a subset. A partial
+ * list renumbers the submitted rows from 0 and leaves the rest where they are,
+ * which duplicates ranks — now rejected by the deferrable unique constraint at
+ * commit, but rejected here first so the editor gets a real message.
+ */
+export async function reorderHomepageSections(ids: string[]) {
+  await requireAdmin();
+  if (!Array.isArray(ids) || !ids.length) throw new Error("Urutan homepage tidak valid.");
 
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("homepage_sections")
+    .select("id,section_key");
+  if (error) throw new Error("Gagal memuat urutan homepage.");
+
+  const rows = (data ?? []) as { id: string; section_key: string }[];
+  const submitted = new Set(ids);
+  const known = new Set(rows.map((row) => row.id));
+  if (
+    submitted.size !== ids.length ||
+    ids.length !== rows.length ||
+    ids.some((id) => !known.has(id)) ||
+    rows.some((row) => !SECTION_KEYS.has(String(row.section_key)))
+  ) {
+    throw new Error("Urutan homepage harus memuat seluruh bagian yang ada.");
+  }
+
+  await applyOrder("homepage_sections", ids, 0, "urutan homepage");
+  revalidatePath("/");
+  revalidatePath("/admin/homepage");
+}

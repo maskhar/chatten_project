@@ -15,6 +15,10 @@ import ts from "typescript";
 const source = fs.readFileSync("lib/admin/reorder-core.ts", "utf8");
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
 const { REORDERABLE_TABLES, isReorderableTable, normalizeOffset, validateReorderIds } = await import(`data:text/javascript,${encodeURIComponent(js)}`);
+const correctiveMigration = fs.readFileSync(
+  "supabase/migrations/20260926000100_homepage_order_deferrable.sql",
+  "utf8",
+);
 
 const uuid = (n) => `0000000${n}-0000-4000-8000-000000000000`;
 
@@ -61,12 +65,44 @@ test("normalizeOffset refuses values that would write negative ranks", () => {
   assert.equal(normalizeOffset("abc"), 0);
 });
 
-test("isReorderableTable matches the migration's allowlist exactly", () => {
-  const migration = fs.readFileSync("supabase/migrations/20260921000700_batch_reorder.sql", "utf8");
-  const clause = migration.slice(migration.indexOf("target_table not in ("), migration.indexOf(") then"));
+test("isReorderableTable matches the latest migration allowlist exactly", () => {
+  const clause = correctiveMigration.slice(
+    correctiveMigration.indexOf("target_table not in ("),
+    correctiveMigration.indexOf(") then"),
+  );
   const inSql = [...clause.matchAll(/'([a-z_]+)'/g)].map((match) => match[1]).sort();
   assert.deepEqual([...REORDERABLE_TABLES].sort(), inSql, "the TypeScript allowlist must mirror the database's");
+  assert.ok(!REORDERABLE_TABLES.includes("events"));
+  assert.ok(!REORDERABLE_TABLES.includes("promotions"));
   for (const table of REORDERABLE_TABLES) assert.ok(isReorderableTable(table));
+});
+
+test("homepage sort order is deferred but remains unique", () => {
+  assert.match(correctiveMigration, /drop index if exists chatten_cafe\.homepage_sections_sort_order_key/);
+  assert.match(correctiveMigration, /add constraint homepage_sections_sort_order_key/);
+  assert.match(correctiveMigration, /unique \(sort_order\)\s+deferrable initially deferred/);
+});
+
+test("homepage action requires the complete current section set", () => {
+  const action = fs.readFileSync("lib/admin/homepage-actions.ts", "utf8");
+  assert.match(action, /ids\.length !== rows\.length/);
+  assert.match(action, /submitted\.size !== ids\.length/);
+  assert.match(action, /ids\.some\(\(id\) => !known\.has\(id\)\)/);
+  assert.ok(!action.includes("moveHomepageSection"));
+});
+
+test("homepage UI has one atomic save path", () => {
+  const component = fs.readFileSync("components/admin/homepage-sortable.tsx", "utf8");
+  assert.match(component, /onSave=\{reorderHomepageSections\}/);
+  assert.ok(!component.includes("moveHomepageSection"));
+  assert.ok(!component.includes('name="direction"'));
+});
+
+test("sortable rollback uses its last persisted baseline", () => {
+  const component = fs.readFileSync("components/admin/sortable-list.tsx", "utf8");
+  assert.match(component, /const persisted = useRef\(items\)/);
+  assert.match(component, /persisted\.current = submitted/);
+  assert.match(component, /setOrder\(persisted\.current\)/);
 });
 
 test("opening_hours is not reorderable", () => {
@@ -78,16 +114,15 @@ test("opening_hours is not reorderable", () => {
   assert.ok(!isReorderableTable("media"));
 });
 
-test("the reorder function is SECURITY INVOKER and allowlists its table", () => {
-  const migration = fs.readFileSync("supabase/migrations/20260921000700_batch_reorder.sql", "utf8");
+test("the latest reorder function is SECURITY INVOKER and allowlists its table", () => {
   // DEFINER would run as the owner and bypass the very RLS policies that
   // decide who may reorder these tables.
-  assert.match(migration, /security invoker/);
-  assert.ok(!/security definer/.test(migration));
-  assert.match(migration, /revoke all on function chatten_cafe\.reorder_rows/);
-  assert.match(migration, /grant execute on function chatten_cafe\.reorder_rows\(text, uuid\[\], integer\) to authenticated/);
+  assert.match(correctiveMigration, /security invoker/);
+  assert.ok(!/security definer/.test(correctiveMigration));
+  assert.match(correctiveMigration, /revoke all on function chatten_cafe\.reorder_rows/);
+  assert.match(correctiveMigration, /grant execute on function chatten_cafe\.reorder_rows\(text, uuid\[\], integer\) to authenticated/);
   // format(%I) quotes an identifier safely but does not restrict which table.
-  assert.match(migration, /is not reorderable/);
+  assert.match(correctiveMigration, /is not reorderable/);
 });
 
 test("no admin action still runs a staging pass or a per-row reorder loop", () => {
