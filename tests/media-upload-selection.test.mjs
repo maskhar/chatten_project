@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import ts from "typescript";
 
-// A78: upload-selection.ts now imports the shared limits module. A relative
+// A78: upload-selection.ts imports the shared limits module. A relative
 // specifier cannot resolve from a data: URL, so it is inlined as one.
 const compile = (name) => ts.transpileModule(
   fs.readFileSync(new URL(`../lib/media/${name}.ts`, import.meta.url), "utf8"),
@@ -41,23 +41,26 @@ test("21 files remain selected and block submission without truncation", () => {
   assert.equal(files.length, 21);
   assert.equal(state.overLimit, true);
   assert.equal(state.canSubmit, false);
-  assert.match(state.message, /no more than 20 images/);
+  assert.match(state.message, /maksimal 20 gambar/i);
 });
 
-test("FormData uses repeated files entries", () => {
+// Transport API accepts exactly one Blob and puts it under the singular `file`
+// key. This guards against silently returning to a getAll("files") batch body.
+test("FormData carries one file per request under singular file key", () => {
   const first = new Blob(["a"], { type: "image/jpeg" });
-  const second = new Blob(["b"], { type: "image/png" });
-  const formData = selection.buildMediaUploadFormData([first, second]);
-  assert.equal(formData.getAll("files").length, 2);
-  assert.equal(formData.get("file"), null);
+  const formData = selection.buildMediaUploadFormData(first);
+  assert.equal(formData.getAll("file").length, 1);
+  assert.equal(formData.get("file")?.size, first.size);
+  assert.equal(formData.get("file")?.type, first.type);
+  assert.equal(formData.getAll("files").length, 0);
 });
 
 test("partial batch summary stays aggregate", () => {
   const message = selection.summarizeMediaUploadBatch({ results: [{ ok: true }, { ok: true }, { ok: true }, { ok: false }] });
-  assert.equal(message, "3 images uploaded. 1 file could not be uploaded.");
+  assert.equal(message, "3 gambar berhasil diunggah. 1 berkas gagal diunggah.");
 });
 
-test("media upload component wires native multiple input, drag drop, queue state, and batch action", () => {
+test("media upload component wires native multiple input, drag drop, queue state, and one-file action", () => {
   const component = fs.readFileSync(new URL("../components/admin/media-upload-dropzone.tsx", import.meta.url), "utf8");
   const page = fs.readFileSync(new URL("../app/admin/(dashboard)/media/page.tsx", import.meta.url), "utf8");
   assert.match(component, /name="files"/);
@@ -66,9 +69,22 @@ test("media upload component wires native multiple input, drag drop, queue state
   assert.match(component, /onDragOver=/);
   assert.match(component, /onDrop=/);
   assert.match(component, /queueItems/);
-  assert.match(component, /uploadMediaBatch/);
-  assert.match(component, /buildMediaUploadFormData/);
+  assert.match(component, /uploadMedia/);
+  assert.match(component, /uploadMedia\(buildMediaUploadFormData\(file\)\)/);
+  assert.ok(!/uploadMediaBatch/.test(component));
+  assert.match(component, /applyUploadOutcome/);
   assert.match(page, /MediaUploadDropzone/);
+});
+
+// Upload/results are terminal queue states: while individual action calls are
+// in flight or outcomes are shown, input, drops, clear, and remove stay locked.
+test("media upload component blocks all queue edits during upload and results", () => {
+  const component = fs.readFileSync(new URL("../components/admin/media-upload-dropzone.tsx", import.meta.url), "utf8");
+  assert.match(component, /const canModifyQueue = !uploading && !hasResults/);
+  assert.match(component, /if \(!canModifyQueue \|\| !files\.length\) return/);
+  assert.match(component, /if \(!canModifyQueue\) return;/);
+  assert.match(component, /disabled=\{!canModifyQueue\}/);
+  assert.match(component, /disabled=\{!selection\.canSubmit \|\| uploading \|\| hasResults\}/);
 });
 
 // A78. Before this, the browser's limit and the server's limit were two
@@ -88,4 +104,5 @@ test("the size limit shown to operators is derived from the enforced value", asy
   const limits = await import("data:text/javascript," + encodeURIComponent(compile("upload-limits")));
   const megabytes = limits.MAX_MEDIA_UPLOAD_BYTES / (1024 * 1024);
   assert.equal(limits.formatMediaSizeLimit(), `${megabytes} MB`);
+  assert.equal(selection.formatMediaSizeLimit(), limits.formatMediaSizeLimit());
 });

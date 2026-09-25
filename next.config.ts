@@ -74,6 +74,14 @@ const csp = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // One image is sent in each media-upload Server Action request. Keep this
+  // ceiling just above the shared 10 MiB image limit so framework parsing does
+  // not reject an otherwise valid upload before server-side validation runs.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "11mb",
+    },
+  },
   poweredByHeader: false,
   // No remotePatterns: after A6 every <Image src> is the same-origin
   // /api/media/[id] route, which next/image already allows. Re-adding the
