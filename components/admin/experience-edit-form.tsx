@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveExperience } from "@/lib/admin/experience-actions";
-import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
+import { ActionForm } from "@/components/admin/action-form";
 import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
 
@@ -63,8 +63,7 @@ export function ExperienceEditForm({
       </div>
 
       <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <form action={saveExperience} className="grid gap-6">
-          <UnsavedChangesGuard />
+        <ActionForm action={saveExperience} className="grid gap-6">
           <input type="hidden" name="id" value={experience.id} />
 
           <div>
@@ -149,7 +148,7 @@ export function ExperienceEditForm({
               Cancel
             </Link>
           </div>
-        </form>
+        </ActionForm>
 
         {imgUrl && (
           <div className="h-fit rounded border bg-white p-4">

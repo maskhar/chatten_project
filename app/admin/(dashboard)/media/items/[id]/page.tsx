@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { saveMediaDetails } from "@/lib/admin/media-actions";
-import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
+import { ActionForm } from "@/components/admin/action-form";
 import { focalObjectPosition } from "@/lib/media/focal-point";
 import { mediaHrefById } from "@/lib/media/url";
 import { buildMediaUsagePresentation } from "@/lib/media/usage-presentation";
@@ -74,8 +74,7 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
           </dl>
         </aside>
 
-        <form action={saveMediaDetails} className="grid max-w-2xl gap-5 rounded border border-line bg-sand p-6">
-          <UnsavedChangesGuard />
+        <ActionForm action={saveMediaDetails} className="grid max-w-2xl gap-5 rounded border border-line bg-sand p-6">
           <input type="hidden" name="id" value={item.id} />
           <label className={labelText}>Title<input name="title" defaultValue={item.title ?? ""} className={field} /></label>
           <label className={labelText}>Alt text <span className="font-normal text-ink-muted">— optional</span><input name="alt_text" defaultValue={item.alt_text ?? ""} className={field} /><span className="mt-1 block text-xs font-normal text-ink-muted">Describes the image for screen readers and for search engines. Worth a sentence when you have one; the image works either way.</span></label>
@@ -101,7 +100,7 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
             <SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white">Save changes</SubmitButton>
             <Link href="/admin/media" className="rounded border border-forest px-6 py-3 text-sm font-semibold">Cancel</Link>
           </div>
-        </form>
+        </ActionForm>
       </div>
 
       <section className="mt-8 max-w-2xl rounded border border-line bg-white p-5" aria-labelledby="media-used-in-heading">
