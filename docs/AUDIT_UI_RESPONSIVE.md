@@ -770,3 +770,83 @@ Keduanya keputusan pemilik, bukan efek samping dari perapian kode:
    antarmuka lebih buruk daripada memilih salah satunya.
 2. **Batas unggah tetap 20 berkas.** Menaikkannya adalah keputusan kapasitas
    server.
+
+---
+
+## 10. Sapuan ulang terautentikasi (26 September 2026)
+
+Audit §1–§9 dijalankan tanpa sesi login, sehingga setiap rute `/admin/*`
+sebenarnya diukur pada halaman login setelah redirect — dan tetap dilaporkan
+"lulus". Sapuan ini memakai `storageState` Playwright dari akun audit sementara,
+lalu menolak halaman yang: dialihkan ke `/admin/login`, merender tanpa `<h1>`,
+masih menampilkan `Loading…`, menjawab status ≥ 400, meluap secara horizontal,
+menulis galat konsol, melempar page error, atau meninggalkan request gagal.
+
+Cakupan: 22 rute × 375 / 768 / 1440 piksel.
+
+### 10.1 A82 — hydration mismatch di keempat daftar seret
+
+`DndContext` memberi dirinya id otomatis dari penghitung modul global. Render
+server memulai penghitung itu dari nol setiap request, sedangkan bundel browser
+sudah menaikkannya saat modul lain dimuat. Hasilnya dua nilai berbeda untuk
+atribut yang sama:
+
+| Sisi | `aria-describedby` yang dirender |
+|---|---|
+| Server | `DndDescribedBy-0` |
+| Klien | `DndDescribedBy-73` |
+
+React memperlakukan selisih atribut saat hydration sebagai mismatch dan **tidak
+menambalnya**, jadi deskripsi drag-and-drop permanen menunjuk ke elemen yang
+tidak ada. Bagi pengguna pembaca layar, tombol seret itu kehilangan seluruh
+instruksi pemakaiannya — bukan sekadar peringatan di konsol.
+
+Perbaikannya satu prop: `const dndId = useId()` lalu `<DndContext id={dndId}>`.
+`useId` memang dirancang untuk persis kasus ini — id stabil lintas server dan
+klien. File `components/admin/sortable-list.tsx` adalah satu-satunya pemakaian
+`DndContext` di repositori, sehingga `/admin/homepage`, `/admin/menu`,
+`/admin/spaces`, dan `/admin/experiences` pulih sekaligus.
+
+Probe hydration khusus dijalankan sebelum dan sesudah: peringatan muncul pada
+keempat rute sebelumnya, dan nol sesudahnya.
+
+### 10.2 A82 — luapan `/admin/media` pada 375px bukan kegagalan `truncate`
+
+Terukur `document.documentElement.scrollWidth` = **384** pada viewport 375 —
+luapan 9px. Judul kartu sudah memakai `truncate`, jadi dugaan pertama (teks
+tidak dipotong) salah. Probe `width: min-content` pada elemen sungguhan
+membuktikan penyebabnya:
+
+| Elemen | min-content terukur |
+|---|---|
+| `<h2 className="mt-4 truncate font-semibold">` | ~322px |
+| `<article>` pembungkus kartu | ~364px |
+
+Grid item bawaan memiliki `min-width: auto`, bukan `0`. Selama pembungkusnya
+boleh tumbuh sampai min-content anaknya, `truncate` pada anak itu tidak pernah
+mendapat kesempatan bekerja. `min-w-0` pada `<article>` mengizinkan kartu
+menyusut, dan `truncate` langsung berlaku.
+
+Ini pelajaran metode yang sama seperti §9.3: nama class ada di HTML tidak
+berarti efeknya berlaku. Yang membuktikannya adalah pengukuran min-content,
+bukan pembacaan kelas.
+
+### 10.3 Hasil sapuan sesudah perbaikan
+
+```
+routes: 22 × viewport 375 / 768 / 1440
+findings: []
+failures: []
+```
+
+Tidak ada luapan horizontal, peringatan hydration, galat konsol, page error,
+maupun request gagal pada seluruh kombinasi.
+
+### 10.4 Satu artefak alat yang sempat dikira cacat aplikasi
+
+Panel Browser bawaan menampilkan `Loading…` pada setiap rute. `fetch("/")`
+mengembalikan 200 dengan HTML lengkap berisi skrip reveal streaming React
+(`$RC`, `$RS`), dan membuka paksa div tersembunyinya memperlihatkan konten utuh.
+Screenshot Playwright dan aplikasi di Docker keduanya merender benar. Jadi ini
+artefak renderer panel, bukan cacat aplikasi — dan sebab itu seluruh verifikasi
+di bagian ini memakai Playwright, bukan panel tersebut.

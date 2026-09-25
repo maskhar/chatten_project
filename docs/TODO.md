@@ -695,6 +695,27 @@ work items; the audit document holds the evidence.
       yang `redirect("?saved=1")` tetap bekerja. Keenam formulir bergaransi kini
       memakainya. Kontrak: 32 tes terfokus, diverifikasi lewat mutasi.
 
+- [x] **A82** Perbaiki hydration mismatch drag-and-drop dan luapan Pustaka Media.
+      `DndContext` tanpa prop `id` mengambil id dari penghitung modul global,
+      yang dimulai pada nilai berbeda di server dan di browser. Setiap tombol
+      seret karena itu dirender `aria-describedby="DndDescribedBy-0"` di server
+      dan `"DndDescribedBy-73"` di klien; React melaporkannya sebagai hydration
+      mismatch dan menolak menambal atribut tersebut, sehingga deskripsi
+      drag-and-drop menunjuk ke elemen yang tidak ada bagi pembaca layar.
+      `components/admin/sortable-list.tsx` kini memakai `useId()`, satu-satunya
+      pemakaian `DndContext` di repo, sehingga `/admin/homepage`, `/admin/menu`,
+      `/admin/spaces`, dan `/admin/experiences` tertutup sekaligus.
+
+      Luapan horizontal `/admin/media` pada 375px (`scrollWidth` 384 lawan
+      `clientWidth` 375) ternyata bukan kegagalan `truncate`. Grid item bawaan
+      memiliki `min-width: auto`, jadi `<article>` pembungkus kartu ikut
+      memaksakan min-content judulnya — diukur ~322px lewat probe
+      `width: min-content`. `min-w-0` pada kartu membuat `truncate` berlaku.
+
+      Bukti sesudah perbaikan: sapuan Playwright terautentikasi atas 22 rute
+      pada 375/768/1440 melaporkan `findings: []` dan `failures: []` — tanpa
+      luapan, peringatan hydration, galat konsol, maupun request gagal.
+
 - [x] **A83** Perketat tujuh server action editor domain (`menu`, `gallery`,
       `events`, `promotions`, `spaces`, `experiences`, dan `roles`) dengan
       skema bersama `form-schema.ts`. Semua ID kini UUID ketat, status dan
