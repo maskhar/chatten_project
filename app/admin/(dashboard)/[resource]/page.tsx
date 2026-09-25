@@ -56,7 +56,7 @@ function FieldInput({ field, value, media }: { field: Field; value: unknown; med
       <label className="block text-sm">
         {field.label}
         <select {...common} defaultValue={current}>
-          {needsPrompt ? <option value="">Select {field.label.toLowerCase()}…</option> : null}
+          {needsPrompt ? <option value="">Pilih {field.label.toLowerCase()}…</option> : null}
           {choices?.map((choice) => <option value={choice.value} key={choice.value}>{choice.label}</option>)}
         </select>
         <FieldHelp id={helpId ?? ""} text={field.help} />
@@ -111,32 +111,32 @@ export default async function AdminResourcePage({ params, searchParams }: { para
     <section>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[.2em] text-rust">CMS module</p>
+          <p className="text-xs uppercase tracking-[.2em] text-rust">Modul CMS</p>
           <h1 className="mt-3 font-serif text-3xl sm:text-4xl lg:text-5xl">{resource.label}</h1>
           {resource.description ? <p className="mt-2 max-w-prose text-sm text-ink">{resource.description}</p> : null}
         </div>
-        <p className="text-sm text-ink">{total} record{total === 1 ? "" : "s"}{filtered ? " matching" : ""}</p>
+        <p className="text-sm text-ink">{total} data{filtered ? " yang cocok" : ""}</p>
       </div>
 
       {/* A plain GET form: filters live in the URL, so a filtered list can be
           bookmarked, shared and reloaded, and the page stays server-rendered. */}
       <form method="get" action={basePath} className="mt-6 flex flex-wrap items-end gap-3">
         <label className="block text-sm">
-          Search
-          <input name="q" type="search" defaultValue={query.search} placeholder={`Search ${resource.label.toLowerCase()}`} className="mt-1 block w-full min-w-[14rem] border border-line bg-white px-3 py-2 text-sm" />
+          Cari
+          <input name="q" type="search" defaultValue={query.search} placeholder={`Cari ${resource.label.toLowerCase()}`} className="mt-1 block w-full min-w-[14rem] border border-line bg-white px-3 py-2 text-sm" />
         </label>
         {hasStatus ? (
           <label className="block text-sm">
             Status
             <select name="status" defaultValue={query.status} className="mt-1 block border border-line bg-white px-3 py-2 text-sm">
-              <option value="">All</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
+              <option value="">Semua</option>
+              <option value="draft">Draf</option>
+              <option value="published">Terbit</option>
             </select>
           </label>
         ) : null}
-        <button type="submit" className="border border-forest px-4 py-2 text-sm font-semibold">Apply</button>
-        {filtered ? <Link href={basePath} className="px-2 py-2 text-sm underline">Clear</Link> : null}
+        <button type="submit" className="border border-forest px-4 py-2 text-sm font-semibold">Terapkan</button>
+        {filtered ? <Link href={basePath} className="px-2 py-2 text-sm underline">Hapus filter</Link> : null}
       </form>
 
       {/* A26: drag ordering, hidden while a filter is active — the action writes
@@ -145,8 +145,8 @@ export default async function AdminResourcePage({ params, searchParams }: { para
           safe because the action offsets by the page's first rank. */}
       {sortable && !filtered && rows.length > 1 ? (
         <details className="mt-6 border border-line bg-sand p-5">
-          <summary className="cursor-pointer text-sm font-semibold">Reorder display order</summary>
-          <p className="mt-3 text-sm text-ink">Drag a row, or use the arrows, then save. This sets the order visitors see on the public site.</p>
+          <summary className="cursor-pointer text-sm font-semibold">Ubah urutan tampilan</summary>
+          <p className="mt-3 text-sm text-ink">Seret sebuah baris, atau pakai tombol panah, lalu simpan. Urutan ini yang dilihat pengunjung di situs publik.</p>
           <div className="mt-4">
             <ResourceReorder resourceKey={resource.key} offset={from} action={reorderResource} items={rows.map((row) => ({ id: String(row.id), label: rowLabel(row) }))} />
           </div>
@@ -163,27 +163,27 @@ export default async function AdminResourcePage({ params, searchParams }: { para
                 <input type="hidden" name="resource" value={resource.key} />
                 <input type="hidden" name="id" value={String(row.id)} />
                 {resource.fields.map((field) => <FieldInput field={field} value={row[field.key]} media={media} key={field.key} />)}
-                <div className="flex gap-3"><SubmitButton className="bg-forest px-4 py-2 text-sm font-semibold text-white">Save changes</SubmitButton></div>
+                <div className="flex gap-3"><SubmitButton className="bg-forest px-4 py-2 text-sm font-semibold text-white">Simpan perubahan</SubmitButton></div>
               </form>
               <form action={deleteResource} className="mt-3">
                 <input type="hidden" name="resource" value={resource.key} />
                 <input type="hidden" name="id" value={String(row.id)} />
-                <DeleteButton>Delete record</DeleteButton>
+                <DeleteButton>Hapus data</DeleteButton>
               </form>
             </details>
           )) : (
             <p className="border border-dashed border-line p-6 text-sm text-ink">
-              {filtered ? "No records match these filters." : `No ${resource.label.toLowerCase()} records yet. Use the form to add the first one.`}
+              {filtered ? "Tidak ada data yang cocok dengan filter ini." : `Belum ada data ${resource.label.toLowerCase()}. Gunakan formulir di samping untuk menambah yang pertama.`}
             </p>
           )}
 
           {page.pageCount > 1 ? (
-            <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-mist pt-4 text-sm">
-              <p className="text-ink">Showing {page.from}–{page.to} of {total}</p>
+            <nav aria-label="Navigasi halaman" className="flex flex-wrap items-center justify-between gap-3 border-t border-mist pt-4 text-sm">
+              <p className="text-ink">Menampilkan {page.from}–{page.to} dari {total}</p>
               <div className="flex flex-wrap items-center gap-2">
-                {page.hasPrevious ? <Link href={listHref(basePath, query, { page: page.current - 1 })} className="border border-forest px-3 py-1.5 font-semibold">Previous</Link> : <span className="border border-mist px-3 py-1.5 text-ink-dim">Previous</span>}
-                <span className="px-1">Page {page.current} of {page.pageCount}</span>
-                {page.hasNext ? <Link href={listHref(basePath, query, { page: page.current + 1 })} className="border border-forest px-3 py-1.5 font-semibold">Next</Link> : <span className="border border-mist px-3 py-1.5 text-ink-dim">Next</span>}
+                {page.hasPrevious ? <Link href={listHref(basePath, query, { page: page.current - 1 })} className="border border-forest px-3 py-1.5 font-semibold">Sebelumnya</Link> : <span className="border border-mist px-3 py-1.5 text-ink-dim">Sebelumnya</span>}
+                <span className="px-1">Halaman {page.current} dari {page.pageCount}</span>
+                {page.hasNext ? <Link href={listHref(basePath, query, { page: page.current + 1 })} className="border border-forest px-3 py-1.5 font-semibold">Berikutnya</Link> : <span className="border border-mist px-3 py-1.5 text-ink-dim">Berikutnya</span>}
               </div>
             </nav>
           ) : null}
@@ -191,10 +191,10 @@ export default async function AdminResourcePage({ params, searchParams }: { para
 
         <form action={saveResource} className="h-fit grid gap-4 border border-line bg-sand p-6">
           <UnsavedChangesGuard />
-          <h2 className="font-serif text-2xl sm:text-3xl">Add {resource.label}</h2>
+          <h2 className="font-serif text-2xl sm:text-3xl">Tambah {resource.label}</h2>
           <input type="hidden" name="resource" value={resource.key} />
           {resource.fields.map((field) => <FieldInput field={field} key={field.key} value={undefined} media={media} />)}
-          <SubmitButton className="bg-terracotta px-4 py-3 text-sm font-semibold text-white" pendingLabel="Creating…">Create record</SubmitButton>
+          <SubmitButton className="bg-terracotta px-4 py-3 text-sm font-semibold text-white" pendingLabel="Menyimpan…">Buat data</SubmitButton>
         </form>
       </div>
     </section>

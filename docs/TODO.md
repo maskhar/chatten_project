@@ -680,6 +680,39 @@ work items; the audit document holds the evidence.
       `SortableList` memulihkan baseline terakhir yang benar-benar tersimpan.
       Kontrak pengujian: `node --test tests/reorder-core.test.mjs` (16 lulus).
 
+- [x] **A80** Terjemahkan antarmuka CMS ke bahasa Indonesia. A77 menyisakan
+      pertanyaan terbuka: salinan dasbor tetap bahasa Inggris sampai pemilik
+      memutuskan. Keputusannya diambil — seluruh permukaan administrator kini
+      berbahasa Indonesia, sejajar dengan situs publik. Operator tidak lagi
+      menerjemahkan sendiri kalimat seperti "Delete this record?" sebelum
+      menekan tombol yang tidak bisa dibatalkan.
+      Cakupan: shell dasbor dan navigasi, ringkasan beranda CMS termasuk waktu
+      relatif (`baru saja`, `3 jam lalu`, `toLocaleDateString("id-ID")`),
+      editor resource generik, batas galat, layar muat, akun, pengguna & peran,
+      pratinjau, beranda, formulir edit galeri dan menu, layar masuk,
+      `DeleteButton`/`SubmitButton`/`SavedNotice`/`ResourceReorder`, pengelola
+      menu, galeri, ruang, pengalaman, acara, dan promosi, serta label pada
+      `lib/admin/resources.ts`, `field-options.ts`, `overview-tables.ts`, dan
+      `unsaved-changes.ts`.
+      Yang **tidak** ikut diterjemahkan, dan alasannya: nilai kolom `draft` dan
+      `published` yang difilter query publik, nama peran `editor`/`admin`/
+      `super_admin`, kunci resource dan seluruh path rute, `sort_order` dan
+      `created_at`, kunci `?error=`, nama platform sosial (merek), serta
+      pencocokan `"an error occurred in the server components render"` pada
+      `error.tsx` — itu pesan React sendiri, menerjemahkannya membuat setiap
+      galat server menampilkan digest mentah. `lib/admin/*` aksi server dan
+      seluruh alur unggah media dikerjakan agen lain dan sengaja dilewati.
+      Satu perbaikan lint ikut: `experience-edit-form.tsx` mengimpor `useState`
+      tanpa memakainya.
+      Kontrak pengujian: `tests/admin-copy-indonesian.test.mjs` (11 kasus)
+      memeriksa frasa Indonesia ada **dan** frasa Inggris lama tidak kembali,
+      mengikuti pola uji navigasi A15. Empat berkas uji lama yang terikat
+      literal diselaraskan: `field-options`, `unsaved-changes`,
+      `events-promotions-manager-core`, dan `admin-overview`.
+      **Catatan terbuka:** `npm run lint` masih menandai
+      `components/admin/sortable-list.tsx:111` (`react-hooks/set-state-in-effect`).
+      Berkas itu di luar cakupan tugas ini dan tidak disentuh.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

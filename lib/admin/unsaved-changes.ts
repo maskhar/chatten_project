@@ -6,7 +6,7 @@
 // the guard never fires on the cases that look like navigation but are not
 // (new tabs, downloads, mailto:, same-page anchors).
 
-export const UNSAVED_MESSAGE = "You have unsaved changes. Leave this page and discard them?";
+export const UNSAVED_MESSAGE = "Ada perubahan yang belum disimpan. Tinggalkan halaman ini dan buang perubahan?";
 
 export type NavigationIntent = {
   href: string | null;

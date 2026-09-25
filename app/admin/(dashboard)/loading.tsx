@@ -6,7 +6,7 @@
 export default function AdminLoading() {
   return (
     <section aria-busy="true" aria-live="polite" className="animate-pulse">
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">Memuat…</span>
       <div className="h-3 w-24 rounded bg-mist" />
       <div className="mt-4 h-10 w-72 max-w-full rounded bg-mist" />
       <div className="mt-4 h-4 w-96 max-w-full rounded bg-mist" />

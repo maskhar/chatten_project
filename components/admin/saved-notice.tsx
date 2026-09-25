@@ -28,7 +28,7 @@ export function SavedNotice() {
 
   return (
     <p role="status" className="mb-6 flex items-center gap-2 border-l-4 border-leaf-ink bg-white px-4 py-3 text-sm font-semibold text-leaf">
-      Changes saved.
+      Perubahan disimpan.
     </p>
   );
 }

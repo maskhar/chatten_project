@@ -43,5 +43,6 @@ test("an anchor with no or an unparseable href is not a navigation", () => {
 });
 
 test("the warning names the consequence", () => {
-  assert.match(UNSAVED_MESSAGE, /unsaved changes/i);
+  assert.match(UNSAVED_MESSAGE, /perubahan yang belum disimpan/i);
+  assert.match(UNSAVED_MESSAGE, /buang perubahan/i);
 });

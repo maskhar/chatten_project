@@ -18,17 +18,17 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
 
   return (
     <section className="border border-line bg-sand p-6 sm:p-8">
-      <h1 className="font-serif text-3xl sm:text-4xl">CMS action failed.</h1>
-      <p className="mt-3 text-ink">No changes were applied.</p>
+      <h1 className="font-serif text-3xl sm:text-4xl">Tindakan CMS gagal.</h1>
+      <p className="mt-3 text-ink">Tidak ada perubahan yang tersimpan.</p>
       {isGeneric ? (
-        <p className="mt-2 text-ink">Check the form and try again.</p>
+        <p className="mt-2 text-ink">Periksa formulir lalu coba lagi.</p>
       ) : (
         <p role="alert" className="mt-4 break-words border-l-4 border-terracotta bg-white px-4 py-3 text-sm text-rust">
           {message}
         </p>
       )}
-      {error.digest ? <p className="mt-3 text-xs text-ink-muted">Reference: {error.digest}</p> : null}
-      <button className="mt-6 bg-forest px-4 py-2 text-sm font-semibold text-white" onClick={() => reset()}>Try again</button>
+      {error.digest ? <p className="mt-3 text-xs text-ink-muted">Referensi: {error.digest}</p> : null}
+      <button className="mt-6 bg-forest px-4 py-2 text-sm font-semibold text-white" onClick={() => reset()}>Coba lagi</button>
     </section>
   );
 }

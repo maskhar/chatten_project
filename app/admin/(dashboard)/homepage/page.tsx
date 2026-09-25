@@ -22,10 +22,10 @@ export default async function HomepageManager() {
     return (
       <section>
         <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl">
-          Homepage
+          Beranda
         </h1>
         <p className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
-          Migration bagian homepage belum diterapkan.
+          Migrasi bagian beranda belum diterapkan.
         </p>
       </section>
     );
@@ -37,20 +37,20 @@ export default async function HomepageManager() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-clay">
-            Website
+            Situs
           </p>
           <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">
-            Homepage
+            Beranda
           </h1>
           <p className="mt-3 max-w-2xl text-ink-muted">
-            Seret, pindahkan, sembunyikan, atau edit bagian tetap website.
+            Seret, pindahkan, sembunyikan, atau ubah bagian tetap situs.
           </p>
         </div>
         <Link
           className="rounded border px-4 py-2 text-sm font-semibold"
           href="/"
         >
-          Pratinjau website
+          Pratinjau situs
         </Link>
       </div>
       <div className="mt-8">

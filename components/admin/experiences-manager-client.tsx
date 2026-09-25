@@ -51,7 +51,7 @@ export function ExperiencesManagerClient({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this experience? The associated media file will not be deleted.")) {
+    if (!confirm("Hapus pengalaman ini? Berkas media terkait tidak ikut dihapus.")) {
       return;
     }
     
@@ -61,7 +61,7 @@ export function ExperiencesManagerClient({
       formData.append("id", id);
       await deleteExperience(formData);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Unable to delete experience.");
+      alert(error instanceof Error ? error.message : "Tidak dapat menghapus pengalaman.");
       setDeleting(null);
     }
   };
@@ -95,7 +95,7 @@ export function ExperiencesManagerClient({
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {experience.status}
+                {experience.status === "published" ? "Terbit" : "Draf"}
               </span>
               <span
                 className={`rounded px-2 py-0.5 text-xs font-semibold ${
@@ -104,7 +104,7 @@ export function ExperiencesManagerClient({
                     : "bg-gray-100 text-gray-800"
                 }`}
               >
-                {experience.is_active ? "Active" : "Inactive"}
+                {experience.is_active ? "Aktif" : "Nonaktif"}
               </span>
             </div>
           </div>
@@ -117,7 +117,7 @@ export function ExperiencesManagerClient({
             onClick={() => handleVisibility(experience.id, !experience.is_active)}
             className={ROW_ACTION_BORDERED}
           >
-            {experience.is_active ? "Hide" : "Show"}
+            {experience.is_active ? "Sembunyikan" : "Tampilkan"}
           </button>
           <Link
             href={`/admin/experiences/items/${experience.id}`}
@@ -131,7 +131,7 @@ export function ExperiencesManagerClient({
             disabled={deleting === experience.id}
             className={`${ROW_ACTION_DANGER} disabled:opacity-50`}
           >
-            {deleting === experience.id ? "Deleting..." : "Delete"}
+            {deleting === experience.id ? "Menghapus…" : "Hapus"}
           </button>
         </>
       ),
@@ -143,29 +143,29 @@ export function ExperiencesManagerClient({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-clay">
-            Website
+            Situs
           </p>
-          <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">Experiences</h1>
+          <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">Pengalaman</h1>
           <p className="mt-3 max-w-2xl text-ink-muted">
-            Manage experiences visitors can discover at Chatten.
+            Kelola pengalaman yang bisa ditemukan pengunjung di Chatten.
           </p>
         </div>
         <a
           href="#add-experience"
           className="rounded bg-forest px-4 py-2 text-sm font-semibold text-white"
         >
-          + Add Experience
+          + Tambah Pengalaman
         </a>
       </div>
 
       {experiences.length === 0 ? (
         <div className="mt-10 rounded border border-mist bg-white p-12 text-center">
-          <p className="text-ink-muted">No experiences have been added yet.</p>
+          <p className="text-ink-muted">Belum ada pengalaman yang ditambahkan.</p>
           <a
             href="#add-experience"
             className="mt-4 inline-block rounded bg-forest px-4 py-2 text-sm font-semibold text-white"
           >
-            Add Experience
+            Tambah Pengalaman
           </a>
         </div>
       ) : (
@@ -182,10 +182,10 @@ export function ExperiencesManagerClient({
         action={saveExperience}
         className="mt-8 max-w-2xl rounded border border-line bg-sand p-6"
       >
-        <h2 className="font-serif text-2xl sm:text-3xl">Add Experience</h2>
+        <h2 className="font-serif text-2xl sm:text-3xl">Tambah Pengalaman</h2>
         
         <label className="mt-4 block text-sm font-semibold">
-          Experience Name
+          Nama pengalaman
           <input name="name" required className={field} />
         </label>
 
@@ -193,12 +193,12 @@ export function ExperiencesManagerClient({
           Slug
           <input name="slug" required className={field} />
           <span className="mt-1 block text-xs text-ink-muted">
-            URL-friendly identifier (e.g., morning-coffee)
+            Pengenal ramah-URL (mis. morning-coffee)
           </span>
         </label>
 
         <label className="mt-4 block text-sm font-semibold">
-          Description
+          Deskripsi
           <textarea name="description" required rows={4} className={field} />
         </label>
 
@@ -209,20 +209,20 @@ export function ExperiencesManagerClient({
         <div className="mt-4 flex flex-wrap gap-4">
           <label className="flex items-center gap-2 text-sm">
             <input name="is_active" type="checkbox" defaultChecked />
-            Active
+            Aktif
           </label>
           
           <label className="flex items-center gap-2 text-sm">
             Status:
             <select name="status" className="rounded border px-2 py-1 text-sm">
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
+              <option value="draft">Draf</option>
+              <option value="published">Terbit</option>
             </select>
           </label>
         </div>
 
-        <SubmitButton className="mt-6 w-full rounded bg-terracotta px-4 py-3 text-sm font-semibold text-white hover:bg-clay" pendingLabel="Creating…">
-          Create Experience
+        <SubmitButton className="mt-6 w-full rounded bg-terracotta px-4 py-3 text-sm font-semibold text-white hover:bg-clay" pendingLabel="Menyimpan…">
+          Buat Pengalaman
         </SubmitButton>
       </form>
     </section>

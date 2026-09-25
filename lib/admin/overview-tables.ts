@@ -14,16 +14,16 @@ import type { StatusTableName } from "@/types/tables";
 export type EditorialTable = { table: StatusTableName; label: string; href: string; titleColumn: string };
 
 export const editorialTables: readonly EditorialTable[] = [
-  { table: "hero_slides", label: "Hero slides", href: "/admin/hero", titleColumn: "title" },
-  { table: "moments", label: "Moments", href: "/admin/homepage", titleColumn: "name" },
-  { table: "about_sections", label: "About sections", href: "/admin/about", titleColumn: "title" },
-  { table: "experiences", label: "Experiences", href: "/admin/experiences", titleColumn: "name" },
-  { table: "spaces", label: "Spaces", href: "/admin/spaces", titleColumn: "name" },
-  { table: "menu_items", label: "Menu items", href: "/admin/menu", titleColumn: "name" },
-  { table: "gallery_items", label: "Gallery items", href: "/admin/gallery", titleColumn: "title" },
-  { table: "testimonials", label: "Testimonials", href: "/admin/testimonials", titleColumn: "author_name" },
-  { table: "promotions", label: "Promotions", href: "/admin/promotions", titleColumn: "title" },
-  { table: "events", label: "Events", href: "/admin/events", titleColumn: "title" },
+  { table: "hero_slides", label: "Slide hero", href: "/admin/hero", titleColumn: "title" },
+  { table: "moments", label: "Momen", href: "/admin/homepage", titleColumn: "name" },
+  { table: "about_sections", label: "Bagian tentang", href: "/admin/about", titleColumn: "title" },
+  { table: "experiences", label: "Pengalaman", href: "/admin/experiences", titleColumn: "name" },
+  { table: "spaces", label: "Ruang", href: "/admin/spaces", titleColumn: "name" },
+  { table: "menu_items", label: "Item menu", href: "/admin/menu", titleColumn: "name" },
+  { table: "gallery_items", label: "Item galeri", href: "/admin/gallery", titleColumn: "title" },
+  { table: "testimonials", label: "Testimoni", href: "/admin/testimonials", titleColumn: "author_name" },
+  { table: "promotions", label: "Promosi", href: "/admin/promotions", titleColumn: "title" },
+  { table: "events", label: "Acara", href: "/admin/events", titleColumn: "title" },
 ] as const;
 
 export type DraftGroup = { label: string; href: string; drafts: number; total: number };
@@ -31,7 +31,7 @@ export type ActivityEntry = { label: string; href: string; group: string; status
 
 export function toActivityEntries(entry: EditorialTable, rows: readonly Record<string, unknown>[]): ActivityEntry[] {
   return rows.map((row) => ({
-    label: String(row[entry.titleColumn] ?? "Untitled"),
+    label: String(row[entry.titleColumn] ?? "Tanpa judul"),
     href: entry.href,
     group: entry.label,
     status: String(row.status ?? "draft"),

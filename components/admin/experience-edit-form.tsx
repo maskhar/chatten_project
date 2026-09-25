@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
@@ -49,14 +48,14 @@ export function ExperienceEditForm({
           href="/admin/experiences"
           className="text-sm text-ink-muted hover:text-forest"
         >
-          ← Back to Experiences
+          ← Kembali ke Pengalaman
         </Link>
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[.18em] text-clay">
-            Edit Experience
+            Edit Pengalaman
           </p>
           <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{experience.name}</h1>
         </div>
@@ -69,7 +68,7 @@ export function ExperienceEditForm({
 
           <div>
             <label className="block text-sm font-semibold">
-              Experience Name
+              Nama pengalaman
               <input
                 name="name"
                 required
@@ -89,14 +88,14 @@ export function ExperienceEditForm({
                 className={field}
               />
               <span className="mt-1 block text-xs text-ink-muted">
-                URL-friendly identifier (e.g., morning-coffee)
+                Pengenal ramah-URL (mis. morning-coffee)
               </span>
             </label>
           </div>
 
           <div>
             <label className="block text-sm font-semibold">
-              Description
+              Deskripsi
               <textarea
                 name="description"
                 required
@@ -122,7 +121,7 @@ export function ExperienceEditForm({
                 type="checkbox"
                 defaultChecked={experience.is_active}
               />
-              Active
+              Aktif
             </label>
 
             <label className="flex items-center gap-2 text-sm">
@@ -132,28 +131,28 @@ export function ExperienceEditForm({
                 defaultValue={experience.status}
                 className="rounded border px-2 py-1 text-sm"
               >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
+                <option value="draft">Draf</option>
+                <option value="published">Terbit</option>
               </select>
             </label>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white hover:bg-forest-soft">
-              Save Changes
+              Simpan perubahan
             </SubmitButton>
             <Link
               href="/admin/experiences"
               className="rounded border border-forest px-6 py-3 text-sm font-semibold text-forest hover:bg-paper"
             >
-              Cancel
+              Batal
             </Link>
           </div>
         </form>
 
         {imgUrl && (
           <div className="h-fit rounded border bg-white p-4">
-            <p className="text-sm font-semibold">Current Image</p>
+            <p className="text-sm font-semibold">Gambar saat ini</p>
             <Image
               src={imgUrl}
               alt={experience.name}
