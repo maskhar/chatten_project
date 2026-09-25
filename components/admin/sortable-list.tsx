@@ -15,7 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { ROW_ACTION_BORDERED, TAP_TARGET } from "@/components/ui/control";
 
 type SortableItem = {
@@ -104,7 +104,7 @@ export function SortableList({
   // A79: rollback must use the last order the server accepted, not the `items`
   // closure captured during a failed request. That prop can already be stale
   // after an earlier successful save and would undo more than the failed edit.
-  const persisted = useRef(items);
+  const [persisted, setPersisted] = useState(items);
   // A82: DndContext memberi id otomatis dari penghitung modul global. Server
   // dan browser memulai penghitung itu pada nilai berbeda, sehingga setiap
   // tombol seret dirender dengan aria-describedby="DndDescribedBy-0" di server
@@ -114,10 +114,18 @@ export function SortableList({
   // identik di kedua sisi.
   const dndId = useId();
 
-  useEffect(() => {
-    persisted.current = items;
+  // A82: menyelaraskan daftar dengan prop server saat render, bukan lewat
+  // useEffect. Versi efek memanggil setOrder di dalam badan efek, sehingga
+  // setiap muatan ulang server menghasilkan render berantai — satu render
+  // dengan urutan lama yang sudah usang, lalu satu lagi setelah efek berjalan.
+  // Pola penyetelan-saat-render React membuang render perantara itu dan
+  // menghilangkan peringatan react-hooks/set-state-in-effect.
+  const [syncedItems, setSyncedItems] = useState(items);
+  if (syncedItems !== items) {
+    setSyncedItems(items);
+    setPersisted(items);
     setOrder(items);
-  }, [items]);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -150,11 +158,11 @@ export function SortableList({
     setMessage("");
     try {
       await onSave(submitted.map((row) => row.id));
-      persisted.current = submitted;
+      setPersisted(submitted);
       setOrder(submitted);
       setMessage("Urutan berhasil disimpan.");
     } catch {
-      setOrder(persisted.current);
+      setOrder(persisted);
       setMessage("Gagal menyimpan urutan. Urutan tersimpan telah dipulihkan.");
     } finally {
       setSaving(false);

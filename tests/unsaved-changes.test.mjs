@@ -252,7 +252,9 @@ test("the guard component does not mark itself clean on the submit event", () =>
   // Assert on the shape rather than the exact string so a rename cannot hide it.
   const submitHandler = guardCode.match(/addEventListener\(\s*"submit"\s*,\s*(\w+)\s*\)/)?.[1];
   assert.ok(submitHandler, "the guard no longer listens for submit at all");
-  const body = guardCode.match(new RegExp(`const ${submitHandler}\\s*=[\\s\\S]*?;\\n`))?.[0] ?? "";
+  // Comment stripping can leave a bare CR behind on a CRLF checkout, so the
+  // terminator has to tolerate any run of line-ending whitespace.
+  const body = guardCode.match(new RegExp(`const ${submitHandler}\\s*=[\\s\\S]*?;[ \\t\\r]*\\n`))?.[0] ?? "";
   assert.match(body, /type:\s*"submit"/, "the submit listener must record a submit, not a save");
   assert.doesNotMatch(body, /outcome:\s*"success"|"reset"/, "the submit listener must not clear dirty state");
 });

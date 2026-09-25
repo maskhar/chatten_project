@@ -99,10 +99,15 @@ test("homepage UI has one atomic save path", () => {
 });
 
 test("sortable rollback uses its last persisted baseline", () => {
+  // A82 moved the baseline off a ref: syncing it during render is what removes
+  // the cascading-render effect, and a ref cannot be written there. What must
+  // survive is the guarantee, not the storage — the baseline advances only on a
+  // confirmed save, and a failure restores exactly that baseline.
   const component = fs.readFileSync("components/admin/sortable-list.tsx", "utf8");
-  assert.match(component, /const persisted = useRef\(items\)/);
-  assert.match(component, /persisted\.current = submitted/);
-  assert.match(component, /setOrder\(persisted\.current\)/);
+  assert.match(component, /const \[persisted, setPersisted\] = useState\(items\)/);
+  assert.match(component, /setPersisted\(submitted\)/);
+  assert.match(component, /setOrder\(persisted\)/);
+  assert.ok(!/setPersisted\(order\)/.test(component), "the baseline must never advance to unsaved on-screen order");
 });
 
 test("the drag context id is stable across server and client render", () => {
