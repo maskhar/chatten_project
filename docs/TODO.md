@@ -680,6 +680,21 @@ work items; the audit document holds the evidence.
       `SortableList` memulihkan baseline terakhir yang benar-benar tersimpan.
       Kontrak pengujian: `node --test tests/reorder-core.test.mjs` (16 lulus).
 
+- [x] **A80** Pertahankan status kotor sampai server mengonfirmasi simpan berhasil.
+      `UnsavedChangesGuard` kini membandingkan snapshot baseline server dengan
+      nilai layar; submit hanya mencatat nilai yang dikirim, gagal tidak
+      menggeser baseline, dan ketikan saat request berjalan tetap dianggap belum
+      tersimpan. Peringatan juga tetap aktif selama fase simpan.
+
+      Penjaga saja tidak cukup: `<form action={serverAction}>` melempar
+      kegagalan validasi/PostgREST ke error boundary yang melepas seluruh
+      formulir, sehingga tidak ada penjaga tersisa untuk memperingatkan.
+      `components/admin/action-form.tsx` menahan kegagalan biasa lewat
+      `useActionState`, meneruskan status sebenarnya ke penjaga, dan menampilkan
+      pesan `role="alert"`; `NEXT_REDIRECT` sengaja dilempar ulang agar simpan
+      yang `redirect("?saved=1")` tetap bekerja. Keenam formulir bergaransi kini
+      memakainya. Kontrak: 32 tes terfokus, diverifikasi lewat mutasi.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

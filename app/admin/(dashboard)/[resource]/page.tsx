@@ -11,7 +11,7 @@ import { DeleteButton } from "@/components/admin/delete-button";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { ResourceReorder } from "@/components/admin/resource-reorder";
-import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
+import { ActionForm } from "@/components/admin/action-form";
 
 type MediaOption = { id: string; title: string | null; alt_text: string | null; category: string | null; width: number | null; height: number | null; bucket: string; storage_path: string };
 
@@ -158,13 +158,12 @@ export default async function AdminResourcePage({ params, searchParams }: { para
           {rows.length ? rows.map((row) => (
             <details className="border border-line bg-sand p-5" key={String(row.id)}>
               <summary className="cursor-pointer break-words font-serif text-xl sm:text-2xl">{rowLabel(row)}</summary>
-              <form action={saveResource} className="mt-6 grid gap-4">
-                <UnsavedChangesGuard />
+              <ActionForm action={saveResource} className="mt-6 grid gap-4">
                 <input type="hidden" name="resource" value={resource.key} />
                 <input type="hidden" name="id" value={String(row.id)} />
                 {resource.fields.map((field) => <FieldInput field={field} value={row[field.key]} media={media} key={field.key} />)}
                 <div className="flex gap-3"><SubmitButton className="bg-forest px-4 py-2 text-sm font-semibold text-white">Save changes</SubmitButton></div>
-              </form>
+              </ActionForm>
               <form action={deleteResource} className="mt-3">
                 <input type="hidden" name="resource" value={resource.key} />
                 <input type="hidden" name="id" value={String(row.id)} />
@@ -189,13 +188,12 @@ export default async function AdminResourcePage({ params, searchParams }: { para
           ) : null}
         </div>
 
-        <form action={saveResource} className="h-fit grid gap-4 border border-line bg-sand p-6">
-          <UnsavedChangesGuard />
+        <ActionForm action={saveResource} className="h-fit grid gap-4 border border-line bg-sand p-6">
           <h2 className="font-serif text-2xl sm:text-3xl">Add {resource.label}</h2>
           <input type="hidden" name="resource" value={resource.key} />
           {resource.fields.map((field) => <FieldInput field={field} key={field.key} value={undefined} media={media} />)}
           <SubmitButton className="bg-terracotta px-4 py-3 text-sm font-semibold text-white" pendingLabel="Creating…">Create record</SubmitButton>
-        </form>
+        </ActionForm>
       </div>
     </section>
   );

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveSpace } from "@/lib/admin/space-actions";
-import { UnsavedChangesGuard } from "@/components/admin/unsaved-changes-guard";
+import { ActionForm } from "@/components/admin/action-form";
 import { mediaHrefById } from "@/lib/media/url";
 import { SubmitButton } from "@/components/admin/submit-button";
 
@@ -22,8 +22,7 @@ export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }
       <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-clay">Edit Space</p>
       <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{space.name}</h1>
       <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <form action={saveSpace} className="grid gap-6">
-          <UnsavedChangesGuard />
+        <ActionForm action={saveSpace} className="grid gap-6">
           <input type="hidden" name="id" value={space.id} />
           <label className="text-sm font-semibold">Space Name<input name="name" required defaultValue={space.name} className={field} /></label>
           <label className="text-sm font-semibold">Slug<input name="slug" required defaultValue={space.slug} className={field} /></label>
@@ -34,7 +33,7 @@ export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }
             <label className="flex items-center gap-2 text-sm">Status<select name="status" defaultValue={space.status} className="rounded border px-2 py-1"><option value="draft">Draft</option><option value="published">Published</option></select></label>
           </div>
           <div className="flex flex-wrap gap-3"><SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white">Save Changes</SubmitButton><Link href="/admin/spaces" className="rounded border border-forest px-6 py-3 text-sm font-semibold">Cancel</Link></div>
-        </form>
+        </ActionForm>
         {image ? <aside className="h-fit rounded border bg-white p-4"><p className="text-sm font-semibold">Current Image</p><Image src={image} alt={space.name} width={320} height={240} className="mt-3 w-full rounded object-cover" /></aside> : null}
       </div>
     </section>
