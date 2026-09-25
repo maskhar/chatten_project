@@ -105,6 +105,19 @@ test("sortable rollback uses its last persisted baseline", () => {
   assert.match(component, /setOrder\(persisted\.current\)/);
 });
 
+test("the drag context id is stable across server and client render", () => {
+  // A82: DndContext's automatic id comes from a module-global counter that
+  // starts at a different value on the server than in the browser, so every
+  // drag handle rendered aria-describedby="DndDescribedBy-0" on the server and
+  // "DndDescribedBy-73" on the client. React reports that as a hydration
+  // mismatch and refuses to patch it, leaving the drag-and-drop description
+  // pointing at an element that does not exist for a screen reader.
+  const component = fs.readFileSync("components/admin/sortable-list.tsx", "utf8");
+  assert.match(component, /useId/);
+  assert.match(component, /const dndId = useId\(\)/);
+  assert.match(component, /<DndContext\s+id=\{dndId\}/);
+});
+
 test("opening_hours is not reorderable", () => {
   // It is unique on (day_of_week, sort_order), so a flat renumber across all
   // seven days collides. It carries a sort_order field in the resource

@@ -15,7 +15,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ROW_ACTION_BORDERED, TAP_TARGET } from "@/components/ui/control";
 
 type SortableItem = {
@@ -105,6 +105,14 @@ export function SortableList({
   // closure captured during a failed request. That prop can already be stale
   // after an earlier successful save and would undo more than the failed edit.
   const persisted = useRef(items);
+  // A82: DndContext memberi id otomatis dari penghitung modul global. Server
+  // dan browser memulai penghitung itu pada nilai berbeda, sehingga setiap
+  // tombol seret dirender dengan aria-describedby="DndDescribedBy-0" di server
+  // dan "DndDescribedBy-73" di klien. React melaporkannya sebagai hydration
+  // mismatch dan menolak menambalnya, jadi deskripsi aksesibilitas drag-and-drop
+  // menunjuk ke elemen yang tidak ada bagi pembaca layar. useId menghasilkan id
+  // identik di kedua sisi.
+  const dndId = useId();
 
   useEffect(() => {
     persisted.current = items;
@@ -156,6 +164,7 @@ export function SortableList({
   return (
     <div className="grid gap-3">
       <DndContext
+        id={dndId}
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={drop}
