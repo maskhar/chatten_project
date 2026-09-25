@@ -1,36 +1,91 @@
 "use server";
+
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/service-role";
+import { assertAffectedRows, parseRole, parseUuid, type CmsRoleValue } from "@/lib/admin/form-schema";
 
-const roles = ["super_admin", "admin", "editor"] as const;
-type CmsRole = typeof roles[number];
-const uuid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
-
-async function currentRole(userId: string) {
+/**
+ * The caller's own stored role, read through the RLS-bound session client.
+ *
+ * `requireAdmin` already returns it, but the role decisions below are the
+ * privilege boundary, so the row is re-read at decision time rather than
+ * trusted from an earlier request. A failed read is an error, not an absent
+ * role: swallowing it used to downgrade a super_admin to "not a super_admin"
+ * and produce a confusing refusal instead of a retry.
+ */
+async function currentRole(userId: string): Promise<CmsRoleValue> {
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
-  return data?.role as CmsRole | undefined;
+  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+  if (error) throw new Error("Peran Anda tidak dapat diperiksa. Coba lagi sebentar.");
+  const role = data?.role;
+  if (!role) throw new Error("Peran Anda tidak ditemukan. Hubungi super admin.");
+  return parseRole(role, "Peran Anda");
+}
+
+/** The target member's stored role, or null when they have none yet. */
+async function storedRole(userId: string): Promise<CmsRoleValue | null> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+  if (error) throw new Error("Peran pengguna tidak dapat diperiksa. Perubahan belum disimpan.");
+  return data?.role ? parseRole(data.role, "Peran pengguna") : null;
 }
 
 export async function addCmsUser(formData: FormData) {
   const current = await requireAdmin("admin");
-  if (await currentRole(current.id) !== "super_admin") throw new Error("Only super admins can add CMS users.");
-  const userId = String(formData.get("user_id") ?? "").trim();
+  if ((await currentRole(current.id)) !== "super_admin") throw new Error("Hanya super admin yang dapat menambah pengguna CMS.");
+  const userId = parseUuid(formData.get("user_id"), "ID pengguna");
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const role = String(formData.get("role")) as CmsRole;
-  if (!uuid.test(userId) || !roles.includes(role)) throw new Error("Invalid CMS user details.");
+  const role = parseRole(formData.get("role"), "Peran CMS");
   const admin = createServiceRoleSupabaseClient();
   const { data, error } = await admin.auth.admin.getUserById(userId);
-  if (error || !data.user || data.user.id !== userId || (email && data.user.email?.toLowerCase() !== email)) throw new Error("Auth identity does not match the supplied CMS user details.");
+  if (error || !data.user || data.user.id !== userId || (email && data.user.email?.toLowerCase() !== email)) {
+    throw new Error("Identitas Auth tidak cocok dengan data pengguna CMS yang dikirim.");
+  }
   const supabase = await createServerSupabaseClient();
-  const { error: profileError } = await supabase.from("profiles").upsert({ id: userId, display_name: data.user.user_metadata?.full_name ?? null }, { onConflict: "id" });
-  if (profileError) throw new Error("Unable to create CMS profile.");
-  const { error: roleError } = await supabase.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id" });
-  if (roleError) throw new Error("Unable to assign CMS role.");
+  const { error: profileError, count: profileCount } = await supabase
+    .from("profiles")
+    .upsert({ id: userId, display_name: data.user.user_metadata?.full_name ?? null }, { onConflict: "id", count: "exact" });
+  if (profileError) throw new Error("Profil CMS gagal dibuat.");
+  assertAffectedRows(profileCount, 1, "Profil CMS tidak dapat dibuat atau tidak boleh diubah.");
+  const { error: roleError, count: roleCount } = await supabase
+    .from("user_roles")
+    .upsert({ user_id: userId, role }, { onConflict: "user_id", count: "exact" });
+  if (roleError) throw new Error("Peran CMS gagal ditetapkan.");
+  assertAffectedRows(roleCount, 1, "Peran CMS tidak dapat ditetapkan atau tidak boleh diubah.");
   revalidatePath("/admin/users");
 }
 
-export async function saveRole(formData: FormData) { const current = await requireAdmin("admin"); const userId = String(formData.get("user_id")); const role = String(formData.get("role")) as CmsRole; if (!uuid.test(userId) || !roles.includes(role)) throw new Error("Invalid role."); const ownRole = await currentRole(current.id); if (role === "super_admin" && ownRole !== "super_admin") throw new Error("Only super admins can grant super admin."); if (userId === current.id && ownRole === "super_admin" && role !== "super_admin") throw new Error("Super admin cannot remove own protection."); const supabase = await createServerSupabaseClient(); const { data: target } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(); if (target?.role === "super_admin" && ownRole !== "super_admin") throw new Error("Only super admins can change a super admin role."); const { error } = await supabase.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id" }); if (error) throw new Error("Unable to save role."); revalidatePath("/admin/users"); }
-export async function removeRole(formData: FormData) { const current = await requireAdmin("admin"); const userId = String(formData.get("user_id")); if (!uuid.test(userId)) throw new Error("Invalid CMS user."); if (userId === current.id) throw new Error("You cannot remove your own role."); const ownRole = await currentRole(current.id); const supabase = await createServerSupabaseClient(); const { data: target } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(); if (target?.role === "super_admin" && ownRole !== "super_admin") throw new Error("Only super admins can remove super admin."); const { error } = await supabase.from("user_roles").delete().eq("user_id", userId); if (error) throw new Error("Unable to remove role."); revalidatePath("/admin/users"); }
+export async function saveRole(formData: FormData) {
+  const current = await requireAdmin("admin");
+  const userId = parseUuid(formData.get("user_id"), "ID pengguna");
+  const role = parseRole(formData.get("role"), "Peran CMS");
+  const ownRole = await currentRole(current.id);
+  if (role === "super_admin" && ownRole !== "super_admin") throw new Error("Hanya super admin yang dapat memberikan peran super admin.");
+  if (userId === current.id && ownRole === "super_admin" && role !== "super_admin") throw new Error("Super admin tidak dapat melepas proteksi dirinya sendiri.");
+  const target = await storedRole(userId);
+  if (target === "super_admin" && ownRole !== "super_admin") throw new Error("Hanya super admin yang dapat mengubah peran super admin.");
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await supabase
+    .from("user_roles")
+    .upsert({ user_id: userId, role }, { onConflict: "user_id", count: "exact" });
+  if (error) throw new Error("Peran gagal disimpan.");
+  assertAffectedRows(count, 1, "Peran tidak ditemukan atau tidak boleh diubah.");
+  revalidatePath("/admin/users");
+}
+
+export async function removeRole(formData: FormData) {
+  const current = await requireAdmin("admin");
+  const userId = parseUuid(formData.get("user_id"), "ID pengguna");
+  if (userId === current.id) throw new Error("Anda tidak dapat menghapus peran Anda sendiri.");
+  const ownRole = await currentRole(current.id);
+  const target = await storedRole(userId);
+  if (!target) throw new Error("Pengguna CMS tidak ditemukan atau sudah tidak memiliki peran.");
+  if (target === "super_admin" && ownRole !== "super_admin") throw new Error("Hanya super admin yang dapat menghapus super admin.");
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await supabase.from("user_roles").delete({ count: "exact" }).eq("user_id", userId);
+  if (error) throw new Error("Peran gagal dihapus.");
+  assertAffectedRows(count, 1, "Peran tidak ditemukan atau tidak boleh dihapus.");
+  revalidatePath("/admin/users");
+}

@@ -680,6 +680,16 @@ work items; the audit document holds the evidence.
       `SortableList` memulihkan baseline terakhir yang benar-benar tersimpan.
       Kontrak pengujian: `node --test tests/reorder-core.test.mjs` (16 lulus).
 
+- [x] **A82** Perketat tujuh server action editor domain (`menu`, `gallery`,
+      `events`, `promotions`, `spaces`, `experiences`, dan `roles`) dengan
+      skema bersama `form-schema.ts`. Semua ID kini UUID ketat, status dan
+      toggle tervalidasi, kolom wajib serta rentang waktu diperiksa sebelum
+      PostgREST, dan setiap lookup gagal dihentikan. Mutasi update/delete/upsert
+      yang sensitif terhadap RLS meminta `count: "exact"` lalu menolak hasil
+      selain satu baris, sehingga filter RLS tidak lagi terlihat sebagai simpan
+      sukses. Pengujian unit skema dan kontrak sumber menutup parser, lookup,
+      pengurutan, serta exact-row check tanpa database remote.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

@@ -112,7 +112,9 @@ test("the server action re-checks the closed sets the form rendered", () => {
   // A select constrains the browser, not the request. The action must not
   // trust the posted value.
   const actions = fs.readFileSync("lib/admin/actions.ts", "utf8");
-  assert.match(actions, /assertAllowedChoices\(resource,payload\)/);
+  // Whitespace is a formatting choice, not part of the contract — the previous
+  // literal broke the moment the file was reformatted.
+  assert.match(actions, /assertAllowedChoices\(resource,\s*payload\)/);
   assert.match(actions, /allowedValues\(field\)/);
 });
 

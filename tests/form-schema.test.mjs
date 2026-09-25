@@ -16,7 +16,28 @@ const js = ts
   .transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } })
   .outputText.replace(/from "zod"/g, `from "${zodUrl}"`);
 const mod = await import(`data:text/javascript,${encodeURIComponent(js)}`);
-const { STATUS_VALUES, coerceFieldValue, checkboxValue, dayOfWeekSchema, nonNegativeIntSchema, optionalTextSchema, optionalUuidSchema, parseField, parseStatus, priceSchema, requiredTextSchema, uuidSchema } = mod;
+const {
+  CMS_ROLE_VALUES,
+  STATUS_VALUES,
+  assertAffectedRows,
+  assertRange,
+  checkboxValue,
+  coerceFieldValue,
+  dayOfWeekSchema,
+  nonNegativeIntSchema,
+  optionalTextSchema,
+  optionalUuidSchema,
+  parseBooleanFlag,
+  parseCheckbox,
+  parseField,
+  parseRole,
+  parseSlug,
+  parseStatus,
+  parseTimestamp,
+  priceSchema,
+  requiredTextSchema,
+  uuidSchema,
+} = mod;
 
 const UUID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 
@@ -36,7 +57,7 @@ test("an absent or tampered status falls back to draft, never to published", () 
 });
 
 test("strict mode rejects a status the database would reject", () => {
-  assert.throws(() => parseStatus("archived", { strict: true, label: "space status" }), /Invalid space status\./);
+  assert.throws(() => parseStatus("archived", { strict: true, label: "status space" }), /Nilai status space tidak valid\./);
   assert.equal(parseStatus("published", { strict: true }), "published");
   // A missing field is still the safe default, not an error.
   assert.equal(parseStatus(null, { strict: true }), "draft");
@@ -99,8 +120,59 @@ test("a checkbox is only true when the browser actually posted it", () => {
   assert.equal(checkboxValue("off"), false);
 });
 
+test("strict checkbox and visibility flags reject tampered encodings", () => {
+  assert.equal(parseCheckbox("on", "Status aktif"), true);
+  assert.equal(parseCheckbox("true", "Status aktif"), true);
+  assert.equal(parseCheckbox("false", "Status aktif"), false);
+  assert.equal(parseCheckbox(null, "Status aktif"), false);
+  assert.throws(() => parseCheckbox("off", "Status aktif"), /Status aktif tidak valid\./);
+
+  assert.equal(parseBooleanFlag("true", "Status tampil"), true);
+  assert.equal(parseBooleanFlag("false", "Status tampil"), false);
+  assert.throws(() => parseBooleanFlag(null, "Status tampil"), /Status tampil tidak valid\./);
+  assert.throws(() => parseBooleanFlag("on", "Status tampil"), /Status tampil tidak valid\./);
+});
+
+test("CMS roles use the database's closed set without an unchecked cast", () => {
+  assert.deepEqual([...CMS_ROLE_VALUES], ["super_admin", "admin", "editor"]);
+  assert.equal(parseRole("editor", "Peran CMS"), "editor");
+  assert.equal(parseRole("super_admin", "Peran CMS"), "super_admin");
+  assert.throws(() => parseRole("owner", "Peran CMS"), /Peran CMS tidak valid\./);
+  assert.throws(() => parseRole(null, "Peran CMS"), /Peran CMS tidak valid\./);
+});
+
+test("slugs have one deterministic fallback and reject punctuation-only names", () => {
+  assert.equal(parseSlug(" Halo, Dunia! ", "fallback", "Slug"), "halo-dunia");
+  assert.equal(parseSlug("", "Nama Menu", "Slug"), "nama-menu");
+  assert.throws(() => parseSlug("---", "!!!", "Slug"), /Slug wajib diisi dan harus memuat huruf atau angka\./);
+});
+
+test("timestamps reject malformed and absent required values before Postgres", () => {
+  assert.equal(parseTimestamp(null, "Mulai"), null);
+  assert.equal(parseTimestamp("", "Mulai"), null);
+  assert.throws(() => parseTimestamp(null, "Mulai", { required: true }), /Mulai wajib diisi\./);
+  assert.throws(() => parseTimestamp("bukan-tanggal", "Mulai"), /Mulai tidak valid\./);
+  // An explicit offset, so the assertion does not depend on the runner's zone.
+  assert.equal(parseTimestamp("2026-09-26T12:30:00Z", "Mulai"), "2026-09-26T12:30:00.000Z");
+  // A datetime-local value carries no zone; it is read in the server's zone and
+  // stored as an instant, which is what timestamptz expects.
+  assert.equal(parseTimestamp("2026-09-26T12:30", "Mulai"), new Date("2026-09-26T12:30").toISOString());
+});
+
+test("time ranges and exact mutation counts fail closed", () => {
+  assert.doesNotThrow(() => assertRange("2026-09-26T12:00:00.000Z", "2026-09-26T12:00:00.000Z", "event"));
+  assert.throws(
+    () => assertRange("2026-09-26T12:01:00.000Z", "2026-09-26T12:00:00.000Z", "event"),
+    /Waktu selesai event harus setelah waktu mulai\./,
+  );
+  assert.doesNotThrow(() => assertAffectedRows(1, 1, "Tidak ditemukan."));
+  assert.throws(() => assertAffectedRows(0, 1, "Tidak ditemukan."), /Tidak ditemukan\./);
+  assert.throws(() => assertAffectedRows(null, 1, "Tidak ditemukan."), /Tidak ditemukan\./);
+});
+
 test("parseField names the field in the message the editor sees", () => {
-  assert.throws(() => parseField(nonNegativeIntSchema, "abc", "Sort order"), /Sort order is invalid\./);
+  // The CMS is operated in Indonesian; the message reaches the operator as-is.
+  assert.throws(() => parseField(nonNegativeIntSchema, "abc", "Urutan tampil"), /Urutan tampil tidak valid\./);
 });
 
 test("coerceFieldValue drops blanks but rejects garbage", () => {
@@ -109,10 +181,10 @@ test("coerceFieldValue drops blanks but rejects garbage", () => {
   assert.equal(coerceFieldValue("sort_order", "3"), 3);
   assert.equal(coerceFieldValue("day_of_week", "2"), 2);
   assert.equal(coerceFieldValue("price", "1500"), 1500);
-  assert.throws(() => coerceFieldValue("status", "archived", "Status"), /Invalid Status\./);
+  assert.throws(() => coerceFieldValue("status", "archived", "Status"), /Nilai Status tidak valid\./);
   assert.equal(coerceFieldValue("title", " Hello "), " Hello ");
-  assert.throws(() => coerceFieldValue("sort_order", "abc", "Sort order"), /Sort order is invalid\./);
-  assert.throws(() => coerceFieldValue("price", "abc", "Price"), /Price is invalid\./);
+  assert.throws(() => coerceFieldValue("sort_order", "abc", "Urutan tampil"), /Urutan tampil tidak valid\./);
+  assert.throws(() => coerceFieldValue("price", "abc", "Harga"), /Harga tidak valid\./);
 });
 
 test("no admin action still writes an unvalidated status into a payload", () => {
