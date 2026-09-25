@@ -80,21 +80,152 @@ export const optionalTextSchema = z
 
 export const requiredTextSchema = z.string().transform((value) => value.trim()).pipe(z.string().min(1));
 
+/** A strict HTML checkbox encoding: only values the admin forms emit are valid. */
+export const checkboxSchema = z.enum(["on", "true", "false", ""]);
+
+/** Parses a checkbox without treating arbitrary tampered values as false. */
+export function parseCheckbox(input: FormDataEntryValue | null, label: string) {
+  const raw = typeof input === "string" ? input : "";
+  const result = checkboxSchema.safeParse(raw);
+  if (!result.success) throw new Error(`${label} tidak valid.`);
+  return raw === "on" || raw === "true";
+}
+
+/**
+ * A visibility toggle's explicit `"true"`/`"false"` hidden field.
+ *
+ * Every toggle action used to read `String(formData.get("active")) === "true"`,
+ * so a missing or tampered field was read as `false` — a request that did not
+ * name a state at all hid the row from the public site, and the operator saw a
+ * successful save. The value must be stated.
+ */
+export function parseBooleanFlag(input: FormDataEntryValue | null, label: string) {
+  const raw = typeof input === "string" ? input : "";
+  if (raw !== "true" && raw !== "false") throw new Error(`${label} tidak valid.`);
+  return raw === "true";
+}
+
+/**
+ * The CMS roles, mirroring `check (role in ('super_admin','admin','editor'))`
+ * on `chatten_cafe.user_roles` in 20260909000100_initial_chatten_cafe.sql.
+ */
+export const CMS_ROLE_VALUES = ["super_admin", "admin", "editor"] as const;
+export type CmsRoleValue = (typeof CMS_ROLE_VALUES)[number];
+export const roleSchema = z.enum(CMS_ROLE_VALUES);
+
+/** Parses a role instead of casting an arbitrary string to the union. */
+export function parseRole(input: FormDataEntryValue | null, label: string): CmsRoleValue {
+  const raw = typeof input === "string" ? input : "";
+  const result = roleSchema.safeParse(raw);
+  if (!result.success) throw new Error(`${label} tidak valid.`);
+  return result.data;
+}
+
 /** An HTML checkbox posts `"on"` when ticked and nothing at all when not. */
 export function checkboxValue(input: FormDataEntryValue | null) {
   return input === "on" || input === "true";
+}
+
+/** Parses an optional UUID foreign key, mapping a blank field to null. */
+export function parseOptionalUuid(input: FormDataEntryValue | null, label: string) {
+  return parseField(optionalUuidSchema, input, label);
+}
+
+/** Parses a required UUID primary or foreign key. */
+export function parseUuid(input: FormDataEntryValue | null, label: string) {
+  return parseField(uuidSchema, input, label);
+}
+
+/** Parses operator text consistently and names the field on failure. */
+export function parseRequiredText(input: FormDataEntryValue | null, label: string) {
+  return parseField(requiredTextSchema, input, label);
+}
+
+/** Parses optional operator text consistently, mapping blank input to null. */
+export function parseOptionalText(input: FormDataEntryValue | null, label: string) {
+  return parseField(optionalTextSchema, input, label);
+}
+
+/**
+ * The one slug rule for every dedicated editor.
+ *
+ * Each action carried its own copy (`slugify`, `slugifyEvent`,
+ * `slugifyPromotion`), all identical, so a change to one silently diverged
+ * from the rest while every table's `slug` column stays `not null unique`.
+ */
+export function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Derives the slug the row should carry, falling back to the display name.
+ *
+ * Throws in Indonesian rather than letting an empty slug reach a `not null`
+ * column, which surfaced to the operator as a generic save failure.
+ */
+export function parseSlug(input: FormDataEntryValue | null, fallback: string, label: string) {
+  const raw = typeof input === "string" && input.trim() !== "" ? input : fallback;
+  const slug = slugify(raw);
+  if (!slug) throw new Error(`${label} wajib diisi dan harus memuat huruf atau angka.`);
+  return slug;
+}
+
+/**
+ * A timestamptz value from a `datetime-local` input.
+ *
+ * `new Date("")` is Invalid Date and `new Date("abc")` likewise; both used to
+ * be caught per action with slightly different English wording. Required
+ * fields (`events.starts_at` is `not null`) fail closed here instead of
+ * reaching Postgres.
+ */
+export function parseTimestamp(input: FormDataEntryValue | null, label: string, options: { required: true }): string;
+export function parseTimestamp(input: FormDataEntryValue | null, label: string, options?: { required?: false }): string | null;
+export function parseTimestamp(input: FormDataEntryValue | null, label: string, options?: { required?: boolean }): string | null {
+  const raw = typeof input === "string" ? input.trim() : "";
+  if (!raw) {
+    if (options?.required) throw new Error(`${label} wajib diisi.`);
+    return null;
+  }
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) throw new Error(`${label} tidak valid.`);
+  return date.toISOString();
+}
+
+/** Mirrors the `ends_at >= starts_at` CHECK both editorial tables carry. */
+export function assertRange(startsAt: string | null, endsAt: string | null, label: string) {
+  if (startsAt && endsAt && new Date(endsAt) < new Date(startsAt)) {
+    throw new Error(`Waktu selesai ${label} harus setelah waktu mulai.`);
+  }
+}
+
+/**
+ * The check every permission-sensitive mutation needs.
+ *
+ * PostgREST reports `error: null` when RLS filters every candidate row away,
+ * so an update or delete an editor is not allowed to perform used to look
+ * exactly like a success — the UI re-rendered as if the change had landed and
+ * the next page load reverted it. Requiring an exact affected-row count turns
+ * that silence into a message.
+ */
+export function assertAffectedRows(count: number | null, expected: number, notFoundMessage: string) {
+  if (count !== expected) throw new Error(notFoundMessage);
 }
 
 /**
  * Parses one form field and throws a message naming the field.
  *
  * Server actions surface a thrown Error to the editor, so the message is user
- * visible: "Sort order is invalid." beats Zod's default issue dump, and beats
- * the PostgREST error the unvalidated value used to produce.
+ * visible: "Urutan tampil tidak valid." beats Zod's default issue dump, and
+ * beats the PostgREST error the unvalidated value used to produce. The CMS is
+ * operated in Indonesian, so the message is too.
  */
 export function parseField<T>(schema: z.ZodType<T>, input: FormDataEntryValue | null, label: string): T {
   const result = schema.safeParse(typeof input === "string" ? input : (input ?? ""));
-  if (!result.success) throw new Error(`${label} is invalid.`);
+  if (!result.success) throw new Error(`${label} tidak valid.`);
   return result.data;
 }
 
@@ -109,7 +240,7 @@ export function parseStatus(input: FormDataEntryValue | null, options?: { strict
   const raw = typeof input === "string" ? input : "";
   if (!options?.strict) return statusSchema.parse(raw === "" ? "draft" : raw);
   const result = strictStatusSchema.safeParse(raw === "" ? "draft" : raw);
-  if (!result.success) throw new Error(`Invalid ${options.label ?? "status"}.`);
+  if (!result.success) throw new Error(`Nilai ${options.label ?? "status"} tidak valid.`);
   return result.data;
 }
 

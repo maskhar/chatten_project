@@ -77,7 +77,7 @@ test("alt text is optional everywhere an operator can type one", () => {
   // detail screen and the Gallery form refine it afterwards.
   const gallery = fs.readFileSync("lib/admin/gallery-actions.ts", "utf8");
   assert.ok(!/!payload\.alt_text/.test(gallery), "the Gallery action rejects a blank alt text again");
-  assert.match(gallery, /alt_text:String\(formData\.get\("alt_text"\)\?\?""\)\.trim\(\)\|\|title/, "a blank alt text no longer falls back to the title");
+  assert.match(gallery, /alt_text: parseOptionalText\(formData\.get\("alt_text"\), "Teks alternatif"\) \?\? title/, "a blank alt text no longer falls back to the title");
 
   for (const file of ["app/admin/(dashboard)/gallery/items/[id]/page.tsx", "components/admin/gallery-manager-client.tsx", "app/admin/(dashboard)/media/items/[id]/page.tsx"]) {
     const source = fs.readFileSync(file, "utf8");

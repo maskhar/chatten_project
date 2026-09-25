@@ -1,13 +1,85 @@
 "use server";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { parseStatus, uuidSchema } from "@/lib/admin/form-schema";
-const uuidPattern={test:(value:string)=>uuidSchema.safeParse(value).success};
-function slugifyPromotion(value:string){return value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
-function parsePromotionDate(value:string,field:string){const trimmed=value.trim();if(!trimmed)return null;const date=new Date(trimmed);if(Number.isNaN(date.getTime()))throw new Error(`Invalid ${field.toLowerCase()}.`);return date.toISOString()}
-function refresh(){revalidatePath("/admin/promotions");revalidatePath("/")}
-export async function savePromotion(formData:FormData){await requireAdmin();const id=String(formData.get("id")??"");const title=String(formData.get("title")??"").trim();const slug=slugifyPromotion(String(formData.get("slug")??title));const summary=String(formData.get("summary")??"").trim()||null;const body=String(formData.get("body")??"").trim()||null;const startsAt=parsePromotionDate(String(formData.get("starts_at")??""),"Promotion start");const endsAt=parsePromotionDate(String(formData.get("ends_at")??""),"Promotion end");if(!title)throw new Error("Promotion title is required.");if(!slug)throw new Error("Promotion slug is required.");if(startsAt&&endsAt&&new Date(endsAt)<new Date(startsAt))throw new Error("Promotion end must be after its start.");const imageMediaId=String(formData.get("image_media_id")??"")||null;const status=parseStatus(formData.get("status"),{strict:true,label:"promotion status"});const supabase=await createServerSupabaseClient();const payload={title,slug,summary,body,image_media_id:imageMediaId,starts_at:startsAt,ends_at:endsAt,is_active:formData.get("is_active")==="on",status};const result=id?await supabase.from("promotions").update(payload).eq("id",id):await supabase.from("promotions").insert(payload);if(result.error)throw new Error("Unable to save promotion.");refresh();redirect("/admin/promotions?saved=1")}
-export async function setPromotionActive(formData:FormData){await requireAdmin();const id=String(formData.get("id")??"");if(!uuidPattern.test(id))throw new Error("Invalid promotion ID.");const supabase=await createServerSupabaseClient();const {error}=await supabase.from("promotions").update({is_active:String(formData.get("active"))==="true"}).eq("id",id);if(error)throw new Error("Unable to update promotion visibility.");refresh()}
-export async function deletePromotion(formData:FormData){await requireAdmin();const id=String(formData.get("id")??"");if(!uuidPattern.test(id))throw new Error("Invalid promotion ID.");const supabase=await createServerSupabaseClient();const {error}=await supabase.from("promotions").delete().eq("id",id);if(error)throw new Error("Unable to delete promotion.");refresh()}
+import {
+  assertAffectedRows,
+  assertRange,
+  parseBooleanFlag,
+  parseCheckbox,
+  parseOptionalText,
+  parseOptionalUuid,
+  parseRequiredText,
+  parseSlug,
+  parseStatus,
+  parseTimestamp,
+  parseUuid,
+} from "@/lib/admin/form-schema";
+
+function refresh() {
+  revalidatePath("/admin/promotions");
+  revalidatePath("/");
+}
+
+export async function savePromotion(formData: FormData) {
+  await requireAdmin();
+  const id = parseOptionalUuid(formData.get("id"), "ID promo");
+  const title = parseRequiredText(formData.get("title"), "Judul promo");
+  const slug = parseSlug(formData.get("slug"), title, "Slug promo");
+  // Both promotion dates are nullable, unlike events; the table's CHECK still
+  // demands ends_at >= starts_at whenever both are present.
+  const startsAt = parseTimestamp(formData.get("starts_at"), "Waktu mulai promo");
+  const endsAt = parseTimestamp(formData.get("ends_at"), "Waktu selesai promo");
+  assertRange(startsAt, endsAt, "promo");
+  const imageMediaId = parseOptionalUuid(formData.get("image_media_id"), "ID gambar promo");
+  const payload = {
+    title,
+    slug,
+    summary: parseOptionalText(formData.get("summary"), "Ringkasan promo"),
+    body: parseOptionalText(formData.get("body"), "Isi promo"),
+    image_media_id: imageMediaId,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    is_active: parseCheckbox(formData.get("is_active"), "Status aktif promo"),
+    status: parseStatus(formData.get("status"), { strict: true, label: "status promo" }),
+  };
+  const supabase = await createServerSupabaseClient();
+  if (imageMediaId) {
+    const mediaLookup = await supabase.from("media").select("id").eq("id", imageMediaId).maybeSingle();
+    if (mediaLookup.error) throw new Error("Gambar tidak dapat diperiksa. Promo belum disimpan.");
+    if (!mediaLookup.data) throw new Error("Gambar tidak ditemukan di Media Library. Pilih gambar lain.");
+  }
+  if (id) {
+    const { error, count } = await supabase.from("promotions").update(payload, { count: "exact" }).eq("id", id);
+    if (error) throw new Error("Promo gagal disimpan.");
+    assertAffectedRows(count, 1, "Promo tidak ditemukan atau tidak boleh diubah.");
+  } else {
+    const { error } = await supabase.from("promotions").insert(payload);
+    if (error) throw new Error("Promo gagal dibuat.");
+  }
+  refresh();
+  redirect("/admin/promotions?saved=1");
+}
+
+export async function setPromotionActive(formData: FormData) {
+  await requireAdmin();
+  const id = parseUuid(formData.get("id"), "ID promo");
+  const active = parseBooleanFlag(formData.get("active"), "Status tampil promo");
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await supabase.from("promotions").update({ is_active: active }, { count: "exact" }).eq("id", id);
+  if (error) throw new Error("Status tampil promo gagal diperbarui.");
+  assertAffectedRows(count, 1, "Promo tidak ditemukan atau tidak boleh diubah.");
+  refresh();
+}
+
+export async function deletePromotion(formData: FormData) {
+  await requireAdmin();
+  const id = parseUuid(formData.get("id"), "ID promo");
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await supabase.from("promotions").delete({ count: "exact" }).eq("id", id);
+  if (error) throw new Error("Promo gagal dihapus.");
+  assertAffectedRows(count, 1, "Promo tidak ditemukan atau tidak boleh dihapus.");
+  refresh();
+}

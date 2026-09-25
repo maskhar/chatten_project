@@ -1,15 +1,86 @@
 "use server";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { parseStatus, uuidSchema } from "@/lib/admin/form-schema";
-const uuidPattern={test:(value:string)=>uuidSchema.safeParse(value).success};
-function slugifyEvent(value:string){return value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
-function parseEventDate(value:string,field:string,required:true):string;
-function parseEventDate(value:string,field:string,required?:false):string|null;
-function parseEventDate(value:string,field:string,required=false):string|null{const trimmed=value.trim();if(!trimmed){if(required)throw new Error(`${field} is required.`);return null}const date=new Date(trimmed);if(Number.isNaN(date.getTime()))throw new Error(`Invalid ${field.toLowerCase()}.`);return date.toISOString()}
-function refresh(){revalidatePath("/admin/events");revalidatePath("/events");revalidatePath("/")}
-export async function saveEvent(formData:FormData){await requireAdmin();const id=String(formData.get("id")??"");const title=String(formData.get("title")??"").trim();const slug=slugifyEvent(String(formData.get("slug")??title));const summary=String(formData.get("summary")??"").trim()||null;const body=String(formData.get("body")??"").trim()||null;const startsAt=parseEventDate(String(formData.get("starts_at")??""),"Event start",true);const endsAt=parseEventDate(String(formData.get("ends_at")??""),"Event end");if(!title)throw new Error("Event title is required.");if(!slug)throw new Error("Event slug is required.");if(startsAt&&endsAt&&new Date(endsAt)<new Date(startsAt))throw new Error("Event end must be after its start.");const imageMediaId=String(formData.get("image_media_id")??"")||null;const status=parseStatus(formData.get("status"),{strict:true,label:"event status"});const supabase=await createServerSupabaseClient();const payload={title,slug,summary,body,image_media_id:imageMediaId,starts_at:startsAt,ends_at:endsAt,is_active:formData.get("is_active")==="on",status};const result=id?await supabase.from("events").update(payload).eq("id",id):await supabase.from("events").insert(payload);if(result.error)throw new Error("Unable to save event.");refresh();redirect("/admin/events?saved=1")}
-export async function setEventActive(formData:FormData){await requireAdmin();const id=String(formData.get("id")??"");if(!uuidPattern.test(id))throw new Error("Invalid event ID.");const supabase=await createServerSupabaseClient();const {error}=await supabase.from("events").update({is_active:String(formData.get("active"))==="true"}).eq("id",id);if(error)throw new Error("Unable to update event visibility.");refresh()}
-export async function deleteEvent(formData:FormData){await requireAdmin();const id=String(formData.get("id")??"");if(!uuidPattern.test(id))throw new Error("Invalid event ID.");const supabase=await createServerSupabaseClient();const {error}=await supabase.from("events").delete().eq("id",id);if(error)throw new Error("Unable to delete event.");refresh()}
+import {
+  assertAffectedRows,
+  assertRange,
+  parseBooleanFlag,
+  parseCheckbox,
+  parseOptionalText,
+  parseOptionalUuid,
+  parseRequiredText,
+  parseSlug,
+  parseStatus,
+  parseTimestamp,
+  parseUuid,
+} from "@/lib/admin/form-schema";
+
+function refresh() {
+  revalidatePath("/admin/events");
+  revalidatePath("/events");
+  revalidatePath("/");
+}
+
+export async function saveEvent(formData: FormData) {
+  await requireAdmin();
+  const id = parseOptionalUuid(formData.get("id"), "ID event");
+  const title = parseRequiredText(formData.get("title"), "Judul event");
+  const slug = parseSlug(formData.get("slug"), title, "Slug event");
+  // events.starts_at is `not null`; ends_at is optional but bounded by the
+  // table's own `ends_at >= starts_at` CHECK.
+  const startsAt = parseTimestamp(formData.get("starts_at"), "Waktu mulai event", { required: true });
+  const endsAt = parseTimestamp(formData.get("ends_at"), "Waktu selesai event");
+  assertRange(startsAt, endsAt, "event");
+  const imageMediaId = parseOptionalUuid(formData.get("image_media_id"), "ID gambar event");
+  const payload = {
+    title,
+    slug,
+    summary: parseOptionalText(formData.get("summary"), "Ringkasan event"),
+    body: parseOptionalText(formData.get("body"), "Isi event"),
+    image_media_id: imageMediaId,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    is_active: parseCheckbox(formData.get("is_active"), "Status aktif event"),
+    status: parseStatus(formData.get("status"), { strict: true, label: "status event" }),
+  };
+  const supabase = await createServerSupabaseClient();
+  if (imageMediaId) {
+    const mediaLookup = await supabase.from("media").select("id").eq("id", imageMediaId).maybeSingle();
+    if (mediaLookup.error) throw new Error("Gambar tidak dapat diperiksa. Event belum disimpan.");
+    if (!mediaLookup.data) throw new Error("Gambar tidak ditemukan di Media Library. Pilih gambar lain.");
+  }
+  if (id) {
+    const { error, count } = await supabase.from("events").update(payload, { count: "exact" }).eq("id", id);
+    if (error) throw new Error("Event gagal disimpan.");
+    assertAffectedRows(count, 1, "Event tidak ditemukan atau tidak boleh diubah.");
+  } else {
+    const { error } = await supabase.from("events").insert(payload);
+    if (error) throw new Error("Event gagal dibuat.");
+  }
+  refresh();
+  redirect("/admin/events?saved=1");
+}
+
+export async function setEventActive(formData: FormData) {
+  await requireAdmin();
+  const id = parseUuid(formData.get("id"), "ID event");
+  const active = parseBooleanFlag(formData.get("active"), "Status tampil event");
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await supabase.from("events").update({ is_active: active }, { count: "exact" }).eq("id", id);
+  if (error) throw new Error("Status tampil event gagal diperbarui.");
+  assertAffectedRows(count, 1, "Event tidak ditemukan atau tidak boleh diubah.");
+  refresh();
+}
+
+export async function deleteEvent(formData: FormData) {
+  await requireAdmin();
+  const id = parseUuid(formData.get("id"), "ID event");
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await supabase.from("events").delete({ count: "exact" }).eq("id", id);
+  if (error) throw new Error("Event gagal dihapus.");
+  assertAffectedRows(count, 1, "Event tidak ditemukan atau tidak boleh dihapus.");
+  refresh();
+}
