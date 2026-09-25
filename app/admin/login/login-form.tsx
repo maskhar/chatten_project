@@ -27,10 +27,10 @@ function safeNext(raw: string | null) {
 // for the second, and sent people to re-type a password that already worked.
 function initialError(reason: string | null) {
   if (reason === "unauthorized") {
-    return "Your sign-in worked, but this account has no CMS access yet. Ask an administrator to grant your account a role, then sign in again.";
+    return "Masuk berhasil, tetapi akun ini belum memiliki akses CMS. Minta administrator memberi peran untuk akun Anda, lalu masuk kembali.";
   }
   if (reason === "forbidden") {
-    return "Your account does not have permission for that page.";
+    return "Akun Anda tidak memiliki izin untuk halaman itu.";
   }
   return undefined;
 }
@@ -55,7 +55,7 @@ export function LoginForm() {
       // and an unknown email, deliberately — distinguishing them would let an
       // attacker enumerate accounts. The copy stays vague for the same reason,
       // but says which two things to check rather than just "check credentials".
-      setError("That email and password did not match. Check both and try again.");
+      setError("Email dan kata sandi tidak cocok. Periksa keduanya lalu coba lagi.");
       return;
     }
     const destination = safeNext(params.get("next"));
@@ -65,9 +65,9 @@ export function LoginForm() {
   return (
     <form action={submit} className="mt-8 grid max-w-sm gap-4">
       <label>Email<input required disabled={pending} name="email" type="email" autoComplete="email" className="mt-1 block w-full border border-sand-deep bg-white px-3 py-2 disabled:opacity-60" /></label>
-      <label>Password<input required disabled={pending} name="password" type="password" autoComplete="current-password" className="mt-1 block w-full border border-sand-deep bg-white px-3 py-2 disabled:opacity-60" /></label>
+      <label>Kata sandi<input required disabled={pending} name="password" type="password" autoComplete="current-password" className="mt-1 block w-full border border-sand-deep bg-white px-3 py-2 disabled:opacity-60" /></label>
       {error ? <p role="alert" className="border-l-4 border-terracotta bg-blush px-3 py-2 text-sm text-rust">{error}</p> : null}
-      <Button type="submit" disabled={pending}>{pending ? "Signing in…" : "Sign in"}</Button>
+      <Button type="submit" disabled={pending}>{pending ? "Sedang masuk…" : "Masuk"}</Button>
     </form>
   );
 }

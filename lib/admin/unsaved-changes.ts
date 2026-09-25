@@ -14,7 +14,7 @@
 // same two reasons: it is the part that is easy to get wrong, and it is the
 // part that can be tested without a browser.
 
-export const UNSAVED_MESSAGE = "You have unsaved changes. Leave this page and discard them?";
+export const UNSAVED_MESSAGE = "Ada perubahan yang belum disimpan. Tinggalkan halaman ini dan buang perubahan?";
 
 export type NavigationIntent = {
   href: string | null;

@@ -28,8 +28,10 @@ test("the day picker covers exactly the seven days, Sunday first", () => {
   // and 7 was accepted and then never matched a day.
   assert.equal(DAY_OPTIONS.length, 7);
   assert.deepEqual(optionValues(DAY_OPTIONS), ["0", "1", "2", "3", "4", "5", "6"]);
-  assert.equal(labelFor(DAY_OPTIONS, 0), "Sunday");
-  assert.equal(labelFor(DAY_OPTIONS, 6), "Saturday");
+  // The labels are the operator-facing copy and are Indonesian; the values
+  // stay the Postgres dow integers the public hours list matches on.
+  assert.equal(labelFor(DAY_OPTIONS, 0), "Minggu");
+  assert.equal(labelFor(DAY_OPTIONS, 6), "Sabtu");
   assert.equal(labelFor(DAY_OPTIONS, 7), null);
 });
 

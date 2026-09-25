@@ -31,7 +31,9 @@ test("activity entries read the per-table title column", () => {
 test("a row with no title falls back rather than rendering undefined", () => {
   const gallery = editorialTables.find((entry) => entry.table === "gallery_items");
   const entry = toActivityEntries(gallery, [{ status: "draft", updated_at: "2026-09-20T10:00:00Z" }])[0];
-  assert.equal(entry.label, "Untitled");
+  // The fallback is operator-facing copy, so it is Indonesian like the rest
+  // of the dashboard; the status value stays the raw column value.
+  assert.equal(entry.label, "Tanpa judul");
   assert.equal(entry.status, "draft");
 });
 

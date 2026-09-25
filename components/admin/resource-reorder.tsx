@@ -14,7 +14,7 @@ export function ResourceReorder({ resourceKey, items, offset, action }: { resour
   return (
     <SortableList
       items={items}
-      empty="Nothing to reorder yet."
+      empty="Belum ada yang bisa diurutkan."
       onSave={async (ids) => {
         const formData = new FormData();
         formData.set("resource", resourceKey);

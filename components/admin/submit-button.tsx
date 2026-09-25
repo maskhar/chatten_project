@@ -12,7 +12,7 @@ export function SubmitButton({ children, pendingLabel, className = "", ...props 
   const { pending } = useFormStatus();
   return (
     <button {...props} type="submit" disabled={pending || props.disabled} aria-busy={pending} className={`disabled:cursor-not-allowed disabled:opacity-60 ${className}`}>
-      {pending ? (pendingLabel ?? "Saving…") : children}
+      {pending ? (pendingLabel ?? "Menyimpan…") : children}
     </button>
   );
 }

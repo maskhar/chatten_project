@@ -27,15 +27,15 @@
 
 export type Option = { value: string; label: string };
 
-/** Sunday-first, matching Postgres `extract(dow)` and `opening_hours.day_of_week`. */
+/** Minggu lebih dulu, mengikuti Postgres `extract(dow)` dan `opening_hours.day_of_week`. */
 export const DAY_OPTIONS: readonly Option[] = [
-  { value: "0", label: "Sunday" },
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" },
+  { value: "0", label: "Minggu" },
+  { value: "1", label: "Senin" },
+  { value: "2", label: "Selasa" },
+  { value: "3", label: "Rabu" },
+  { value: "4", label: "Kamis" },
+  { value: "5", label: "Jumat" },
+  { value: "6", label: "Sabtu" },
 ] as const;
 
 /**
@@ -63,14 +63,14 @@ export const SOCIAL_PLATFORM_OPTIONS: readonly Option[] = [
  * failure rather than a route an editor cannot link to.
  */
 export const NAVIGATION_ROUTE_OPTIONS: readonly Option[] = [
-  { value: "/", label: "Home" },
-  { value: "/about", label: "About" },
-  { value: "/experience", label: "Experience" },
+  { value: "/", label: "Beranda" },
+  { value: "/about", label: "Tentang" },
+  { value: "/experience", label: "Pengalaman" },
   { value: "/menu", label: "Menu" },
-  { value: "/spaces", label: "Spaces" },
-  { value: "/events", label: "Events" },
-  { value: "/gallery", label: "Gallery" },
-  { value: "/visit", label: "Visit" },
+  { value: "/spaces", label: "Ruang" },
+  { value: "/events", label: "Acara" },
+  { value: "/gallery", label: "Galeri" },
+  { value: "/visit", label: "Kunjungi" },
 ] as const;
 
 /**
@@ -81,21 +81,21 @@ export const NAVIGATION_ROUTE_OPTIONS: readonly Option[] = [
  * rather than from seo_settings, so it is deliberately not offered.
  */
 export const SEO_PAGE_KEY_OPTIONS: readonly Option[] = [
-  { value: "about", label: "About" },
-  { value: "experience", label: "Experience" },
+  { value: "about", label: "Tentang" },
+  { value: "experience", label: "Pengalaman" },
   { value: "menu", label: "Menu" },
-  { value: "spaces", label: "Spaces" },
-  { value: "events", label: "Events" },
-  { value: "gallery", label: "Gallery" },
-  { value: "visit", label: "Visit" },
+  { value: "spaces", label: "Ruang" },
+  { value: "events", label: "Acara" },
+  { value: "gallery", label: "Galeri" },
+  { value: "visit", label: "Kunjungi" },
 ] as const;
 
 /** The robots directives worth offering; anything else is a typo, not a choice. */
 export const ROBOTS_OPTIONS: readonly Option[] = [
-  { value: "", label: "Default (index, follow)" },
-  { value: "index, follow", label: "Index and follow" },
-  { value: "noindex, follow", label: "Hide from search, follow links" },
-  { value: "noindex, nofollow", label: "Hide from search, ignore links" },
+  { value: "", label: "Bawaan (index, follow)" },
+  { value: "index, follow", label: "Indeks dan ikuti tautan" },
+  { value: "noindex, follow", label: "Sembunyikan dari pencarian, ikuti tautan" },
+  { value: "noindex, nofollow", label: "Sembunyikan dari pencarian, abaikan tautan" },
 ] as const;
 
 export function optionValues(options: readonly Option[]) {
