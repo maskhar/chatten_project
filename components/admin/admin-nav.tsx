@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type NavGroup = readonly [string, readonly (readonly [string, string])[]];
 
@@ -43,10 +43,10 @@ export function AdminNavLinks({ groups, isAdmin, onNavigate }: { groups: readonl
         </div>
       ))}
       <div>
-        <p className="px-2 text-[10px] font-semibold uppercase tracking-[.16em] text-ink-muted">Administration</p>
+        <p className="px-2 text-[10px] font-semibold uppercase tracking-[.16em] text-ink-muted">Administrasi</p>
         <div className="mt-2 grid gap-1">
-          {isAdmin ? <NavLink href="/admin/users" label="Users & Roles" current={isCurrent(pathname, "/admin/users")} onNavigate={onNavigate} /> : null}
-          <NavLink href="/admin/account" label="My Account" current={isCurrent(pathname, "/admin/account")} onNavigate={onNavigate} />
+          {isAdmin ? <NavLink href="/admin/users" label="Pengguna & Peran" current={isCurrent(pathname, "/admin/users")} onNavigate={onNavigate} /> : null}
+          <NavLink href="/admin/account" label="Akun Saya" current={isCurrent(pathname, "/admin/account")} onNavigate={onNavigate} />
         </div>
       </div>
     </nav>
@@ -57,7 +57,7 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <Link href="/admin" onClick={onNavigate} className="font-serif text-2xl tracking-[.12em]">CHATTEN</Link>
-      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[.18em] text-clay">Website manager</p>
+      <p className="mt-1 text-[10px] font-semibold uppercase tracking-[.18em] text-clay">Pengelola situs</p>
     </>
   );
 }
@@ -73,10 +73,55 @@ export function AdminSidebar({ groups, isAdmin }: { groups: readonly NavGroup[];
 
 export function AdminMobileNav({ groups, isAdmin }: { groups: readonly NavGroup[]; isAdmin: boolean }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const closeDrawer = useCallback(() => {
+    setOpen(false);
+    // Return focus after React removes the dialog, regardless of how it closes.
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
 
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+
+    const panel = panelRef.current;
+    const getFocusableElements = () => Array.from(
+      panel?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    ).filter((element) => !element.hasAttribute("hidden"));
+
+    // Put keyboard users inside the dialog as soon as it opens.
+    getFocusableElements()[0]?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDrawer();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        panel?.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+      if (event.shiftKey && (activeElement === firstElement || !panel?.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && (activeElement === lastElement || !panel?.contains(activeElement))) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
     document.addEventListener("keydown", onKeyDown);
     // The panel scrolls on its own; without this the page behind it scrolls too.
     const previousOverflow = document.body.style.overflow;
@@ -85,14 +130,15 @@ export function AdminMobileNav({ groups, isAdmin }: { groups: readonly NavGroup[
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open]);
+  }, [closeDrawer, open]);
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Open navigation menu"
+        aria-label="Buka menu navigasi"
         aria-expanded={open}
         aria-controls="admin-mobile-nav"
         className="rounded border border-forest p-2 lg:hidden"
@@ -106,23 +152,26 @@ export function AdminMobileNav({ groups, isAdmin }: { groups: readonly NavGroup[
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
-            aria-label="Close navigation menu"
-            onClick={() => setOpen(false)}
+            aria-label="Tutup menu navigasi"
+            onClick={closeDrawer}
+            tabIndex={-1}
             className="absolute inset-0 h-full w-full bg-black/40"
           />
           <div
+            ref={panelRef}
             id="admin-mobile-nav"
             role="dialog"
             aria-modal="true"
-            aria-label="CMS navigation"
+            aria-label="Navigasi CMS"
+            tabIndex={-1}
             className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-mist bg-white p-5"
           >
             <div className="flex items-start justify-between gap-3">
-              <div><Brand onNavigate={() => setOpen(false)} /></div>
+              <div><Brand onNavigate={closeDrawer} /></div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close navigation menu"
+                onClick={closeDrawer}
+                aria-label="Tutup menu navigasi"
                 className="rounded border border-forest px-2 py-1 text-sm font-semibold"
               >
                 ✕
@@ -130,7 +179,7 @@ export function AdminMobileNav({ groups, isAdmin }: { groups: readonly NavGroup[
             </div>
             {/* Each link closes the drawer: it is an overlay, so leaving it
                 open would cover the page the operator just asked for. */}
-            <AdminNavLinks groups={groups} isAdmin={isAdmin} onNavigate={() => setOpen(false)} />
+            <AdminNavLinks groups={groups} isAdmin={isAdmin} onNavigate={closeDrawer} />
           </div>
         </div>
       ) : null}

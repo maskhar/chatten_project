@@ -72,9 +72,82 @@ test("the sidebar has a mobile counterpart sharing one link list", () => {
 test("the mobile drawer is dismissible by keyboard and by choosing a link", () => {
   const nav = fs.readFileSync("components/admin/admin-nav.tsx", "utf8");
   assert.match(nav, /event\.key === "Escape"/);
-  assert.match(nav, /onNavigate=\{\(\) => setOpen\(false\)\}/);
+  assert.match(nav, /onNavigate=\{closeDrawer\}/);
   assert.match(nav, /aria-modal="true"/);
   assert.match(nav, /aria-expanded=\{open\}/);
+  assert.match(nav, /aria-controls="admin-mobile-nav"/);
+  assert.match(nav, /id="admin-mobile-nav"/);
+  assert.match(nav, /role="dialog"/);
+  assert.match(nav, /aria-current=\{current \? "page" : undefined\}/);
+  // The backdrop still closes the drawer, and the body scroll lock is restored
+  // to whatever it was rather than being cleared outright.
+  assert.match(nav, /className="absolute inset-0 h-full w-full bg-black\/40"/);
+  assert.match(nav, /const previousOverflow = document\.body\.style\.overflow/);
+  assert.match(nav, /document\.body\.style\.overflow = previousOverflow/);
+});
+
+test("the mobile drawer holds refs for its trigger and its panel", () => {
+  // Without a handle on the trigger there is nowhere to send focus back to,
+  // and without a handle on the panel the trap cannot tell inside from out.
+  const nav = fs.readFileSync("components/admin/admin-nav.tsx", "utf8");
+  assert.match(nav, /const triggerRef = useRef<HTMLButtonElement>\(null\)/);
+  assert.match(nav, /const panelRef = useRef<HTMLDivElement>\(null\)/);
+  assert.match(nav, /ref=\{triggerRef\}/);
+  assert.match(nav, /ref=\{panelRef\}/);
+});
+
+test("opening the drawer moves focus into it", () => {
+  // A keyboard or screen-reader operator who opens the drawer and is left on
+  // the trigger behind the overlay has to tab through the whole page to reach
+  // the links they just asked for.
+  const nav = fs.readFileSync("components/admin/admin-nav.tsx", "utf8");
+  assert.match(nav, /getFocusableElements/);
+  assert.match(nav, /a\[href\], button:not\(\[disabled\]\), \[tabindex\]:not\(\[tabindex="-1"\]\)/);
+  assert.match(nav, /getFocusableElements\(\)\[0\]\?\.focus\(\)/);
+});
+
+test("Tab and Shift+Tab stay inside the open drawer", () => {
+  const nav = fs.readFileSync("components/admin/admin-nav.tsx", "utf8");
+  assert.match(nav, /event\.key !== "Tab"/);
+  assert.match(nav, /event\.shiftKey/);
+  assert.match(nav, /lastElement\.focus\(\)/);
+  assert.match(nav, /firstElement\.focus\(\)/);
+  assert.match(nav, /event\.preventDefault\(\)/);
+  // Focus that has already escaped the panel is pulled back in, so the trap
+  // does not depend on it starting inside.
+  assert.match(nav, /!panel\?\.contains\(activeElement\)/);
+  // The backdrop is a real <button>, so it must not be a tab stop of its own.
+  assert.match(nav, /aria-label="Tutup menu navigasi"\s+onClick=\{closeDrawer\}\s+tabIndex=\{-1\}/);
+});
+
+test("closing the drawer any way returns focus to the trigger", () => {
+  // Escape, the ✕, the backdrop and a link all route through one closer, so
+  // no path can forget to restore focus.
+  const nav = fs.readFileSync("components/admin/admin-nav.tsx", "utf8");
+  assert.match(nav, /const closeDrawer = useCallback\(\(\) => \{/);
+  assert.match(nav, /triggerRef\.current\?\.focus\(\)/);
+  assert.ok(!/onClick=\{\(\) => setOpen\(false\)\}/.test(nav), "a close path bypasses closeDrawer and leaves focus adrift");
+  assert.equal((nav.match(/closeDrawer/g) ?? []).length >= 6, true, "not every close path goes through closeDrawer");
+});
+
+test("the desktop sidebar is untouched by the drawer's focus handling", () => {
+  // The trap is scoped to the drawer panel; the sidebar must stay a plain
+  // always-visible nav with no dialog semantics of its own.
+  const nav = fs.readFileSync("components/admin/admin-nav.tsx", "utf8");
+  const sidebar = nav.slice(nav.indexOf("export function AdminSidebar"), nav.indexOf("export function AdminMobileNav"));
+  assert.match(sidebar, /lg:block/);
+  assert.ok(!/role="dialog"/.test(sidebar), "the desktop sidebar became a dialog");
+  assert.ok(!/panelRef|triggerRef|tabIndex/.test(sidebar), "drawer focus plumbing leaked into the desktop sidebar");
+});
+
+test("the CMS navigation copy this component owns is Indonesian", () => {
+  const nav = fs.readFileSync("components/admin/admin-nav.tsx", "utf8");
+  for (const phrase of ["Administrasi", "Pengguna & Peran", "Akun Saya", "Pengelola situs", "Buka menu navigasi", "Tutup menu navigasi", "Navigasi CMS"]) {
+    assert.ok(nav.includes(phrase), `the drawer no longer says "${phrase}"`);
+  }
+  for (const stale of ["Administration", "Users & Roles", "My Account", "Website manager", "Open navigation menu", "Close navigation menu", "CMS navigation"]) {
+    assert.ok(!nav.includes(stale), `English copy "${stale}" is back in the CMS nav`);
+  }
 });
 
 test("the only admin data table can scroll instead of overflowing a phone", () => {
