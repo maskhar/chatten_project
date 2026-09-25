@@ -38,7 +38,7 @@ export function MediaPicker({
     [media, query, categoryFilter],
   );
 
-  const current = media.find((item) => item.id === (selected || value));
+  const current = media.find((item) => item.id === selected);
 
   const clearFilters = () => {
     setQuery("");
@@ -48,35 +48,35 @@ export function MediaPicker({
   const hasActiveFilters = query || categoryFilter;
 
   return (
-    <div className="mt-2 grid gap-3 rounded border border-line bg-paper p-4">
-      <input type="hidden" name={name} value={selected || value || ""} />
+    <div className="@container mt-2 grid min-w-0 w-full gap-3 rounded border border-line bg-paper p-4">
+      <input type="hidden" name={name} value={selected} />
       {current ? (
-        <div className="flex items-center gap-3 rounded border border-sage-deep bg-white p-3 shadow-sm">
+        <div className="flex min-w-0 flex-wrap items-center gap-3 rounded border border-sage-deep bg-white p-3 shadow-sm">
           <Image
             src={mediaHrefById(current.id)!}
             alt={current.alt_text ?? current.title ?? ""}
             width={96}
             height={72}
-            className="h-16 w-20 rounded object-cover"
+            className="h-16 w-20 shrink-0 rounded object-cover"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-leaf-ink">
-              Selected
+              Terpilih
             </p>
             <p className="mt-1 truncate font-medium">
-              {current.title ?? "Untitled image"}
+              {current.title ?? "Gambar tanpa judul"}
             </p>
-            <p className="text-xs text-ink">
-              {current.alt_text ?? "No alt text"}
+            <p className="truncate text-xs text-ink">
+              {current.alt_text ?? "Tanpa teks alternatif"}
             </p>
           </div>
-          <div className="ml-auto flex gap-2">
+          <div className="flex w-full flex-wrap gap-2 @sm:w-auto @sm:shrink-0">
             <button
               type="button"
               className="rounded border border-sage-deep bg-white px-3 py-1.5 text-sm font-medium hover:bg-paper"
               onClick={() => setSelected("")}
             >
-              Replace
+              Ganti
             </button>
             {!required && (
               <button
@@ -84,25 +84,27 @@ export function MediaPicker({
                 className="rounded border border-line px-3 py-1.5 text-sm text-ink hover:bg-white"
                 onClick={() => setSelected("")}
               >
-                Remove
+                Hapus pilihan
               </button>
             )}
           </div>
         </div>
       ) : null}
-      <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+      <div className="grid min-w-0 w-full gap-2 @md:grid-cols-[minmax(0,1fr)_minmax(0,auto)_auto]">
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search images..."
-          className="rounded border border-line bg-white px-3 py-2 text-sm"
+          placeholder="Cari gambar..."
+          aria-label="Cari gambar"
+          className="min-w-0 w-full rounded border border-line bg-white px-3 py-2 text-sm"
         />
         <select
           value={categoryFilter}
           onChange={(event) => setCategoryFilter(event.target.value)}
-          className="rounded border border-line bg-white px-3 py-2 text-sm"
+          aria-label="Filter kategori"
+          className="min-w-0 w-full rounded border border-line bg-white px-3 py-2 text-sm"
         >
-          <option value="">All categories</option>
+          <option value="">Semua kategori</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
@@ -115,47 +117,46 @@ export function MediaPicker({
             onClick={clearFilters}
             className="rounded border border-line bg-white px-3 py-2 text-sm text-ink hover:bg-paper"
           >
-            Clear filters
+            Bersihkan filter
           </button>
         )}
       </div>
       {media.length === 0 ? (
         <div className="rounded border border-sand-deep bg-cream p-6 text-center">
-          <p className="font-medium text-bark">No images yet</p>
+          <p className="font-medium text-bark">Belum ada gambar</p>
           <p className="mt-2 text-sm text-bark">
-            Upload an image in the Media Library and it appears here straight away.
+            Unggah gambar di Pustaka Media dan gambar akan langsung tampil di sini.
           </p>
           <Link
             href="/admin/media"
             className="mt-4 inline-block rounded bg-forest px-4 py-2 text-sm font-semibold text-white hover:bg-forest-soft"
           >
-            Open Media Library
+            Buka Pustaka Media
           </Link>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded border border-line bg-white p-6 text-center">
-          <p className="text-sm text-ink">No images match your filters.</p>
+          <p className="text-sm text-ink">Tidak ada gambar yang sesuai dengan filter.</p>
           <button
             type="button"
             onClick={clearFilters}
             className="mt-3 text-sm font-medium underline"
           >
-            Clear filters
+            Bersihkan filter
           </button>
         </div>
       ) : (
-        <div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto rounded border border-mist bg-white p-2 sm:grid-cols-3">
+        <div className="grid min-w-0 w-full max-h-80 grid-cols-1 gap-2 overflow-y-auto rounded border border-mist bg-white p-2 @xs:grid-cols-2 @lg:grid-cols-3">
           {filtered.map((item) => {
             const url = mediaHrefById(item.id)!;
-            const effectiveSelected = selected || value || "";
-            const isSelected = effectiveSelected === item.id;
+            const isSelected = selected === item.id;
             return (
               <button
                 type="button"
                 onClick={() => setSelected(item.id)}
-                className={`overflow-hidden rounded border text-left transition-all ${isSelected ? "border-leaf-ink ring-2 ring-leaf-ink ring-offset-1" : "border-mist hover:border-sage-deep"}`}
+                className={`min-w-0 w-full overflow-hidden rounded border text-left transition-all ${isSelected ? "border-leaf-ink ring-2 ring-leaf-ink ring-offset-1" : "border-mist hover:border-sage-deep"}`}
                 key={item.id}
-                aria-label={`Select ${item.title ?? item.alt_text ?? "image"}`}
+                aria-label={`Pilih ${item.title ?? item.alt_text ?? "gambar"}`}
                 aria-pressed={isSelected}
               >
                 <Image
@@ -168,11 +169,11 @@ export function MediaPicker({
                 <div className="p-2">
                   {isSelected && (
                     <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-leaf-ink">
-                      Selected
+                      Terpilih
                     </p>
                   )}
                   <span className="block truncate text-xs">
-                    {item.title ?? item.alt_text ?? "Untitled"}
+                    {item.title ?? item.alt_text ?? "Tanpa judul"}
                   </span>
                 </div>
               </button>

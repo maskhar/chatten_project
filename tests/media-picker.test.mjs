@@ -68,44 +68,99 @@ test("the picker uses the shared filter rather than its own copy", () => {
   assert.ok(src.includes("pickerCategories"), "the picker derives categories inline again");
 });
 
-test("MediaPicker shows Replace button for current selection", () => {
-  assert.ok(src.includes('Replace'));
-  assert.ok(src.includes('onClick={() => setSelected("")}'));
+test("state initialized from value is the sole selection source", () => {
+  assert.match(src, /const \[selected, setSelected\] = useState\(value \?\? ""\)/);
+  assert.match(src, /item\.id === selected/);
+  assert.match(src, /name=\{name\} value=\{selected\}/);
+  assert.match(src, /const isSelected = selected === item\.id/);
+  assert.doesNotMatch(src, /selected\s*\|\|\s*value/);
 });
 
-test("MediaPicker shows Remove button only when not required", () => {
-  assert.ok(src.includes('{!required &&'));
-  assert.ok(src.includes('Remove'));
+test("an empty selection intentionally clears an existing value", () => {
+  assert.match(src, /onClick=\{\(\) => setSelected\(""\)\}/);
+  assert.doesNotMatch(src, /value=\{selected\s*\|\|/);
+  assert.doesNotMatch(src, /item\.id === \(selected\s*\|\|/);
 });
 
-test("MediaPicker displays Selected indicator on current image", () => {
-  assert.ok(src.includes('Selected'));
-  assert.ok(src.includes('text-leaf-ink'));
+test("MediaPicker keeps removal unavailable when selection is required", () => {
+  assert.ok(src.includes("{!required &&"));
+  assert.ok(src.includes("Hapus pilihan"));
 });
 
-test("the empty state tells the operator uploading is the only step", () => {
-  // There is no approval step left to mention: an uploaded image reaches the
-  // picker immediately, and the old copy promised a second action that no
-  // longer exists.
-  assert.ok(src.includes('No images yet'));
-  assert.ok(src.includes('it appears here straight away'));
+test("MediaPicker uses container layout and can shrink in a narrow sidebar", () => {
+  assert.match(src, /className="[^"]*@container[^"]*min-w-0[^"]*w-full[^"]*"/);
+  assert.match(src, /className="[^"]*grid[^"]*min-w-0[^"]*w-full[^"]*@md:grid-cols-/);
+  assert.match(src, /className="[^"]*flex[^"]*w-full[^"]*flex-wrap[^"]*@sm:w-auto/);
+  assert.match(src, /className="[^"]*min-w-0[^"]*flex-1[^"]*"/);
+  assert.match(src, /className=\{`min-w-0 w-full overflow-hidden/);
+  assert.ok(src.includes('className="block truncate text-xs"'));
+});
+
+test("MediaPicker exposes Indonesian accessible names and pressed state", () => {
+  assert.ok(src.includes('aria-label="Cari gambar"'));
+  assert.ok(src.includes('aria-label="Filter kategori"'));
+  assert.ok(src.includes('aria-label={`Pilih ${'));
+  assert.ok(src.includes("aria-pressed={isSelected}"));
+});
+
+test("MediaPicker uses Indonesian selection and action copy", () => {
+  for (const copy of [
+    "Terpilih",
+    "Ganti",
+    "Hapus pilihan",
+    "Gambar tanpa judul",
+    "Tanpa teks alternatif",
+    "Tanpa judul",
+  ]) {
+    assert.ok(src.includes(copy), `missing Indonesian copy: ${copy}`);
+  }
+  assert.ok(src.includes("text-leaf-ink"));
+});
+
+test("empty states and filters use Indonesian copy", () => {
+  for (const copy of [
+    "Cari gambar...",
+    "Semua kategori",
+    "Bersihkan filter",
+    "Belum ada gambar",
+    "Unggah gambar di Pustaka Media dan gambar akan langsung tampil di sini.",
+    "Buka Pustaka Media",
+    "Tidak ada gambar yang sesuai dengan filter.",
+  ]) {
+    assert.ok(src.includes(copy), `missing Indonesian copy: ${copy}`);
+  }
   assert.ok(!/approve/i.test(src), "the picker mentions approving an image again");
   assert.ok(src.includes('href="/admin/media"'));
-  assert.ok(src.includes('Open Media Library'));
 });
 
-test("MediaPicker shows filtered empty state with clear action", () => {
-  assert.ok(src.includes('No images match your filters'));
-  assert.ok(src.includes('Clear filters'));
+test("MediaPicker no longer exposes English interface copy", () => {
+  // `Selected`, `Replace` and `Remove` also occur as fragments of identifiers
+  // such as `isSelected`, so they are matched as rendered JSX text only. The
+  // rest are literal strings the operator reads.
+  for (const jsxText of ["Selected", "Replace", "Remove", "Untitled"]) {
+    assert.doesNotMatch(
+      src,
+      new RegExp(`>\\s*${jsxText}\\s*<`),
+      `English copy rendered: ${jsxText}`,
+    );
+  }
+  for (const literal of [
+    "Search images",
+    "All categories",
+    "Clear filters",
+    "No images yet",
+    "No images match",
+    "Open Media Library",
+    "Untitled image",
+    "No alt text",
+    "Select ${",
+  ]) {
+    assert.ok(!src.includes(literal), `English copy remains: ${literal}`);
+  }
 });
 
-test("MediaPicker includes accessibility attributes", () => {
-  assert.ok(src.includes('aria-label'));
-  assert.ok(src.includes('aria-pressed'));
-});
-
-test("MediaPicker visual selection uses ring and not color-only", () => {
-  assert.ok(src.includes('ring-2'));
-  assert.ok(src.includes('ring-leaf-ink'));
-  assert.ok(src.includes('Selected'));
+test("MediaPicker visual selection uses ring and not color alone", () => {
+  assert.ok(src.includes("ring-2"));
+  assert.ok(src.includes("ring-leaf-ink"));
+  assert.ok(src.includes("Terpilih"));
 });
