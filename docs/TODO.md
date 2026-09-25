@@ -665,6 +665,21 @@ work items; the audit document holds the evidence.
       **Open question, answered conservatively:** the limit stays at 20 files.
       Raising it is a server-capacity decision, not a copy fix.
 
+- [x] **A79** Perbaiki pengurutan homepage yang selalu gagal dan rollback yang usang.
+      Indeks unik langsung pada `homepage_sections.sort_order` memeriksa setiap
+      baris ketika `reorder_rows` menukar peringkat. Permutasi valid pun memicu
+      `23505`; bukti browser menunjukkan tombol simpan mengembalikan urutan dan
+      tombol pindah langsung menghasilkan HTTP 500. Migration
+      `20260926000100_homepage_order_deferrable.sql` menggantinya dengan
+      constraint unik `DEFERRABLE INITIALLY DEFERRED`, sehingga keunikan tetap
+      wajib pada akhir transaksi tetapi tidak gagal pada keadaan sementara.
+      Fungsi database dan allowlist TypeScript juga tidak lagi menerima
+      `events` atau `promotions`, karena kolom `sort_order` keduanya telah
+      dihapus. CMS menghapus jalur swap dua-update, hanya menyimpan daftar
+      lengkap melalui RPC atomik, memvalidasi seluruh set bagian, dan
+      `SortableList` memulihkan baseline terakhir yang benar-benar tersimpan.
+      Kontrak pengujian: `node --test tests/reorder-core.test.mjs` (16 lulus).
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

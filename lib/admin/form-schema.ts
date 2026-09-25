@@ -120,6 +120,11 @@ export function parseStatus(input: FormDataEntryValue | null, options?: { strict
  * the payload so the column keeps its default — and throws for a value that
  * is present but not parseable, which is the case `Number()` used to pass
  * through as NaN.
+ *
+ * A81: `status` is parsed strictly here. The lenient form silently rewrote a
+ * tampered value to `draft`, so unpublishing a live row looked identical to a
+ * successful save — the generic form only ever posts one of the two declared
+ * options, so anything else is a tampered request, not a typo to absorb.
  */
 export function coerceFieldValue(field: string, input: FormDataEntryValue | null, label = field): string | number | null {
   if (input === null || input === "") return null;
@@ -127,6 +132,6 @@ export function coerceFieldValue(field: string, input: FormDataEntryValue | null
   if (field === "day_of_week") return parseField(dayOfWeekSchema, raw, label);
   if (field === "sort_order") return parseField(nonNegativeIntSchema, raw, label);
   if (field === "price") return parseField(priceSchema, raw, label);
-  if (field === "status") return parseStatus(raw);
+  if (field === "status") return parseStatus(raw, { strict: true, label });
   return raw;
 }

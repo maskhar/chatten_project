@@ -109,7 +109,7 @@ test("coerceFieldValue drops blanks but rejects garbage", () => {
   assert.equal(coerceFieldValue("sort_order", "3"), 3);
   assert.equal(coerceFieldValue("day_of_week", "2"), 2);
   assert.equal(coerceFieldValue("price", "1500"), 1500);
-  assert.equal(coerceFieldValue("status", "archived"), "draft");
+  assert.throws(() => coerceFieldValue("status", "archived", "Status"), /Invalid Status\./);
   assert.equal(coerceFieldValue("title", " Hello "), " Hello ");
   assert.throws(() => coerceFieldValue("sort_order", "abc", "Sort order"), /Sort order is invalid\./);
   assert.throws(() => coerceFieldValue("price", "abc", "Price"), /Price is invalid\./);
@@ -141,4 +141,19 @@ test("the generic CMS action coerces through the shared helper", () => {
   assert.match(text, /coerceFieldValue/);
   // The old body was `if (field === "sort_order" ...) return Number(input)`.
   assert.ok(!/return Number\(input\)/.test(text), "actions.ts still coerces with a bare Number()");
+});
+
+test("generic save enforces required fields and validates optional record ids", () => {
+  const text = fs.readFileSync("lib/admin/actions.ts", "utf8");
+  assert.match(text, /field\.required/);
+  assert.match(text, /wajib diisi/);
+  assert.match(text, /parseField\(optionalUuidSchema, formData\.get\("id"\)/);
+});
+
+test("generic update and delete reject zero-row RLS success", () => {
+  const text = fs.readFileSync("lib/admin/actions.ts", "utf8");
+  assert.match(text, /update\(payload, \{ count: "exact" \}\)/);
+  assert.match(text, /delete\(\{ count: "exact" \}\)/);
+  assert.equal((text.match(/count !== 1/g) ?? []).length, 2);
+  assert.match(text, /parseField\(uuidSchema, formData\.get\("id"\)/);
 });

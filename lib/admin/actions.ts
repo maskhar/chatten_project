@@ -7,7 +7,7 @@ import { dynamicTable } from "@/lib/supabase/dynamic";
 import { applyOrder, isReorderableTable, normalizeOffset } from "@/lib/admin/reorder";
 import { allowedValues, minRoleFor, resourceFor, type Resource } from "./resources";
 import { MAP_EMBED_HOSTS, URL_FIELD_KEYS, isSafeInternalPath, isSafeUrl, isSafeUrlWithHost } from "@/lib/url-safety";
-import { coerceFieldValue } from "./form-schema";
+import { coerceFieldValue, optionalUuidSchema, parseField, uuidSchema } from "./form-schema";
 
 // Resolves the resource from the form *before* authorizing, so the required
 // role can depend on which resource is being written (A9).
@@ -54,10 +54,65 @@ function assertAllowedChoices(resource: Resource, payload: Record<string, unknow
   }
 }
 
-export async function saveResource(formData: FormData) { const resource=await authorizeResource(formData); const id=formData.get("id"); const payload=Object.fromEntries(resource.fields.map(field=>[field.key,field.type==="checkbox"?formData.get(field.key)==="on":value(field.key,formData.get(field.key),field.label)]).filter(([key,entry])=>entry!==null||key==="image_media_id")); assertSafeUrls(payload); assertAllowedChoices(resource,payload); const supabase=await createServerSupabaseClient(); const query=id?dynamicTable(supabase, resource.table).update(payload).eq("id",String(id)):dynamicTable(supabase, resource.table).insert(payload); const {error}=await query;if(error)throw new Error("Unable to save content.");revalidatePath("/");revalidatePath(`/admin/${resource.key}`);redirect(`/admin/${resource.key}?saved=1`); }
+export async function saveResource(formData: FormData) {
+  const resource = await authorizeResource(formData);
+  const id = parseField(optionalUuidSchema, formData.get("id"), "ID konten");
+  const entries = resource.fields.map((field) => {
+    const input = formData.get(field.key);
+    if (field.required && field.type !== "checkbox") {
+      const raw = typeof input === "string" ? input.trim() : "";
+      if (!raw) throw new Error(`${field.label} wajib diisi.`);
+    }
+    return [
+      field.key,
+      field.type === "checkbox"
+        ? formData.get(field.key) === "on"
+        : value(field.key, input, field.label),
+    ] as const;
+  });
+  const payload = Object.fromEntries(
+    entries.filter(([key, entry]) => entry !== null || key === "image_media_id"),
+  );
+  assertSafeUrls(payload);
+  assertAllowedChoices(resource, payload);
+
+  const supabase = await createServerSupabaseClient();
+  if (id) {
+    const { error, count } = await dynamicTable(supabase, resource.table)
+      .update(payload, { count: "exact" })
+      .eq("id", id);
+    if (error) throw new Error("Gagal menyimpan konten.");
+    if (count !== 1) {
+      throw new Error("Konten tidak ditemukan atau tidak boleh diubah.");
+    }
+  } else {
+    const { error } = await dynamicTable(supabase, resource.table).insert(payload);
+    if (error) throw new Error("Gagal menyimpan konten.");
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/admin/${resource.key}`);
+  redirect(`/admin/${resource.key}?saved=1`);
+}
 // A26: `offset` is the rank of the first submitted row within the whole table.
 // The list view is paginated, so without it page 2 would renumber its rows from
 // 0 and collide with page 1 instead of continuing after it.
 export async function reorderResource(formData: FormData) { const resource=await authorizeResource(formData); if(!resource.fields.some(field=>field.key==="sort_order")) throw new Error("This resource has no display order."); if(!isReorderableTable(resource.table)) throw new Error("This resource has no display order."); const ids=String(formData.get("ids") ?? "").split(",").filter(Boolean); if(!ids.length) throw new Error("The new order was not received. Reload the page and try reordering again."); await applyOrder(resource.table, ids, normalizeOffset(formData.get("offset")), "order"); revalidatePath("/"); revalidatePath(`/admin/${resource.key}`); }
-export async function deleteResource(formData: FormData) { const resource=await authorizeResource(formData); const id=String(formData.get("id")); if(!id)throw new Error("This item could not be identified. Reload the page and try again."); const supabase=await createServerSupabaseClient(); const {error}=await dynamicTable(supabase, resource.table).delete().eq("id",id); if(error)throw new Error("Unable to delete content."); revalidatePath("/");revalidatePath(`/admin/${resource.key}`); }
+export async function deleteResource(formData: FormData) {
+  const resource = await authorizeResource(formData);
+  // `String(null)` is "nope" — the old truthiness check let the literal string
+  // "null" through to .eq(), where PostgREST rejected it as a malformed uuid
+  // and the editor saw "Unable to delete content".
+  const id = parseField(uuidSchema, formData.get("id"), "ID konten");
+  const supabase = await createServerSupabaseClient();
+  const { error, count } = await dynamicTable(supabase, resource.table)
+    .delete({ count: "exact" })
+    .eq("id", id);
+  if (error) throw new Error("Gagal menghapus konten.");
+  if (count !== 1) {
+    throw new Error("Konten tidak ditemukan atau tidak boleh dihapus.");
+  }
+  revalidatePath("/");
+  revalidatePath(`/admin/${resource.key}`);
+}
 export async function signOut(){const supabase=await createServerSupabaseClient();await supabase.auth.signOut();redirect("/admin/login");}
