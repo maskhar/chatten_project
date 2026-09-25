@@ -9,6 +9,14 @@ export type UploadQueueItem = {
   mediaId?: string;
 };
 
+export type UploadItemOutcome = {
+  ok: boolean;
+  filename?: string;
+  mediaId?: string;
+  code?: string;
+  message?: string;
+};
+
 export function createQueueItem(id: string, file: File): UploadQueueItem {
   return { id, file, status: "ready" };
 }
@@ -17,17 +25,18 @@ export function setQueueItemsUploading(items: readonly UploadQueueItem[]): Uploa
   return items.map((item) => ({ ...item, status: "uploading" as const }));
 }
 
-export function applyUploadResults(
+// Each file is uploaded in its own request, so its queue row is settled on its
+// own. Rewriting the whole queue from one aggregate response used to discard an
+// already-finished sibling's outcome whenever a later request changed the list.
+export function applyUploadOutcome(
   items: readonly UploadQueueItem[],
-  results: ReadonlyArray<{ ok: boolean; filename: string; mediaId?: string; code?: string; message?: string }>,
+  id: string,
+  outcome: UploadItemOutcome,
 ): UploadQueueItem[] {
-  return items.map((item, index) => {
-    const result = results[index];
-    if (!result) return item;
-    if (result.ok) {
-      return { ...item, status: "complete" as const, mediaId: result.mediaId };
-    }
-    return { ...item, status: "failed" as const, code: result.code, message: result.message };
+  return items.map((item) => {
+    if (item.id !== id) return item;
+    if (outcome.ok) return { ...item, status: "complete" as const, code: undefined, message: undefined, mediaId: outcome.mediaId };
+    return { ...item, status: "failed" as const, code: outcome.code, message: outcome.message, mediaId: undefined };
   });
 }
 
@@ -40,10 +49,7 @@ export function formatFileSize(bytes: number): string {
 export function summarizeQueueResults(items: readonly UploadQueueItem[]): string {
   const complete = items.filter((item) => item.status === "complete").length;
   const failed = items.filter((item) => item.status === "failed").length;
-  if (failed === 0) {
-    return complete === 1 ? "1 image uploaded." : `${complete} images uploaded.`;
-  }
-  const uploadedText = complete === 1 ? "1 image uploaded." : `${complete} images uploaded.`;
-  const failedText = failed === 1 ? " 1 file failed." : ` ${failed} files failed.`;
-  return uploadedText + failedText;
+  const uploadedText = `${complete} gambar berhasil diunggah.`;
+  if (failed === 0) return uploadedText;
+  return `${uploadedText} ${failed} berkas gagal.`;
 }

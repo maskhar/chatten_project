@@ -63,3 +63,47 @@ test("actual Media delete flow rechecks usage before Storage deletion", () => {
   assert.match(pageSource, /MediaDeleteControl/);
   assert.match(pageSource, /references=\{usage\.get\(String\(row\.id\)\)\?\?\[\]\}/);
 });
+
+// An id that is not a UUID must be refused before it reaches PostgREST, in the
+// same vocabulary every other admin action uses.
+test("media delete validates the id as a strict UUID", () => {
+  const actionSource = fs.readFileSync(new URL("../lib/admin/media-actions.ts", import.meta.url), "utf8");
+  const deleteSource = actionSource.slice(actionSource.indexOf("export async function deleteMediaWithFeedback"));
+  assert.match(deleteSource, /uuidSchema\.safeParse\(id\)/);
+  assert.ok(deleteSource.indexOf("uuidSchema.safeParse(id)") < deleteSource.indexOf('from("media")'));
+});
+
+// Removing the object first left a Media Library row pointing at bytes that no
+// longer existed whenever the metadata delete then failed. Metadata goes first,
+// and only a delete that returns exactly one row may remove the object.
+test("media delete removes metadata first and verifies the affected row", () => {
+  const actionSource = fs.readFileSync(new URL("../lib/admin/media-actions.ts", import.meta.url), "utf8");
+  const deleteSource = actionSource.slice(actionSource.indexOf("export async function deleteMediaWithFeedback"));
+  const metadataDelete = deleteSource.indexOf('.delete().eq("id", id)');
+  const storageRemove = deleteSource.indexOf("supabase.storage");
+  assert.ok(metadataDelete > 0 && storageRemove > metadataDelete, "Storage removal still precedes the metadata delete");
+  assert.match(deleteSource, /\.delete\(\)\.eq\("id", id\)\.select\("id,bucket,storage_path"\)/);
+  assert.match(deleteSource, /deletedRows\.length !== 1/);
+  assert.ok(deleteSource.indexOf("deletedRows.length !== 1") < storageRemove, "the row count is not verified before Storage removal");
+});
+
+// A Storage removal that fails after the row is gone leaves an orphan object.
+// That has to be said out loud, with the path, rather than reported as success.
+test("a failed Storage removal is reported as an orphan, not as success", () => {
+  const actionSource = fs.readFileSync(new URL("../lib/admin/media-actions.ts", import.meta.url), "utf8");
+  const deleteSource = actionSource.slice(actionSource.indexOf("export async function deleteMediaWithFeedback"));
+  assert.match(deleteSource, /if \(storageResult\.error\)/);
+  assert.match(deleteSource, /yatim/);
+  assert.match(deleteSource, /removedRow\.storage_path/);
+  assert.ok(deleteSource.indexOf("if (storageResult.error)") < deleteSource.indexOf('return { status: "success" }'));
+});
+
+// Supabase Storage reports a failed removal in its result rather than throwing.
+// A remove() that ignores that result tells upload-core compensation succeeded
+// when the bytes are still there.
+test("the upload adapter inspects Storage removal errors", () => {
+  const actionSource = fs.readFileSync(new URL("../lib/admin/media-actions.ts", import.meta.url), "utf8");
+  const adapterSource = actionSource.slice(actionSource.indexOf("function mediaUploadAdapter"), actionSource.indexOf("export async function uploadMedia"));
+  assert.match(adapterSource, /const \{ error \} = await supabase\.storage\.from\("chatten-media"\)\.remove\(\[path\]\)/);
+  assert.match(adapterSource, /if \(error\) throw error/);
+});
