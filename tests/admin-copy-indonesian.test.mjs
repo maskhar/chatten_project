@@ -333,8 +333,13 @@ test("the operator guide quotes labels that still exist in the UI", () => {
     ["Belum digunakan", "app/admin/(dashboard)/media/page.tsx"],
     ["Digunakan di", "app/admin/(dashboard)/media/items/[id]/page.tsx"],
     ["Hapus dengan aman", "components/admin/media-delete-control.tsx"],
-    ["Hasil terkunci", "components/admin/media-upload-dropzone.tsx"],
-    ["Kosongkan pilihan", "components/admin/media-upload-dropzone.tsx"],
+    // A91 (lanjutan): "Hasil terkunci"/"Kosongkan pilihan" belonged to the queue
+    // that locked itself permanently on the first result. The guide now names the
+    // controls that replaced them.
+    ["Kosongkan antrean", "components/admin/media-upload-dropzone.tsx"],
+    ["Hapus dari antrean", "components/admin/media-upload-dropzone.tsx"],
+    ["berkas gagal", "components/admin/media-upload-dropzone.tsx"],
+    ["berkas tersisa", "components/admin/media-upload-dropzone.tsx"],
     ["Gambar ini belum dipakai di mana pun.", "lib/media/usage-presentation.ts"],
   ];
   for (const [label, file] of quoted) {

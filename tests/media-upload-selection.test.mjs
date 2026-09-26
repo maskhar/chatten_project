@@ -76,15 +76,20 @@ test("media upload component wires native multiple input, drag drop, queue state
   assert.match(page, /MediaUploadDropzone/);
 });
 
-// Upload/results are terminal queue states: while individual action calls are
-// in flight or outcomes are shown, input, drops, clear, and remove stay locked.
-test("media upload component blocks all queue edits during upload and results", () => {
+// A91 (lanjutan). This test used to assert `!uploading && !hasResults`, which is
+// exactly the defect: results are per-file, so the first completion of a 20-file
+// batch locked the queue permanently and the operator could only recover by
+// reloading the page and re-picking every file. The lock now lasts precisely as
+// long as requests are in flight — a request whose File is already being read
+// must not have its row removed under it — and no longer.
+test("media upload component locks queue edits only while requests are in flight", () => {
   const component = fs.readFileSync(new URL("../components/admin/media-upload-dropzone.tsx", import.meta.url), "utf8");
-  assert.match(component, /const canModifyQueue = !uploading && !hasResults/);
+  assert.match(component, /const canModifyQueue = !uploading/);
+  assert.ok(!/canModifyQueue = !uploading &&/.test(component), "the queue lock outlives the requests again");
   assert.match(component, /if \(!canModifyQueue \|\| !files\.length\) return/);
   assert.match(component, /if \(!canModifyQueue\) return;/);
   assert.match(component, /disabled=\{!canModifyQueue\}/);
-  assert.match(component, /disabled=\{!selection\.canSubmit \|\| uploading \|\| hasResults\}/);
+  assert.match(component, /disabled=\{!selection\.canSubmit \|\| uploading\}/);
 });
 
 // A78. Before this, the browser's limit and the server's limit were two

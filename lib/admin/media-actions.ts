@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { mediaInUseActionState, type MediaDeleteActionState } from "@/lib/media/delete-state";
+import { mediaInUseActionState, mediaOrphanActionState, type MediaDeleteActionState } from "@/lib/media/delete-state";
 import { processMediaUploadFile, type MediaUploadAdapter, type MediaUploadFileResult } from "@/lib/media/upload-core";
 import { parseFocalPoint } from "@/lib/media/focal-point";
 import { MEDIA_BUCKET } from "@/lib/media/private-object";
@@ -92,19 +92,31 @@ export async function deleteMediaWithFeedback(_previousState: MediaDeleteActionS
   // editor-writable column, and a row edited to name another bucket would aim
   // this removal at objects the Media Library does not own. A row that does not
   // name our own bucket keeps its bytes and is reported as an orphan instead.
+  // Both branches below describe the same terminal fact: the row is gone and its
+  // object is not. That is `MEDIA_DELETE_ORPHANED`, not the generic failure code
+  // — the generic one means nothing changed and the operator may retry, and
+  // retrying a row that no longer exists can only produce a second, misleading
+  // error.
   const removedRow = deletedRows[0];
   if (String(removedRow.bucket) !== MEDIA_BUCKET) {
     revalidatePath("/admin/media");
     revalidatePath("/");
-    return mediaDeleteFailure("Catatan gambar sudah dihapus dari Pustaka Media, tetapi berkasnya berada di luar penyimpanan Chatten sehingga tidak dihapus. Minta administrator memeriksanya.");
+    return {
+      status: "error",
+      code: "MEDIA_DELETE_ORPHANED",
+      message: "Catatan gambar sudah dihapus dari Pustaka Media, tetapi berkasnya berada di luar penyimpanan Chatten sehingga tidak dihapus dan tertinggal sebagai berkas yatim di bucket " + String(removedRow.bucket) + ". Minta administrator memeriksanya, lalu muat ulang halaman ini.",
+    };
   }
   const storageResult = await supabase.storage.from(MEDIA_BUCKET).remove([String(removedRow.storage_path)]);
   revalidatePath("/admin/media");
   revalidatePath("/");
   if (storageResult.error) {
-    return mediaDeleteFailure("Catatan gambar sudah dihapus dari Pustaka Media, tetapi berkasnya gagal dihapus dari Storage sehingga tersisa sebagai berkas yatim: " + String(removedRow.storage_path) + ". Minta administrator membersihkannya secara manual.");
+    return mediaOrphanActionState(String(removedRow.storage_path));
   }
-  return { status: "success" };
+  // A success used to return a bare status with no message, and the control
+  // rendered messages only for `status === "error"` — so the one outcome the
+  // operator most needed confirmed was the only one that said nothing at all.
+  return { status: "success", message: "Gambar dihapus dari Pustaka Media dan Storage." };
 }
 
 // Every field here is optional. An uploaded image is usable immediately; this

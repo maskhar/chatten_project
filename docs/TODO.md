@@ -984,6 +984,72 @@ work items; the audit document holds the evidence.
       dalam satu manager klien; aksi server dan RPC tetap mempertahankan validasi
       database/RLS sendiri untuk tab atau klien lain.
 
+      **Lanjutan A91 — antrean unggah media.** Satu gambar dikirim per request
+      Server Action, jadi setiap baris antrean menyelesaikan dirinya sendiri.
+      Dropzone memakai satu bendera `hasResults` untuk dua pertanyaan yang
+      berbeda, dan bendera itu sudah benar begitu berkas pertama selesai. Pada
+      kumpulan dua puluh berkas paralel akibatnya: ringkasan muncul di tengah
+      jalan dengan angka yang hanya benar untuk satu tick, dan antrean terkunci
+      permanen — satu kegagalan di antara sembilan belas keberhasilan hanya bisa
+      diperbaiki dengan memuat ulang halaman lalu memilih ulang semua berkas.
+
+      Bendera itu dipecah menjadi dua predikat murni yang berbeda:
+      `isQueueUploading` (masih ada request berjalan) dan `isQueueSettled`
+      (setiap baris sudah punya hasil). Ringkasan hanya digerbangi oleh yang
+      kedua; antrean kosong sengaja tidak dianggap selesai. `canModifyQueue`
+      sekarang hanya bergantung pada request yang sedang berjalan, sehingga
+      kumpulan yang gagal separuh tetap dapat diperbaiki di tempat.
+
+      Pemulihannya adalah **reset + ulangi hanya yang gagal**:
+      `retryFailedQueueItems` menyisakan baris gagal, mengembalikannya ke
+      `ready`, dan membersihkan kode/pesan lama; `readyQueueItems` dan
+      `startQueueUpload` hanya pernah menyentuh baris `ready`. Berkas yang sudah
+      berhasil karena itu tidak mungkin dikirim ulang — bytenya sudah ada di
+      Pustaka Media, dan pengiriman kedua hanya akan ditolak sebagai duplikat
+      sambil terlihat seperti kegagalan baru bagi operator. `setQueueItemsUploading`
+      dihapus karena kontraknya memang yang salah, bukan pemakaiannya.
+
+      Live region diperbaiki sekaligus: sebelumnya seluruh daftar berkas berada
+      di dalam `aria-live`, sehingga satu perubahan status membacakan ulang dua
+      puluh baris. Kini ada satu paragraf `sr-only` yang selalu ada di DOM —
+      region yang muncul bersamaan dengan isinya sering tidak terbacakan — dan
+      isinya dikendalikan `queueStatusMessage`: tepat satu kalimat per fase, satu
+      saat kumpulan mulai dan satu saat benar-benar selesai. Status setiap baris
+      juga selalu tertulis, bukan hanya berwarna, dan warna mentah
+      `text-green-800`/`text-red-800`/`bg-red-50`/`border-red-300` diganti token
+      `leaf`/`rust`/`blush`/`terracotta` agar baris ini ikut terikat gerbang
+      kontras `tests/palette.test.mjs`. Tombol memakai kelas bersama
+      `ROW_ACTION_BORDERED`/`ROW_ACTION_DANGER`/`TAP_TARGET` (≥44px).
+
+      **Lanjutan A91 — hasil akhir hapus media.** Hapus media punya tiga hasil
+      yang berbeda, bukan dua, dan dua di antaranya memakai kode yang sama.
+      `MEDIA_DELETE_ORPHANED` memisahkan "catatan terhapus tetapi berkasnya
+      tertinggal di Storage" dari "tidak ada yang berubah, silakan coba lagi":
+      yang pertama terminal dan perlu administrator, sehingga menawarkan tombol
+      hapus lagi pada baris yang sudah hilang hanya bisa menghasilkan error kedua
+      yang menyesatkan. Kedua cabang objek tertinggal — Storage gagal menghapus,
+      dan baris yang menyebut bucket di luar penyimpanan Chatten — kini menunjuk
+      ke hasil itu dan membawa jalur berkas yang harus dibersihkan.
+      Keberhasilan akhirnya membawa pesan sendiri; sebelumnya hasil yang paling
+      perlu dikonfirmasi operator justru satu-satunya yang tidak berkata apa pun,
+      karena kontrol hanya menulis pesan untuk `status === "error"`.
+      `MediaDeleteControl` mengumumkan sukses dengan `role="status"`, berkas yatim
+      dengan `role="alert"`, menghilangkan tombol pada kedua keadaan terminal,
+      menyembunyikan error percobaan sebelumnya selama percobaan berikutnya
+      berjalan, dan memasang `aria-busy`. Pengurutan metadata-dulu, pemeriksaan
+      ulang penggunaan, validasi UUID, hitungan baris terdampak, dan penjagaan
+      kepemilikan bucket tidak diubah.
+
+      Dua uji yang justru memaku cacat lama ikut diperbaiki maksudnya:
+      `media-upload-selection` dulu menuntut `!uploading && !hasResults`, dan
+      gerbang label `admin-copy-indonesian` memaku **Hasil terkunci**/**Kosongkan
+      pilihan** yang sudah tidak ada. Keduanya kini memaku perilaku baru, termasuk
+      penegasan bahwa lock tidak boleh kembali hidup lebih lama dari request.
+      Verifikasi akhir: 411/411 uji, typecheck, lint, dan build lulus.
+      Batas: pembersihan berkas yatim yang sudah ada belum otomatis — belum ada
+      pekerjaan penyapu maupun trigger database, jadi pelaporannya tetap manual
+      lewat pesan yang membawa jalur berkas.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

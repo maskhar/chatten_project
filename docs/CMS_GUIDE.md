@@ -170,8 +170,10 @@ Saat memilih gambar untuk konten (Hero, Moments, Menu, Galeri, Pengalaman, Acara
 - Setiap berkas yang dipilih menampilkan statusnya sendiri: **Siap**, **Mengunggah**, **Berhasil**, atau **Gagal**.
 - Berkas yang gagal menampilkan alasan spesifik, seperti format tidak didukung, batas ukuran berkas, atau duplikasi terdeteksi.
 - Satu berkas yang gagal tidak membatalkan unggahan berkas lain yang berhasil dalam kumpulan yang sama.
-- Setelah unggahan selesai, ringkasan menunjukkan jumlah gambar yang berhasil diunggah dan jumlah yang gagal.
-- Gunakan **Kosongkan pilihan** selama antrean belum diproses. Setelah hasil muncul, tombol berubah menjadi **Hasil terkunci** dan antrean tidak dapat diubah lagi.
+- Ringkasan muncul hanya setelah seluruh berkas dalam antrean punya hasil, bukan setelah berkas pertama selesai, sehingga angkanya tidak pernah menghitung kumpulan yang masih berjalan.
+- Antrean hanya terkunci selama unggahan berjalan. Setelah semuanya selesai, antrean tetap dapat diubah: tambahkan berkas baru, gunakan **Kosongkan antrean**, atau hapus satu baris dengan **Hapus dari antrean**.
+- Bila ada yang gagal, tombol **Ulangi N berkas gagal** menyisakan hanya baris yang gagal dan mengembalikannya ke status **Siap**. Berkas yang sudah berhasil dibuang dari antrean dan tidak pernah dikirim ulang, karena berkasnya sudah ada di Pustaka Media dan pengiriman kedua hanya akan ditolak sebagai duplikat.
+- Setelah mengulang, tombol kirim menyebutkan jumlah yang tersisa, misalnya **Unggah 3 berkas tersisa**.
 
 ## Digunakan di
 
@@ -185,6 +187,10 @@ Saat memilih gambar untuk konten (Hero, Moments, Menu, Galeri, Pengalaman, Acara
 - Gambar yang digunakan tidak dapat dihapus. Kartu Media menampilkan jumlah penggunaan saat ini serta nama sumber daya dan konten yang mudah dibaca.
 - Hapus atau ganti setiap referensi konten yang terdaftar sebelum menghapus gambar.
 - Server memeriksa kembali penggunaan saat ini saat **Hapus dengan aman** dikirim, sehingga keadaan halaman yang sudah usang tidak dapat melewati perlindungan.
+- Hapus media punya tiga hasil akhir yang berbeda:
+  - **Berhasil.** Kartu menampilkan `Gambar dihapus dari Pustaka Media dan Storage.` dan tombolnya hilang, karena barisnya memang sudah tidak ada.
+  - **Ditolak atau tidak ada yang berubah.** Alasannya ditulis dan tombol **Hapus dengan aman** tetap tersedia untuk dicoba lagi. Pesan kegagalan lama disembunyikan selama percobaan berikutnya berjalan.
+  - **Berkas yatim.** Catatan gambar sudah terhapus tetapi berkasnya masih tertinggal di Storage. Pesannya menyebutkan jalur berkas yang tertinggal, tombolnya hilang, dan pembersihannya perlu administrator — mencoba menghapus ulang tidak ada gunanya karena barisnya sudah hilang. Salin jalur tersebut saat melapor, lalu muat ulang halaman.
 
 ## Pengguna dan Peran
 
