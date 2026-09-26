@@ -1273,6 +1273,9 @@ di sini: membuatnya mengubah struktur basis data bersama dan memerlukan
 otorisasi tersendiri. Urutan penerapan harus dipastikan manual sebelum
 menjalankan keduanya.
 
+**Diterapkan 2026-09-27** (lihat A98 untuk cacat yang ditemukan tepat sebelum
+penerapan, urutan penerapan yang dipakai, dan hasil verifikasinya).
+
 ### A95 — aksesibilitas sisi publik: landmark, fokus, target sentuh, alt
 
 Perlakuan yang sama seperti A92, kali ini untuk sebelas halaman publik.
@@ -1516,6 +1519,99 @@ Catatan sampingan dari anotasi yang sama, tidak terkait kegagalan ini:
 pemberitahuan. Mematoknya ke `ubuntu-24.04` akan membuat kenaikan itu menjadi
 keputusan, bukan kejutan — belum dilakukan, menunggu CI hidup lagi supaya
 perubahannya dapat diverifikasi.
+
+### A98 — penerapan A93/A94, dan route media yang akan gelap karenanya
+
+Kedua migrasi diterapkan ke basis data Supabase swakelola pada 2026-09-27,
+masing-masing dalam satu transaksi `psql -v ON_ERROR_STOP=1
+--single-transaction` terhadap service `db`, dengan cara yang sama seperti
+migrasi 2026-09-26. Tetapi tidak langsung: gladi bersih menemukan satu cacat
+yang harus diperbaiki *lebih dulu*, dan itu mengubah urutan penerapannya.
+
+**Cacatnya.** `app/api/media/[id]/route.ts` mencari baris media di bawah
+konteks pemanggil — itu gerbang A89, dan benar — dengan
+`select("bucket,storage_path,mime_type")`. Ketiga kolom itu adalah tepat yang
+dicabut A93 dari `anon`. Karena hak per kolom tidak memangkas hasil melainkan
+menolak seluruh kueri, setiap pengunjung publik akan menerima 404 dari route
+itu, dan **setiap gambar di situs hilang** begitu migrasi diterapkan. Tidak ada
+uji yang menangkapnya: `tests/media-exposure-boundary.test.mjs` melarang
+`select("*")` pada media, dan route ini tidak memakai `select("*")`. Ini
+dibuktikan sebelum disentuh, bukan disimpulkan: A93 dijalankan dalam transaksi
+yang dibatalkan, lalu `set local role anon; select bucket, storage_path,
+mime_type from chatten_cafe.media` menjawab `permission denied for table
+media`, sementara enam kolom publiknya berhasil.
+
+**Perbaikannya** memisahkan dua pertanyaan yang tadinya dijawab satu kueri.
+Pemeriksaan visibilitas tetap di konteks pemanggil dan hanya meminta `id` —
+kebijakan `public_media` yang dipersempit tetap berlaku di sana, jadi media
+yang tidak dirujuk konten mana pun tetap 404 bagi pengunjung. Baru setelah
+lolos, `bucket`, `storage_path`, `mime_type` dibaca oleh klien service role —
+satu-satunya konteks yang memang boleh melihatnya — dan tetap diperlakukan
+sebagai data tidak tepercaya oleh `isMediaBucket`, `isSafeMediaStoragePath`,
+dan `mediaContentDisposition`, tanpa perubahan. Uji baru di
+`tests/media-exposure-boundary.test.mjs` memaku bahwa pencarian
+konteks-pemanggil hanya boleh menyebut kolom yang dimiliki `anon`, dan bahwa
+kolom penyimpanan datang dari klien service role. Uji itu dibuktikan bisa
+merah: mengembalikan select lama menggagalkannya dengan pesan yang menyebut
+ketiga kolom.
+
+**Urutan penerapan.** Kode baru (`select("id")`) bekerja di kedua keadaan
+basis data; kode lama hanya bekerja di keadaan lama. Jadi aplikasinya dibangun
+dan container `chatten_project-app-1` diganti *lebih dulu*, diverifikasi
+route-nya masih 200 terhadap basis data pra-migrasi, baru migrasi dijalankan.
+Jendela gelapnya nol — bukan "beberapa detik" seperti diperkirakan A93.
+
+**Verifikasi di basis data**, dalam transaksi yang dibatalkan supaya data
+nyata tidak berubah (lima baris media, nol sisa baris audit sesudahnya):
+
+- `public_media` kini `exists(...)` atas sepuluh tabel rujukan; `cms_manage`
+  tidak berubah.
+- `anon` memegang SELECT hanya pada `alt_text, focal_x, focal_y, height, id,
+  width`; tidak ada SELECT tingkat tabel. `authenticated` tetap penuh.
+- `select bucket …` dan `select storage_path …` sebagai `anon` ditolak,
+  `42501`.
+- Media yang tidak dirujuk: `anon` melihat 0 baris. Setelah satu baris
+  `gallery_items` sementara (published, aktif) merujuknya: 1 baris, enam kolom.
+- `delete` pada media yang dirujuk ditolak: `ERROR: Media … is referenced by
+  1 content row(s)`, `HINT: MEDIA_IN_USE`, dan baris rujukannya **tetap utuh**
+  — `on delete set null` tidak sempat menyentuhnya. Media yang tidak dirujuk
+  tetap bisa dihapus.
+- Fungsinya `prosecdef = t`, `search_path=chatten_cafe, pg_temp`; trigger
+  BEFORE DELETE aktif.
+- `"chatten public read"` hilang dari `storage.objects`; bucket `public = f`.
+
+**Verifikasi lewat HTTP**, pada container yang berjalan:
+
+- `GET /api/media/<id>` untuk media yang tidak dirujuk: 404 (sebelum
+  migrasi 200 — itu memang lubang yang ditutup).
+- PostgREST sebagai `anon`, `select=*` pada media: 401 `permission denied for
+  table media`; `select=id,alt_text,width,height,focal_x,focal_y`: 200.
+- `/storage/v1/object/public/chatten-media/<path>`: 400 (bucket privat).
+- Enam halaman publik: 200, log container bersih.
+
+Gerbang lokal: 450/450 uji, typecheck, lint, build.
+
+**Temuan di luar batas Chatten, TIDAK disentuh.** Pemeriksaan
+`/storage/v1/object/authenticated/chatten-media/<path>` dengan kunci `anon`
+menjawab **200**, padahal `"chatten public read"` sudah dihapus. Sebabnya
+kebijakan milik tenant lain pada `storage.objects`:
+
+```
+Public Access                  | SELECT | PUBLIC | true
+Public upload for development  | INSERT | PUBLIC | bucket_id = '3d-models'
+Public update for development  | UPDATE | PUBLIC | bucket_id = '3d-models'
+```
+
+`"Public Access"` adalah `using (true)` tanpa batas bucket, jadi ia memberi
+siapa pun — termasuk pemegang kunci anon — hak baca atas objek di **semua**
+bucket instance ini, bukan hanya milik tenant yang membuatnya. Bagi Chatten,
+akibatnya A93 menutup pintu depan tetapi jendela tetangga terbuka: byte objek
+masih dapat diunduh oleh siapa pun yang mengetahui `storage_path`, meski
+`storage_path` sendiri kini tidak lagi terbaca `anon`. Kebijakan itu bukan
+milik proyek ini, ada di tabel bersama, dan mempersempitnya dapat mematahkan
+tenant yang bergantung padanya; karena itu ia **tidak diubah** dan dicatat di
+sini sebagai keputusan operator instance. Perbaikan yang benar ada di pihak
+pemiliknya: mengganti `true` dengan daftar bucket yang memang publik.
 
 ## Migration process note
 

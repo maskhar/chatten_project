@@ -81,6 +81,26 @@ test("no public-surface query selects * from the media table", () => {
   assert.deepEqual(offenders, [], `select("*") on media will fail as anon: ${offenders.join(", ")}`);
 });
 
+// Route media berjalan sebagai pemanggil (anon untuk pengunjung publik) saat
+// memeriksa visibilitas baris. Sebelum perbaikan ini ia memilih
+// `bucket,storage_path,mime_type` di konteks itu — tiga kolom yang justru
+// dicabut A93 — sehingga menerapkan migrasinya akan membuat route menjawab 404
+// untuk setiap gambar. Pemeriksaan visibilitas kini hanya meminta `id`;
+// ketiga kolom penyimpanan dibaca di bawah service role.
+test("the media route's caller-context lookup only asks for columns anon may read", () => {
+  const route = fs
+    .readFileSync("app/api/media/[id]/route.ts", "utf8")
+    .replace(/^\s*\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  const callerLookup = route.match(/createServerSupabaseClient\(\)[\s\S]*?\.from\("media"\)\s*\.select\("([^"]+)"\)/);
+  assert.ok(callerLookup, "the route no longer looks the row up under the caller's RLS context");
+  const requested = callerLookup[1].split(",").map((value) => value.trim());
+  const anonColumns = new Set(["id", "alt_text", "width", "height", "focal_x", "focal_y"]);
+  const overreach = requested.filter((column) => !anonColumns.has(column));
+  assert.deepEqual(overreach, [], `the caller-context lookup names revoked columns and will 404 every image: ${overreach.join(", ")}`);
+  assert.match(route, /service\s*\.from\("media"\)\s*\.select\("bucket,storage_path,mime_type"\)/, "the storage columns must come from the service-role client, the only context allowed to see them");
+});
+
 test("the public media shapes do not carry bucket or storage_path", () => {
   for (const file of ["lib/public-data/types.ts", "lib/homepage/types.ts"]) {
     const code = fs
