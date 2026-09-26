@@ -833,6 +833,39 @@ work items; the audit document holds the evidence.
       tidak ada kebocoran redirect login, dan setiap halaman dasbor tetap punya
       `h1`.
 
+- [x] **A87** Tutup eskalasi peran `admin` → `super_admin` pada batas database,
+      bukan hanya di aksi CMS. `user_roles.role_manage` adalah satu kebijakan
+      permisif `FOR ALL` dengan `has_role('admin')`; karena fungsi itu juga
+      bernilai benar untuk `super_admin`, setiap admin dapat memanggil PostgREST
+      langsung dan PATCH barisnya sendiri menjadi `super_admin`. `saveRole`
+      memang menolak tindakan itu, tetapi aksi server bukan batas keamanan ketika
+      token sesi yang sama dapat mengakses `/rest/v1/user_roles`.
+      `20260926000200_restrict_super_admin_role_writes.sql` menambah tiga
+      kebijakan **restrictive** per perintah: INSERT menguji role baru, UPDATE
+      menguji row lama dengan `USING` dan row baru dengan `WITH CHECK`, DELETE
+      menguji row lama. Predikatnya sama: `role <> 'super_admin' OR
+      has_role('super_admin')`. Bentuk restrictive wajib karena kebijakan
+      permisif di-OR; menambah kebijakan permisif tidak akan pernah membatasi
+      `role_manage` lama. SELECT sengaja tidak dibatasi, sebab `storedRole()`
+      pada `role-actions.ts` perlu melihat target `super_admin` sebelum memberi
+      pesan penolakan yang tepat.
+      Tidak ada RLS yang dinonaktifkan, grant yang diperlebar, maupun perubahan
+      pada `protect_last_super_admin`: trigger itu tetap menjawab pertanyaan
+      berbeda, yaitu larangan menghapus/demosi super admin terakhir.
+      Kontrak statis baru `tests/role-escalation-guard.test.mjs` (7 kasus)
+      mengunci tiga kebijakan restrictive, predikat pre-/post-image UPDATE,
+      ketiadaan perubahan SELECT/grant/RLS, serta pesan aksi server.
+      Dibuktikan langsung terhadap Supabase self-hosted pada 2026-09-26 dengan
+      empat akun Auth sementara dan pembersihan `finally`: matriks RLS 28/28
+      lulus. Admin ditolak saat promosi diri maupun saat INSERT super admin,
+      DELETE role super admin ditolak, sedangkan super admin masih dapat
+      memberi dan menurunkan role super admin. Metadata `pg_policies`
+      mengonfirmasi tiga guard `RESTRICTIVE` dan `role_manage`/`own_role` tetap
+      ada. Script audit sementara juga diperbaiki: RPC `reorder_rows` hasil
+      `0` diklasifikasikan sebagai penolakan RLS, kolom SEO dipakai `title`
+      (bukan `meta_title` yang tidak ada), dan akun tanpa role tetap diberi
+      profile agar fixture memenuhi foreign key.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

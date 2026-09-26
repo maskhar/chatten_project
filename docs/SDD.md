@@ -12,6 +12,40 @@ Next.js Server Components default. Browser client uses anon key; server client u
 
 RLS permits anonymous reads only for active/published content. CMS mutations require `editor`, `admin`, or `super_admin`; user/role management requires `admin` or `super_admin`. Auth trigger creates profiles. Initial admin role bootstrap must occur through controlled database administration after Auth user creation.
 
+### Writing a `super_admin` row requires being one (audit item A87)
+
+`role_manage` on `chatten_cafe.user_roles` is `FOR ALL` gated on
+`chatten_cafe.has_role('admin')`, and that function ORs `role = 'super_admin'`
+into every branch — so the one predicate covering the whole table is satisfied
+by an `admin` as well. Any admin session could therefore write any row of the
+table, including its own, with any value the CHECK constraint accepts:
+`PATCH /rest/v1/user_roles?user_id=eq.<self>` with `{"role":"super_admin"}`
+succeeded. `lib/admin/role-actions.ts` refused it, but a server action is not a
+boundary when the same session cookie reaches PostgREST directly.
+
+`20260926000200_restrict_super_admin_role_writes.sql` adds three **restrictive**
+policies — `super_admin_insert_guard`, `super_admin_update_guard`,
+`super_admin_delete_guard` — each carrying
+`role <> 'super_admin' or chatten_cafe.has_role('super_admin')`. Restrictive is
+the required shape: permissive policies are OR'd, so another permissive policy
+would widen access and leave `role_manage` sufficient on its own. Restrictive
+policies are AND'd with the permissive result, which narrows without dropping
+either existing policy.
+
+The guards cover writes only. A restrictive `FOR ALL` or `FOR SELECT` policy
+would also hide `super_admin` rows from an admin session, and `role-actions.ts`
+reads the target's stored role through the RLS-bound client before deciding
+(`storedRole`); a hidden row would read as "no super_admin to protect" and take
+the permissive branch. `UPDATE` needs both sides: `USING` stops an admin editing
+an existing super_admin, `WITH CHECK` stops an admin promoting any row to one.
+A PostgREST upsert is `INSERT … ON CONFLICT DO UPDATE`, so both policies apply
+to what `saveRole`/`addCmsUser` actually execute.
+
+A `super_admin` keeps full access; an `admin` keeps full access to `admin` and
+`editor` rows, which is the membership work the Users & Roles screen exists for.
+`protect_last_super_admin` answers a different question — whether the final
+super_admin may disappear — and is unchanged.
+
 ### Deleting the last super_admin (audit item A65)
 
 `auth.users` → `chatten_cafe.profiles` → `chatten_cafe.user_roles` are chained
