@@ -156,3 +156,12 @@ Saat memilih gambar untuk konten (Hero, Moments, Menu, Galeri, Pengalaman, Acara
 - Gambar yang digunakan tidak dapat dihapus. Kartu Media menampilkan jumlah penggunaan saat ini serta nama sumber daya dan konten yang mudah dibaca.
 - Hapus atau ganti setiap referensi konten yang terdaftar sebelum menghapus gambar.
 - Server memeriksa kembali penggunaan saat ini saat **Hapus dengan aman** dikirim, sehingga keadaan halaman yang sudah usang tidak dapat melewati perlindungan.
+
+## Pengguna dan Peran
+
+- Peran CMS terdiri dari **Editor** (konten), **Admin** (konten, pengaturan, dan keanggotaan), serta **Super admin** (semuanya).
+- **Admin tidak dapat memberikan, mengubah, atau menghapus peran Super admin.** Hanya Super admin yang dapat melakukannya.
+- Bagi Admin, pilihan **Super admin** tampil terkunci, baris anggota Super admin terkunci seluruhnya, dan formulir penambahan pengguna dinonaktifkan dengan keterangan `Hanya Super admin yang dapat menambah pengguna CMS.`
+- Tidak ada peran yang dapat menghapus perannya sendiri, dan Super admin tidak dapat menurunkan perannya sendiri.
+- Aturan ini ditegakkan oleh basis data, bukan hanya oleh antarmuka, sehingga tetap berlaku pada setiap jalur akses.
+- Super admin terakhir tidak dapat dihapus. Angkat Super admin kedua terlebih dahulu bila peran itu perlu dipindahkan.

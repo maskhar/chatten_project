@@ -866,6 +866,26 @@ work items; the audit document holds the evidence.
       (bukan `meta_title` yang tidak ada), dan akun tanpa role tetap diberi
       profile agar fixture memenuhi foreign key.
 
+- [x] **A88** Selaraskan kontrol Pengguna & Peran dengan batas A87,
+      supaya UI tidak menawarkan aksi yang pasti ditolak server atau database.
+      Halaman kini memakai `cmsRole` hasil `requireAdmin("admin")` (klien sesi
+      terikat RLS), bukan data service-role, untuk menentukan kemampuan caller.
+      Bagi Admin, formulir tambah pengguna dinonaktifkan, semua opsi Super admin
+      terkunci, baris Super admin yang sudah ada tetap menampilkan nilai terpilih
+      tetapi seluruh aksi ubah/hapus terkunci, dan tombol hapus role milik sendiri
+      juga terkunci. Bagi Super admin, tambah pengguna dan pengelolaan role lain
+      tetap aktif, sedangkan ubah/hapus role diri sendiri terkunci sesuai guard
+      server. Menonaktifkan, bukan menghilangkan, opsi Super admin mencegah baris
+      yang sudah ada jatuh tampil sebagai Editor. Pesan ringkas menjelaskan bahwa
+      Admin tetap dapat mengatur Editor/Admin yang sudah ada; hanya Super admin
+      dapat menambah anggota atau mengelola Super admin. Panduan operator pada
+      `docs/CMS_GUIDE.md` memuat matriks hak dan perlindungan super admin terakhir.
+      Kontrak `tests/role-escalation-guard.test.mjs` kini 8 kasus dan menyematkan
+      seluruh kondisi UI itu. Dibuktikan di browser pada 2026-09-26 dengan akun
+      Admin dan Super admin sementara lalu keduanya dihapus: cabang Admin dan
+      Super admin menunjukkan state kontrol yang tepat, tanpa error console atau
+      server. Verifikasi akhir: 368/368 uji, lint, typecheck, dan build lulus.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

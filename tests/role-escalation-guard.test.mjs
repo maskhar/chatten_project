@@ -16,6 +16,7 @@ import fs from "node:fs";
 const guard = fs.readFileSync("supabase/migrations/20260926000200_restrict_super_admin_role_writes.sql", "utf8");
 const initial = fs.readFileSync("supabase/migrations/20260909000100_initial_chatten_cafe.sql", "utf8");
 const roleActions = fs.readFileSync("lib/admin/role-actions.ts", "utf8");
+const usersPage = fs.readFileSync("app/admin/(dashboard)/users/page.tsx", "utf8");
 
 test("the flaw this migration closes is still the flaw in the schema it inherits", () => {
   // If role_manage is ever narrowed at its source, the restrictive policies
@@ -80,6 +81,23 @@ test("the last-super-admin trigger is a different guard and is left alone", () =
   assert.ok(!/protect_last_super_admin/.test(guard.replace(/^--.*$/gm, "")), "the guard migration alters the trigger");
   const trigger = fs.readFileSync("supabase/migrations/20260909000300_protect_last_super_admin.sql", "utf8");
   assert.match(trigger, /create constraint trigger protect_last_super_admin/);
+});
+
+test("the Users & Roles UI mirrors the database boundary", () => {
+  // Rendering the value as a disabled option preserves a selected existing
+  // super_admin row. Removing it would falsely render that row as Editor.
+  assert.match(usersPage, /function RoleOptions\(\{ canManageSuper \}/);
+  assert.match(usersPage, /value="super_admin" disabled=\{!canManageSuper\}/);
+  assert.match(usersPage, /const touchesSuper = user\.role === "super_admin" && !canManageSuper/);
+  assert.match(usersPage, /const canAssign = !touchesSuper && !\(isSelf && canManageSuper\)/);
+  assert.match(usersPage, /const canRemove = !touchesSuper && !isSelf/);
+  assert.match(usersPage, /disabled=\{!canAssign\}/);
+  assert.match(usersPage, /disabled=\{!canRemove\}/);
+  assert.match(usersPage, /Hanya Super admin yang dapat menambah pengguna CMS\./);
+  assert.match(usersPage, /pendingLabel="Menambahkan…" disabled=\{!canManageSuper\}/);
+  // Viewer role comes from RLS-bound requireAdmin, never from service-role data.
+  assert.match(usersPage, /const viewer = await requireAdmin\("admin"\)/);
+  assert.match(usersPage, /const canManageSuper = viewer\.cmsRole === "super_admin"/);
 });
 
 test("the application layer still refuses the same three moves", () => {
