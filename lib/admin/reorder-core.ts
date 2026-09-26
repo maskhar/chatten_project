@@ -55,6 +55,25 @@ export function validateReorderIds(ids: readonly string[], label = "urutan") {
   return ids;
 }
 
+/**
+ * Confirms that a non-paginated reorder submitted every current row exactly
+ * once. A subset cannot safely be renumbered from zero: omitted rows retain
+ * their ranks and may collide with the submitted rows.
+ *
+ * Paginated resource lists deliberately do not use this helper. They submit a
+ * page plus an offset and preserve rows outside that page.
+ */
+export function isCompleteReorderSet(submittedIds: readonly string[], existingIds: readonly string[]) {
+  if (submittedIds.length !== existingIds.length) return false;
+  const submitted = new Set(submittedIds);
+  const existing = new Set(existingIds);
+  return (
+    submitted.size === submittedIds.length
+    && existing.size === existingIds.length
+    && existingIds.every((id) => submitted.has(id))
+  );
+}
+
 /** Rejects a negative or non-integer offset, which would write negative ranks. */
 export function normalizeOffset(raw: unknown) {
   const value = Number(raw ?? 0);

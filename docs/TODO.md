@@ -916,6 +916,36 @@ work items; the audit document holds the evidence.
       belum dipersempit; pekerjaan database itu masih menunggu preflight
       ledger migrasi dan tidak diklaim selesai oleh A89.
 
+- [x] **A90** Tolak pengurutan parsial pada Galeri dan Menu sebelum subset
+      menyentuh RPC batch. Kedua aksi sebelumnya memeriksa hanya baris yang ID-nya
+      dikirim (`.in("id", ids)`) lalu membandingkan jumlah hasil dengan jumlah ID.
+      Daftar parsial yang seluruh ID-nya sah karena itu lolos, kemudian
+      `applyOrder(..., 0)` menomori ulang subset dari nol sementara baris yang
+      dihilangkan mempertahankan rank lama. `gallery_items`, `menu_categories`,
+      dan `menu_items` tidak memiliki batas unik pada `sort_order`, sehingga
+      database menerima rank kembar dan urutan publik menjadi tidak deterministik.
+
+      Helper murni `isCompleteReorderSet` kini membandingkan kesamaan himpunan
+      dua arah, panjang, serta keunikan daftar kiriman dan daftar database.
+      Galeri membaca seluruh ID yang terlihat; kategori Menu membaca seluruh
+      kategori; item Menu membaca seluruh item dalam `category_id` yang sudah
+      divalidasi. Ruang dan Pengalaman dipindahkan ke helper yang sama agar
+      kontrak pengurutan penuh tidak kembali berbeda antar-modul. Jalur generik
+      `reorderResource` sengaja tetap berbasis halaman + offset karena A26 hanya
+      mengurutkan satu halaman dan harus mempertahankan baris di luar halaman.
+      UI Sortable tidak dijadikan batas kepercayaan; aksi server tetap menjadi
+      pemeriksa meski klien normal memang mengirim seluruh daftar.
+
+      Kontrak uji baru membuktikan permutasi penuh diterima, subset, ID asing,
+      dan duplikat ditolak; Galeri/Menu tidak lagi membatasi lookup ke ID kiriman;
+      item Menu tetap dibatasi kategori; serta jalur generik tidak menerima gate
+      full-set. Verifikasi akhir: 380/380 uji, lint, typecheck, dan build lulus.
+      Batas ini menutup aksi CMS, bukan akses RPC langsung: RPC `reorder_rows`
+      tetap menerima subset untuk kebutuhan pengurutan generik berhalaman. Jika
+      ancaman klien PostgREST langsung hendak ditutup juga, perlukan RPC full-set
+      terpisah dan keluarkan tiga tabel ini dari allowlist RPC lama tanpa merusak
+      jalur A26.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

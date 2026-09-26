@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyOrder } from "@/lib/admin/reorder";
+import { isCompleteReorderSet } from "@/lib/admin/reorder-core";
 import {
   assertAffectedRows,
   parseBooleanFlag,
@@ -19,14 +20,21 @@ function refreshGallery() {
   revalidatePath("/gallery");
 }
 
+// The submitted list must be the complete current set, not merely a list of ids
+// that all exist. applyOrder renumbers from rank 0, so a partial list renumbers
+// the submitted subset and leaves every omitted row parked at its old rank —
+// duplicate ranks the database cannot catch, because gallery_items has no unique
+// constraint on sort_order (see 20260921000700_batch_reorder.sql). Spaces,
+// experiences and homepage sections already required the full set.
 export async function reorderGalleryItems(ids: string[]) {
   await requireAdmin();
   if (!ids.length) throw new Error("Urutan galeri tidak diterima. Muat ulang halaman lalu coba lagi.");
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.from("gallery_items").select("id").in("id", ids);
+  const { data, error } = await supabase.from("gallery_items").select("id");
   if (error) throw new Error("Data galeri untuk pengurutan tidak dapat dibaca. Muat ulang halaman lalu coba lagi.");
-  if (data.length !== ids.length) {
-    throw new Error("Salah satu item galeri yang diurutkan sudah tidak ada. Muat ulang halaman untuk melihat daftar terbaru.");
+  const existingIds = data.map((row) => String(row.id));
+  if (!isCompleteReorderSet(ids, existingIds)) {
+    throw new Error("Urutan galeri harus memuat setiap item galeri tepat satu kali.");
   }
   await applyOrder("gallery_items", ids, 0, "urutan galeri");
   refreshGallery();

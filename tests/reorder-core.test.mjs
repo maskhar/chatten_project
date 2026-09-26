@@ -14,7 +14,7 @@ import ts from "typescript";
 
 const source = fs.readFileSync("lib/admin/reorder-core.ts", "utf8");
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
-const { REORDERABLE_TABLES, isReorderableTable, normalizeOffset, validateReorderIds } = await import(`data:text/javascript,${encodeURIComponent(js)}`);
+const { REORDERABLE_TABLES, isCompleteReorderSet, isReorderableTable, normalizeOffset, validateReorderIds } = await import(`data:text/javascript,${encodeURIComponent(js)}`);
 const correctiveMigration = fs.readFileSync(
   "supabase/migrations/20260926000100_homepage_order_deferrable.sql",
   "utf8",
@@ -52,6 +52,20 @@ test("the label appears in the message so the editor knows which list failed", (
 test("a non-array is rejected rather than coerced", () => {
   assert.throws(() => validateReorderIds("not-an-array"), /urutan tidak valid\./);
   assert.throws(() => validateReorderIds(null), /urutan tidak valid\./);
+});
+
+test("isCompleteReorderSet accepts the same ids in any order", () => {
+  assert.equal(isCompleteReorderSet([uuid(3), uuid(1), uuid(2)], [uuid(1), uuid(2), uuid(3)]), true);
+});
+
+test("isCompleteReorderSet rejects a partial list before ranks can collide", () => {
+  assert.equal(isCompleteReorderSet([uuid(2), uuid(1)], [uuid(1), uuid(2), uuid(3)]), false);
+});
+
+test("isCompleteReorderSet rejects unknown and duplicate ids", () => {
+  assert.equal(isCompleteReorderSet([uuid(1), uuid(2), uuid(4)], [uuid(1), uuid(2), uuid(3)]), false);
+  assert.equal(isCompleteReorderSet([uuid(1), uuid(1), uuid(2)], [uuid(1), uuid(2), uuid(3)]), false);
+  assert.equal(isCompleteReorderSet([uuid(1), uuid(2), uuid(3)], [uuid(1), uuid(1), uuid(2)]), false);
 });
 
 test("normalizeOffset refuses values that would write negative ranks", () => {
@@ -154,6 +168,52 @@ test("no admin action still runs a staging pass or a per-row reorder loop", () =
       `${name} still writes sort_order one row at a time; route it through applyOrder`,
     );
   }
+});
+
+// Gallery and menu used to check only that every submitted id exists — `.in("id",
+// ids)` followed by a length comparison. That passes for a partial list, and
+// applyOrder then renumbers the submitted subset from rank 0 while every omitted
+// row keeps its old rank. gallery_items, menu_categories and menu_items carry no
+// unique constraint on sort_order, so the database accepts the duplicates and the
+// public list renders an arbitrary order.
+test("every non-paginated reorder action requires the complete current set", () => {
+  const actions = [
+    ["lib/admin/gallery-actions.ts", "gallery_items"],
+    ["lib/admin/menu-actions.ts", "menu_categories"],
+    ["lib/admin/space-actions.ts", "spaces"],
+    ["lib/admin/experience-actions.ts", "experiences"],
+  ];
+  for (const [file, table] of actions) {
+    const text = fs.readFileSync(file, "utf8");
+    assert.ok(
+      !new RegExp(`from\\("${table}"\\)\\s*\\.select\\("id"\\)\\s*\\.in\\("id", ids\\)`).test(text),
+      `${file} narrows the ${table} existence check to the submitted ids again; a partial list would renumber a subset`,
+    );
+    assert.match(text, /harus memuat setiap/, `${file} no longer refuses an incomplete order`);
+  }
+
+  // Both defective call sites now route the comparison through one shared helper
+  // rather than re-deriving it, so a future edit cannot weaken only one of them.
+  for (const file of ["lib/admin/gallery-actions.ts", "lib/admin/menu-actions.ts"]) {
+    const text = fs.readFileSync(file, "utf8");
+    assert.match(text, /isCompleteReorderSet\(ids, existingIds\)/, `${file} must use the shared full-set gate`);
+  }
+});
+
+test("menu item order is compared within its own category", () => {
+  // menu_items ranks are per category, so the complete set for one save is that
+  // category's items. Comparing against the whole table would refuse every
+  // legitimate save the moment a second category exists.
+  const text = fs.readFileSync("lib/admin/menu-actions.ts", "utf8");
+  assert.match(text, /from\("menu_items"\)\.select\("id"\)\.eq\("category_id", category!\)/);
+});
+
+test("the paginated generic reorder stays offset-based and is not forced to a full set", () => {
+  // A26: the generic resource list reorders one page and preserves the rows
+  // outside it, so the full-set rule must not leak into this path.
+  const text = fs.readFileSync("lib/admin/actions.ts", "utf8");
+  assert.match(text, /normalizeOffset\(formData\.get\("offset"\)\)/);
+  assert.ok(!text.includes("isCompleteReorderSet"), "reorderResource must not require the complete table");
 });
 
 test("applyOrder fails the action when the database updated a different number of rows", () => {

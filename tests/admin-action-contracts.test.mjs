@@ -71,11 +71,20 @@ test("foreign-key and reorder lookups stop on lookup errors", () => {
   assert.match(source("role"), /if \(error\) throw new Error\("Peran Anda tidak dapat diperiksa/);
 });
 
+// A90: this used to accept `data.length !== ids.length` as proof. Gallery and
+// menu paired that comparison with `.in("id", ids)`, which makes it a check that
+// the submitted ids exist rather than a check that nothing was left out — a
+// partial list passed, and applyOrder then renumbered the subset from rank 0
+// while omitted rows kept their old ranks. All four dedicated reorder paths now
+// compare against the full current set through one shared helper.
 test("reorder paths require every currently visible row", () => {
-  for (const name of ["gallery", "space", "experience"]) {
+  for (const name of ["gallery", "menu", "space", "experience"]) {
     const text = source(name);
-    assert.match(text, /data\.length !== ids\.length|existingIds\.length !== ids\.length/, `${name} accepts a partial reorder list`);
+    assert.match(text, /isCompleteReorderSet\(ids, existingIds\)/, `${name} accepts a partial reorder list`);
+    assert.match(text, /harus memuat setiap/, `${name} does not refuse an incomplete order`);
+    assert.doesNotMatch(text, /\.select\("id"\)\.in\("id", ids\)/, `${name} scopes the reorder lookup to the submitted ids`);
     assert.match(text, /if \(error\) throw new Error/, `${name} ignores reorder lookup failure`);
   }
-  assert.match(source("menu"), /data\.length !== ids\.length/);
+  // menu_items ranks are per category, so its complete set is that category's items.
+  assert.match(source("menu"), /from\("menu_items"\)\.select\("id"\)\.eq\("category_id", category!\)/);
 });

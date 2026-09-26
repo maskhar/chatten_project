@@ -82,6 +82,7 @@
 - Tambahkan, ubah, hapus, seret, atau pindahkan kategori menu. Kategori yang berisi item tidak dapat dihapus.
 - Tambahkan item dengan kategori, harga Rupiah, ketersediaan, deskripsi, dan gambar dari Media Picker.
 - Ubah, duplikat, hapus, seret, atau pindahkan item di dalam kategorinya.
+- Saat menyimpan urutan, daftar harus tetap memuat semua kategori atau semua item dalam kategori tersebut tepat satu kali. Bila data berubah di tab lain, muat ulang halaman lalu ulangi pengurutan; sistem menolak daftar parsial agar rank publik tidak bertabrakan.
 - Perubahan ketersediaan langsung dipublikasikan. Media yang dipakai kembali tetap berada di Pustaka Media.
 - Masukkan harga sebagai angka Rupiah biasa, misalnya `25000`; daftar menampilkan `Rp 25.000`.
 
@@ -89,6 +90,7 @@
 
 - Tambahkan gambar dari Pustaka Media, ubah keterangan dan teks alt, ganti referensi gambar, tampilkan atau sembunyikan item, serta hapus data Galeri.
 - Seret item atau gunakan tombol panah naik/turun untuk menyimpan urutan publik.
+- Simpanan urutan harus memuat setiap item Galeri tepat satu kali. Bila ada item yang ditambah atau dihapus di tempat lain, muat ulang halaman lalu simpan urutan kembali.
 - Menghapus item Galeri tidak menghapus aset Pustaka Media yang digunakan bersama.
 
 ## Memilih Gambar

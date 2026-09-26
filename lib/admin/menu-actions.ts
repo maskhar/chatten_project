@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { parseIdr } from "@/lib/menu/price";
 import { dynamicTable } from "@/lib/supabase/dynamic";
 import { applyOrder } from "@/lib/admin/reorder";
+import { isCompleteReorderSet } from "@/lib/admin/reorder-core";
 import {
   assertAffectedRows,
   parseBooleanFlag,
@@ -40,17 +41,34 @@ async function nextSortOrder(table: "menu_categories" | "menu_items", categoryId
   return Number(current ?? -1) + 1;
 }
 
+// The submitted list must be the complete current set — every category, or every
+// item within the one category being reordered. Checking only that the submitted
+// ids exist is not enough: applyOrder renumbers from rank 0, so a partial list
+// renumbers the subset and leaves every omitted row parked at its old rank.
+// Neither menu_categories nor menu_items has a unique constraint on sort_order
+// (see 20260921000700_batch_reorder.sql), so the database would accept the
+// duplicate ranks and the public menu would render an arbitrary order.
+//
+// menu_items is scoped by category_id because its ranks are per category: the
+// complete set for this call is that category's items, not the whole table.
 async function saveOrder(table: "menu_categories" | "menu_items", ids: string[], categoryId?: string) {
   await requireAdmin();
   if (!ids.length) throw new Error("Urutan menu tidak diterima. Muat ulang halaman lalu coba lagi.");
   const category = table === "menu_items" ? parseUuid(categoryId ?? null, "ID kategori") : null;
   const supabase = await createServerSupabaseClient();
   const query = table === "menu_items"
-    ? supabase.from("menu_items").select("id").in("id", ids).eq("category_id", category!)
-    : supabase.from("menu_categories").select("id").in("id", ids);
+    ? supabase.from("menu_items").select("id").eq("category_id", category!)
+    : supabase.from("menu_categories").select("id");
   const { data, error } = await query;
   if (error) throw new Error("Data menu untuk pengurutan tidak dapat dibaca. Muat ulang halaman lalu coba lagi.");
-  if (data.length !== ids.length) throw new Error("Satu atau beberapa data menu sudah berubah. Muat ulang halaman lalu coba lagi.");
+  const existingIds = (data as { id: unknown }[]).map((row) => String(row.id));
+  if (!isCompleteReorderSet(ids, existingIds)) {
+    throw new Error(
+      table === "menu_items"
+        ? "Urutan menu harus memuat setiap item dalam kategori ini tepat satu kali."
+        : "Urutan menu harus memuat setiap kategori menu tepat satu kali.",
+    );
+  }
   await applyOrder(table, ids, 0, "urutan menu");
   refreshMenu(true);
 }

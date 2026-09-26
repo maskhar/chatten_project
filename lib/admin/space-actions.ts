@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyOrder } from "@/lib/admin/reorder";
+import { isCompleteReorderSet } from "@/lib/admin/reorder-core";
 import {
   assertAffectedRows,
   parseBooleanFlag,
@@ -79,7 +80,7 @@ export async function reorderSpaces(ids: string[]) {
   const { data, error } = await supabase.from("spaces").select("id");
   if (error) throw new Error("Daftar ruang tidak dapat dibaca. Muat ulang halaman lalu coba lagi.");
   const existingIds = data.map((row) => String(row.id));
-  if (existingIds.length !== ids.length || existingIds.some((existing) => !ids.includes(existing))) {
+  if (!isCompleteReorderSet(ids, existingIds)) {
     throw new Error("Urutan ruang harus memuat setiap ruang tepat satu kali.");
   }
 

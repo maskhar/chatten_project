@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyOrder } from "@/lib/admin/reorder";
+import { isCompleteReorderSet } from "@/lib/admin/reorder-core";
 import {
   assertAffectedRows,
   parseBooleanFlag,
@@ -80,7 +81,7 @@ export async function reorderExperiences(ids: string[]) {
   const { data, error } = await supabase.from("experiences").select("id");
   if (error) throw new Error("Daftar pengalaman tidak dapat dibaca. Muat ulang halaman lalu coba lagi.");
   const existingIds = data.map((row) => String(row.id));
-  if (existingIds.length !== ids.length || existingIds.some((existing) => !ids.includes(existing))) {
+  if (!isCompleteReorderSet(ids, existingIds)) {
     throw new Error("Urutan pengalaman harus memuat setiap pengalaman tepat satu kali.");
   }
 
