@@ -29,13 +29,13 @@ function code(file) {
 const shellPages = [
   "app/(public)/page.tsx",
   "app/about/page.tsx",
-  "app/events/page.tsx",
+  "app/events/(list)/page.tsx",
   "app/events/[slug]/page.tsx",
-  "app/experience/page.tsx",
+  "app/experience/(list)/page.tsx",
   "app/experience/[slug]/page.tsx",
   "app/gallery/page.tsx",
   "app/menu/page.tsx",
-  "app/spaces/page.tsx",
+  "app/spaces/(list)/page.tsx",
   "app/spaces/[slug]/page.tsx",
   "app/visit/page.tsx",
   "app/not-found.tsx",
@@ -94,9 +94,9 @@ test("the homepage testimonials band is a named region", () => {
 const focusRequired = [
   ["components/public/header.tsx", /Plan Your Visit/],
   ["components/public/public-footer.tsx", /FOOTER_FOCUS/],
-  ["app/events/page.tsx", /CARD_FOCUS/],
-  ["app/experience/page.tsx", /CARD_FOCUS/],
-  ["app/spaces/page.tsx", /CARD_FOCUS/],
+  ["app/events/(list)/page.tsx", /CARD_FOCUS/],
+  ["app/experience/(list)/page.tsx", /CARD_FOCUS/],
+  ["app/spaces/(list)/page.tsx", /CARD_FOCUS/],
 ];
 
 test("the header's framed link, the footer, and the three card links all carry a focus ring", () => {
@@ -148,7 +148,7 @@ test("no public surface uses a raw img element", () => {
 // mengumumkan hal yang sama dua kali. Kedua tempat ini memakai judul konten
 // sebagai cadangan alt, dan judul itu adalah heading di dalam elemen yang sama.
 test("no image falls back to a title that is already a heading beside it", () => {
-  assert.doesNotMatch(code("app/events/page.tsx"), /alt=\{asset\?\.alt_text\s*\?\?\s*event\.title\}/);
+  assert.doesNotMatch(code("app/events/(list)/page.tsx"), /alt=\{asset\?\.alt_text\s*\?\?\s*event\.title\}/);
   const detail = code("app/events/[slug]/page.tsx");
   assert.doesNotMatch(detail, /alt=\{image\?\.alt_text\s*\?\?\s*event\.title\}/);
   // Gambar itu juga sama dengan yang sudah ditampilkan hero, jadi satu-satunya

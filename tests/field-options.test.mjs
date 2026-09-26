@@ -46,10 +46,24 @@ test("every navigation route resolves to a real public page", () => {
   // A typo here is a header link to a 404, and the fallback navigation only
   // appears when the table is empty, so one bad row cannot be undone by
   // emptying the list.
+  // A106: sebuah route group seperti `(list)` tidak menambah segmen URL, jadi
+  // `/spaces` kini dilayani `app/spaces/(list)/page.tsx`. Memetakan path URL ke
+  // path direktori satu-ke-satu berhenti benar begitu itu terjadi — dan tes ini
+  // gagal justru karena asumsinya, bukan karena rutenya rusak. Yang diperiksa
+  // sekarang: ada `page.tsx` tepat di segmen itu, ATAU di dalam satu route group
+  // di bawahnya. Bukan pencarian rekursif: `app/spaces/[slug]/page.tsx` tidak
+  // boleh dianggap menjawab `/spaces`.
+  const hasPage = (dir) => {
+    if (fs.existsSync(path.join(dir, "page.tsx"))) return true;
+    if (!fs.existsSync(dir)) return false;
+    return fs.readdirSync(dir, { withFileTypes: true }).some(
+      (entry) => entry.isDirectory() && entry.name.startsWith("(") && fs.existsSync(path.join(dir, entry.name, "page.tsx")),
+    );
+  };
   for (const { value } of NAVIGATION_ROUTE_OPTIONS) {
     assert.ok(value.startsWith("/"), `${value} is not a site-relative path`);
     const dir = value === "/" ? "app/(public)" : `app${value}`;
-    assert.ok(fs.existsSync(path.join(dir, "page.tsx")), `${value} has no page at ${dir}/page.tsx`);
+    assert.ok(hasPage(dir), `${value} has no page at ${dir}/page.tsx nor in a route group inside it`);
   }
 });
 

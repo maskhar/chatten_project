@@ -2063,6 +2063,79 @@ sematan adalah tambahan, bukan prasyarat.
 Tidak ada perubahan kode pada siklus ini — temuan yang benar adalah bahwa
 keduanya sudah benar, dan itu hanya bisa diketahui dengan memeriksanya.
 
+### A106 — slug tak dikenal menjawab HTTP 200 sambil menampilkan halaman 404
+
+`/spaces/nope`, `/events/nope` dan `/experience/nope` merender halaman 404 dengan
+benar — "This view is not here.", `noindex`, tombol kembali — tetapi mengirimkan
+status **200 OK**. Ketiga halaman detail sudah memanggil `notFound()`, jadi dari
+membaca kodenya tidak ada yang tampak salah. Cacatnya hanya terlihat dari kode
+status respons, bukan dari badannya; sebuah pemeriksaan yang hanya membandingkan
+teks halaman akan lulus pada kode yang rusak.
+
+Kenapa itu serius: pengayak memakai status, bukan teks. Setiap URL salah yang
+pernah ditautkan orang — slug yang berubah, tempelan yang terpotong, tebakan bot
+— menjadi halaman "sah" yang boleh diindeks dan dipertahankan, dan satu situs
+yang menjawab 200 untuk apa pun di bawah `/spaces/` tidak punya batas jumlah
+halaman. `noindex` di sana meredam sebagian akibatnya, tetapi `noindex` adalah
+permintaan, sedangkan 404 adalah fakta protokol. Pemantauan uptime dan pemeriksa
+tautan juga membaca status: keduanya melaporkan sehat.
+
+**Sebabnya bukan di halaman detailnya.** Sebabnya `app/spaces/loading.tsx` — satu
+tingkat di atas `[slug]`. Sebuah `loading.tsx` membuat batas Suspense untuk
+**seluruh subtree segmennya**, termasuk `[slug]`, sehingga Next mengalirkan
+skeleton lebih dulu. Status HTTP terkirim bersama byte pertama, dan `notFound()`
+yang berjalan sesudahnya hanya sanggup menukar isi yang belum terkirim — statusnya
+sudah tidak bisa ditarik kembali.
+
+Diagnosisnya lewat probe, bukan dugaan, karena dua hipotesis pertama saya salah:
+
+1. Memindahkan `notFound()` ke `generateMetadata` (dengan alasan ia tuntas sebelum
+   `<head>` dikirim) — **tidak menolong**, tetap 200.
+2. Menghapus `app/spaces/[slug]/loading.tsx` — **tetap 200**. Tes negatif ini
+   sempat menyesatkan: ia gagal justru karena `app/spaces/loading.tsx` di segmen
+   induk masih ada, dan itulah yang sebenarnya membungkus. Kalau saya berhenti di
+   sini, kesimpulannya akan "`loading.tsx` bukan penyebabnya" — persis kebalikan
+   dari yang benar.
+
+Probe minimal yang memutuskannya, di route buangan: satu `[slug]` yang memanggil
+`notFound()` menjawab **404**; menambahkan satu `loading.tsx` di sebelahnya
+mengubahnya menjadi **200**; dan menaruh `loading.tsx` itu di dalam route group
+`(list)` bersama halaman daftarnya mengembalikannya ke **404** sementara `/segmen`
+tetap dilayani. Baru setelah itu perbaikannya diterapkan pada kode sungguhan.
+
+Perbaikannya struktural, bukan tambalan: halaman daftar dan skeleton-nya
+dipindahkan ke route group `(list)`.
+
+    app/spaces/page.tsx          -> app/spaces/(list)/page.tsx
+    app/spaces/loading.tsx       -> app/spaces/(list)/loading.tsx
+    app/spaces/[slug]/loading.tsx -> dihapus
+
+Sama untuk `experience` dan `events`. Route group tidak menambah segmen URL, jadi
+`/spaces` tetap alamat yang sama — yang berubah hanya di mana batas Suspense-nya
+berhenti. `[slug]/loading.tsx` dihapus, bukan dipindahkan: satu-satunya `await`
+sebelum `notFound()` adalah lookup satu baris terindeks (A60), jadi skeleton di
+sana membeli beberapa milidetik dengan harga status HTTP yang salah.
+
+Verifikasi setelah container dibangun ulang: tiga slug palsu **404**, `/nope`
+tetap 404, dan 16 halaman nyata tetap 200 — termasuk kedelapan halaman detail
+terbitan. Tidak ada regresi SEO: sitemap tetap 16 `<loc>`, judul tetap
+`Spaces | Chatten Cafe` dan `Rooftop | Chatten Cafe`, canonical utuh untuk daftar
+maupun detail, badan halaman 404 masih terender. Nol error di log container.
+
+Satu tes yang ada ikut gagal dan **tesnya benar**: "every navigation route
+resolves to a real public page" memetakan path URL ke path direktori satu-ke-satu,
+asumsi yang berhenti berlaku begitu ada route group. Yang diperbaiki asumsinya —
+sekarang menerima `page.tsx` di segmen itu atau di dalam satu route group di
+bawahnya, dan sengaja **bukan** pencarian rekursif supaya `[slug]/page.tsx` tidak
+pernah dianggap menjawab `/spaces`.
+
+Tes baru `tests/detail-not-found-status.test.mjs` memaku bentuk direktorinya,
+karena di situlah cacatnya hidup. `npm test` tidak menjalankan server, jadi tidak
+ada gunanya berpura-pura menguji kode status di sana; dan sebuah tes yang hanya
+memeriksa `notFound()` ada di dalam berkas halaman akan lulus pada kode yang
+rusak — pemanggilan itu memang sudah ada sejak awal dan tetap tidak cukup. Tesnya
+dibuktikan bisa gagal lebih dulu dengan mengembalikan `app/spaces/loading.tsx`.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

@@ -76,7 +76,7 @@ test("no public anchor re-implements the CTA underline without a height", () => 
   // min-h-11. Only the public tree is scanned — admin has its own idiom.
   //
   // The tag is captured, not just the className, because the same underline
-  // style is also used as *decoration inside* a link. app/experience/page.tsx
+  // style is also used as *decoration inside* a link. app/experience/(list)/page.tsx
   // renders it on a <span> within an <a> that wraps an h-72 image and a p-7
   // body — the anchor is ~350px tall, the span is not a target at all, and
   // giving it TEXT_LINK would nest a second focus ring inside one link. A
