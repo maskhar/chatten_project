@@ -1844,6 +1844,46 @@ yang salah.
 Pemulihan satu perintah, bila ternyata ada alur yang bergantung padanya, dicatat
 di kepala berkas SQL-nya.
 
+### A102 — siklus CRUD CMS terautentikasi dan urutan fokus diverifikasi
+
+Menutup item #2. Sampai di sini CMS baru terbukti dapat **dibaca** setelah login
+(tujuh layar 200, lalu A100). Yang belum: apakah operator benar-benar dapat
+**menulis** melalui antarmuka, melewati RLS, Server Action, dan revalidasi.
+
+Dijalankan di peramban sungguhan sebagai `super_admin`, satu siklus penuh pada
+`/admin/events`:
+
+```
+LOGIN: ok
+CREATE: ok — baris muncul di daftar
+buka editor: /admin/events/items/c77cf8f0-…
+UPDATE: ok — judul baru tersimpan
+DELETE: ok — baris hilang
+respons >=400: (tidak ada)
+```
+
+Setiap langkah diverifikasi lewat pemuatan ulang daftar, bukan lewat pesan sukses
+di layar — sebuah Server Action bisa menjawab "tersimpan" sambil gagal
+merevalidasi, dan itu justru kelas bug yang perlu ditangkap di sini.
+
+Urutan fokus: **41/41** uji Playwright lulus (`exit 0`) terhadap container yang
+sudah dibangun ulang, mencakup delapan halaman publik — tautan lewati sebagai
+perhentian tab pertama, fokus benar-benar masuk ke landmark `main`, tab
+sesudahnya tidak kembali ke header, tidak ada kontrol terfokus yang tak terlihat
+atau `aria-hidden`, setiap perhentian punya indikator fokus kasatmata, dan seksi
+beranda yang disembunyikan keluar sepenuhnya dari urutan tab.
+
+**Kebersihan data uji.** Baris yang dibuat siklus ini dihapus oleh siklus itu
+sendiri. Pemeriksaan basis data sesudahnya menemukan **satu** sisa,
+`audit-uji-1790454753177` berstatus `draft` — milik lari uji saya sendiri yang
+sebelumnya mati pada timeout locator, bukan konten nyata. Dihapus dengan sasaran
+`id` persis plus syarat `slug`, bukan `delete … where slug like`, sehingga tidak
+mungkin menyentuh baris lain. `chatten_cafe.events` kini 0 baris, sama seperti
+sebelum audit.
+
+Kredensial akun uji diberikan lewat variabel lingkungan saat menjalankan skrip,
+tidak pernah ditulis ke berkas mana pun di repositori.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

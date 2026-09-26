@@ -40,6 +40,18 @@ pernah commit rahasia". Yang diverifikasi:
 Baris "Authenticated browser E2E confirmed by operator" sengaja **belum**
 dicentang: pengujiannya dijalankan di sini, bukan dikonfirmasi oleh operator.
 
+### Siklus CRUD terautentikasi (A102)
+
+Satu siklus penuh di `/admin/events` sebagai `super_admin` di peramban sungguhan:
+buat → ubah → hapus, semuanya diverifikasi lewat pemuatan ulang daftar dan bukan
+lewat pesan sukses di layar, dengan **nol** respons ≥ 400. Ditambah 41/41 uji
+urutan fokus Playwright terhadap container yang sudah dibangun ulang.
+
+Baris uji yang dibuat sudah dihapus; satu sisa dari lari sebelumnya yang gagal
+(`audit-uji-1790454753177`, `draft`) dihapus dengan sasaran `id` persis.
+`chatten_cafe.events` kembali 0 baris — tidak ada satu pun data nyata yang
+disentuh.
+
 ## Gerbang otomatis
 
 `.github/workflows/ci.yml` menjalankan uji, pemeriksaan tipe, pemeriksaan gaya,
