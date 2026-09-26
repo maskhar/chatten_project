@@ -38,10 +38,10 @@ export async function toggleHomepageSection(formData: FormData) {
     .from("homepage_sections")
     .update({ is_visible: raw === "true" }, { count: "exact" })
     .eq("id", id);
-  if (error) throw new Error("Gagal memperbarui bagian homepage.");
+  if (error) throw new Error("Gagal memperbarui bagian beranda.");
   // RLS returns success with zero rows for a caller who may not write, which
   // would otherwise render as a state change that reverts on the next load.
-  if (!count) throw new Error("Bagian homepage tidak ditemukan atau tidak boleh diubah.");
+  if (!count) throw new Error("Bagian beranda tidak ditemukan atau tidak boleh diubah.");
   revalidatePath("/");
   revalidatePath("/admin/homepage");
 }
@@ -56,13 +56,13 @@ export async function toggleHomepageSection(formData: FormData) {
  */
 export async function reorderHomepageSections(ids: string[]) {
   await requireAdmin();
-  if (!Array.isArray(ids) || !ids.length) throw new Error("Urutan homepage tidak valid.");
+  if (!Array.isArray(ids) || !ids.length) throw new Error("Urutan beranda tidak valid.");
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("homepage_sections")
     .select("id,section_key");
-  if (error) throw new Error("Gagal memuat urutan homepage.");
+  if (error) throw new Error("Gagal memuat urutan beranda.");
 
   const rows = (data ?? []) as { id: string; section_key: string }[];
   const submitted = new Set(ids);
@@ -73,10 +73,10 @@ export async function reorderHomepageSections(ids: string[]) {
     ids.some((id) => !known.has(id)) ||
     rows.some((row) => !SECTION_KEYS.has(String(row.section_key)))
   ) {
-    throw new Error("Urutan homepage harus memuat seluruh bagian yang ada.");
+    throw new Error("Urutan beranda harus memuat seluruh bagian yang ada.");
   }
 
-  await applyOrder("homepage_sections", ids, 0, "urutan homepage");
+  await applyOrder("homepage_sections", ids, 0, "urutan beranda");
   revalidatePath("/");
   revalidatePath("/admin/homepage");
 }

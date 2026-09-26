@@ -6,7 +6,7 @@
  * Mirrors the allowlist inside `chatten_cafe.reorder_rows`. The database is
  * the real boundary — it raises on anything outside its own list — but
  * duplicating it here turns a bad table name into a compile error instead of a
- * failed mutation an editor sees as "Unable to save order".
+ * failed mutation an editor sees as "Gagal menyimpan urutan".
  */
 export const REORDERABLE_TABLES = [
   "hero_slides",
@@ -48,10 +48,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * means two positions compete for one row, so an entry silently vanishes from
  * the order.
  */
-export function validateReorderIds(ids: readonly string[], label = "order") {
-  if (!Array.isArray(ids)) throw new Error(`Invalid ${label}.`);
-  if (ids.some((id) => !UUID.test(id))) throw new Error(`Invalid ${label}.`);
-  if (new Set(ids).size !== ids.length) throw new Error(`Invalid ${label}.`);
+export function validateReorderIds(ids: readonly string[], label = "urutan") {
+  if (!Array.isArray(ids)) throw new Error(`${label} tidak valid.`);
+  if (ids.some((id) => !UUID.test(id))) throw new Error(`${label} tidak valid.`);
+  if (new Set(ids).size !== ids.length) throw new Error(`${label} tidak valid.`);
   return ids;
 }
 

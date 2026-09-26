@@ -12,8 +12,8 @@ export function parseFocalValue(raw: FormDataEntryValue | null | undefined): num
   // must clear the column rather than fail validation.
   if (!text) return null;
   const value = Number(text);
-  if (!Number.isFinite(value)) throw new Error("Focal point must be a number between 0 and 1.");
-  if (value < 0 || value > 1) throw new Error("Focal point must be between 0 and 1.");
+  if (!Number.isFinite(value)) throw new Error("Titik fokus harus berupa angka antara 0 dan 1.");
+  if (value < 0 || value > 1) throw new Error("Titik fokus harus bernilai antara 0 dan 1.");
   return Number(value.toFixed(FOCAL_DECIMALS));
 }
 
@@ -23,7 +23,9 @@ export function parseFocalValue(raw: FormDataEntryValue | null | undefined): num
 export function parseFocalPoint(x: FormDataEntryValue | null | undefined, y: FormDataEntryValue | null | undefined) {
   const focalX = parseFocalValue(x);
   const focalY = parseFocalValue(y);
-  if ((focalX === null) !== (focalY === null)) throw new Error("Set both focal point values, or leave both empty.");
+  if ((focalX === null) !== (focalY === null)) {
+    throw new Error("Isi kedua nilai titik fokus, atau kosongkan keduanya.");
+  }
   return { focal_x: focalX, focal_y: focalY };
 }
 

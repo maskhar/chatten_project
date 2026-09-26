@@ -45,17 +45,19 @@ export type MediaUsageRows = {
   seo?: SeoMediaRow[];
 };
 
+// The keys are the map contract every usage consumer reads; only the label and
+// the fallback title reach an operator, so only those are translated.
 const resourceMetadata: Record<MediaUsageResource, { label: string; fallbackTitle: string }> = {
-  hero: { label: "Hero", fallbackTitle: "Hero slide" },
-  moment: { label: "Moment", fallbackTitle: "Moment" },
-  about: { label: "About", fallbackTitle: "About section" },
-  experience: { label: "Experience", fallbackTitle: "Experience" },
-  space: { label: "Space", fallbackTitle: "Space" },
-  gallery: { label: "Gallery", fallbackTitle: "Gallery item" },
-  event: { label: "Event", fallbackTitle: "Event" },
-  promotion: { label: "Promotion", fallbackTitle: "Promotion" },
-  menu: { label: "Menu", fallbackTitle: "Menu item" },
-  seo: { label: "SEO", fallbackTitle: "SEO settings" },
+  hero: { label: "Hero", fallbackTitle: "Slide hero" },
+  moment: { label: "Momen", fallbackTitle: "Momen" },
+  about: { label: "Tentang", fallbackTitle: "Bagian Tentang" },
+  experience: { label: "Pengalaman", fallbackTitle: "Pengalaman" },
+  space: { label: "Ruang", fallbackTitle: "Ruang" },
+  gallery: { label: "Galeri", fallbackTitle: "Item galeri" },
+  event: { label: "Acara", fallbackTitle: "Acara" },
+  promotion: { label: "Promosi", fallbackTitle: "Promosi" },
+  menu: { label: "Menu", fallbackTitle: "Item menu" },
+  seo: { label: "SEO", fallbackTitle: "Pengaturan SEO" },
 };
 
 function displayTitle(values: Array<string | null | undefined>, fallbackTitle: string) {

@@ -100,4 +100,27 @@ export async function deleteMediaWithFeedback(_previousState: MediaDeleteActionS
 // Every field here is optional. An uploaded image is usable immediately; this
 // screen only refines it — a better title, alt text for search engines and
 // screen readers, a focal point so the crop keeps the subject in frame.
-export async function saveMediaDetails(formData:FormData){await requireAdmin();const supabase=await createServerSupabaseClient();const id=String(formData.get('id')??'');if(!uuidSchema.safeParse(id).success)throw new Error('Invalid media details.');const payload={title:String(formData.get('title')??'').trim()||null,alt_text:String(formData.get('alt_text')??'').trim()||null,caption:String(formData.get('caption')??'').trim()||null,category:String(formData.get('category')??'').trim()||null,tags:String(formData.get('tags')??'').split(',').map(value=>value.trim()).filter(Boolean),...parseFocalPoint(formData.get('focal_x'),formData.get('focal_y'))};const {error}=await supabase.from('media').update(payload).eq('id',id);if(error)throw new Error('Unable to save media details.');revalidatePath('/admin/media');revalidatePath('/');redirect(`/admin/media/items/${id}?saved=1`);}
+export async function saveMediaDetails(formData: FormData) {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const id = String(formData.get("id") ?? "");
+  if (!uuidSchema.safeParse(id).success) throw new Error("Detail media tidak valid.");
+
+  const payload = {
+    title: String(formData.get("title") ?? "").trim() || null,
+    alt_text: String(formData.get("alt_text") ?? "").trim() || null,
+    caption: String(formData.get("caption") ?? "").trim() || null,
+    category: String(formData.get("category") ?? "").trim() || null,
+    tags: String(formData.get("tags") ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+    ...parseFocalPoint(formData.get("focal_x"), formData.get("focal_y")),
+  };
+  const { error } = await supabase.from("media").update(payload).eq("id", id);
+  if (error) throw new Error("Detail media gagal disimpan.");
+
+  revalidatePath("/admin/media");
+  revalidatePath("/");
+  redirect(`/admin/media/items/${id}?saved=1`);
+}

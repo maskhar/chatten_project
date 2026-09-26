@@ -1,6 +1,6 @@
 import type { MediaUsageReference } from "./usage";
 
-const unusedMessage = "This image is not currently used anywhere.";
+const unusedMessage = "Gambar ini belum dipakai di mana pun.";
 
 export type MediaUsagePresentation = {
   count: number;
@@ -13,7 +13,8 @@ export function buildMediaUsagePresentation(references: readonly MediaUsageRefer
   const count = references.length;
   return {
     count,
-    summary: count ? `Used in ${count} ${count === 1 ? "place" : "places"}` : null,
+    // Indonesian has no plural inflection here, so one phrase covers both counts.
+    summary: count ? `Dipakai di ${count} tempat` : null,
     emptyMessage: count ? null : unusedMessage,
     references,
   };

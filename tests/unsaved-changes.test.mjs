@@ -296,7 +296,7 @@ test("ActionForm drives the guard with the real outcome, not a guess", () => {
 
 test("ActionForm surfaces a message the operator can act on", () => {
   assert.match(actionFormCode, /role="alert"/);
-  assert.match(actionForm, /Your changes are still here/, "a redacted production error must still say the work survived");
+  assert.match(actionForm, /Perubahan Anda masih ada/, "a redacted production error must still say the work survived");
 });
 
 test("every form that had a guard now keeps its dirty state on failure", () => {

@@ -13,17 +13,17 @@ test("unused Media remains deletable with meaningful confirmation and fallback",
   const named = buildMediaDeleteState([], "Panorama.jpg");
   assert.equal(named.canDelete, true);
   assert.equal(named.protectedMessage, null);
-  assert.equal(named.confirmationMessage, "Delete “Panorama.jpg”? This permanently removes the image from the Media Library and Storage.");
-  assert.match(buildMediaDeleteState([], " ").confirmationMessage, /Delete “this image”/);
+  assert.equal(named.confirmationMessage, "Hapus “Panorama.jpg”? Gambar akan dihapus permanen dari Pustaka Media dan Storage.");
+  assert.match(buildMediaDeleteState([], " ").confirmationMessage, /Hapus “gambar ini”/);
 });
 
 test("one Event reference blocks deletion with singular explanation", () => {
-  const references = [{ mediaId: "media-1", resource: "event", label: "Event", title: "Acoustic Night" }];
+  const references = [{ mediaId: "media-1", resource: "event", label: "Acara", title: "Acoustic Night" }];
   const state = buildMediaDeleteState(references, "Event image");
   const result = mediaInUseActionState(references);
   assert.equal(state.canDelete, false);
   assert.equal(state.usageCount, 1);
-  assert.equal(state.protectedMessage, "This image cannot be deleted because it is currently used in 1 place.");
+  assert.equal(state.protectedMessage, "Gambar ini tidak dapat dihapus karena sedang dipakai di 1 tempat.");
   assert.deepEqual(state.references, references);
   assert.equal(result.code, "MEDIA_IN_USE");
   assert.deepEqual(result.references, references);
@@ -32,25 +32,25 @@ test("one Event reference blocks deletion with singular explanation", () => {
 test("multiple references preserve Hero, Gallery, and Promotion context", () => {
   const references = [
     { mediaId: "media-1", resource: "hero", label: "Hero", title: "Main Panorama" },
-    { mediaId: "media-1", resource: "gallery", label: "Gallery", title: "Golden Hour" },
-    { mediaId: "media-1", resource: "promotion", label: "Promotion", title: "Weekend Offer" },
+    { mediaId: "media-1", resource: "gallery", label: "Galeri", title: "Golden Hour" },
+    { mediaId: "media-1", resource: "promotion", label: "Promosi", title: "Weekend Offer" },
   ];
   const state = buildMediaDeleteState(references, "Shared image");
   assert.equal(state.canDelete, false);
   assert.equal(state.usageCount, 3);
-  assert.equal(state.protectedMessage, "This image cannot be deleted because it is currently used in 3 places.");
+  assert.equal(state.protectedMessage, "Gambar ini tidak dapat dihapus karena sedang dipakai di 3 tempat.");
   assert.deepEqual(state.references, references);
 });
 
 test("duplicate Gallery and SEO occurrences all block deletion", () => {
   const references = [
-    { mediaId: "media-1", resource: "gallery", label: "Gallery", title: "Sunset" },
-    { mediaId: "media-1", resource: "gallery", label: "Gallery", title: "Night View" },
+    { mediaId: "media-1", resource: "gallery", label: "Galeri", title: "Sunset" },
+    { mediaId: "media-1", resource: "gallery", label: "Galeri", title: "Night View" },
     { mediaId: "media-1", resource: "seo", label: "SEO", title: "Homepage" },
   ];
   const state = buildMediaDeleteState(references, "Shared image");
   assert.equal(state.usageCount, 3);
-  assert.deepEqual(state.references.map((reference) => reference.label + " — " + reference.title), ["Gallery — Sunset", "Gallery — Night View", "SEO — Homepage"]);
+  assert.deepEqual(state.references.map((reference) => reference.label + " — " + reference.title), ["Galeri — Sunset", "Galeri — Night View", "SEO — Homepage"]);
 });
 
 test("actual Media delete flow rechecks usage before Storage deletion", () => {
@@ -61,7 +61,7 @@ test("actual Media delete flow rechecks usage before Storage deletion", () => {
   assert.match(actionSource, /MEDIA_DELETE_FAILED/);
   const pageSource = fs.readFileSync(new URL("../app/admin/(dashboard)/media/page.tsx", import.meta.url), "utf8");
   assert.match(pageSource, /MediaDeleteControl/);
-  assert.match(pageSource, /references=\{usage\.get\(String\(row\.id\)\)\?\?\[\]\}/);
+  assert.match(pageSource, /references=\{usage\.get\((?:String\(row\.id\)|id)\)\s*\?\?\s*\[\]\}/);
 });
 
 // An id that is not a UUID must be refused before it reaches PostgREST, in the

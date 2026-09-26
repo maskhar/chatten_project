@@ -34,7 +34,7 @@ function feedbackMessage(error: unknown): string {
   // framework boilerplate, but still tell the operator the form is intact and
   // what they can do next.
   if (!message || /^an error occurred in the server components render/i.test(message)) {
-    return "Save failed. Your changes are still here. Check the form and try again.";
+    return "Penyimpanan gagal. Perubahan Anda masih ada. Periksa formulir lalu coba lagi.";
   }
   return message;
 }

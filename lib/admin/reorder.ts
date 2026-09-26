@@ -19,7 +19,7 @@ export { REORDERABLE_TABLES, isReorderableTable, normalizeOffset, type Reorderab
  * row may be written; an editor without permission updates nothing rather than
  * being silently elevated.
  */
-export async function applyOrder(table: ReorderableTable, ids: string[], offset = 0, label = "order") {
+export async function applyOrder(table: ReorderableTable, ids: string[], offset = 0, label = "urutan") {
   validateReorderIds(ids, label);
   if (!ids.length) return 0;
 
@@ -30,12 +30,12 @@ export async function applyOrder(table: ReorderableTable, ids: string[], offset 
     start_offset: offset,
   });
 
-  if (error) throw new Error(`Unable to save ${label}.`);
+  if (error) throw new Error(`Gagal menyimpan ${label}.`);
 
   // RLS returning zero rows for a non-empty list means the caller could not
   // write them. Reporting success there would show the editor a reordered
   // list that reverts on the next load.
   const affected = typeof data === "number" ? data : 0;
-  if (affected !== ids.length) throw new Error(`Unable to save ${label}.`);
+  if (affected !== ids.length) throw new Error(`Gagal menyimpan ${label}.`);
   return affected;
 }

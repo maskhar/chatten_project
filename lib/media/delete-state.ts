@@ -20,17 +20,17 @@ export const initialMediaDeleteActionState: MediaDeleteActionState = { status: "
 
 export function buildMediaDeleteState(references: readonly MediaUsageReference[], mediaName: string): MediaDeleteState {
   const presentation = buildMediaUsagePresentation(references);
-  const name = mediaName.trim() || "this image";
+  const name = mediaName.trim() || "gambar ini";
   return {
     canDelete: presentation.count === 0,
     usageCount: presentation.count,
-    protectedMessage: presentation.count ? "This image cannot be deleted because it is currently used in " + presentation.count + " " + (presentation.count === 1 ? "place." : "places.") : null,
-    confirmationMessage: presentation.count ? null : "Delete “" + name + "”? This permanently removes the image from the Media Library and Storage.",
+    protectedMessage: presentation.count ? "Gambar ini tidak dapat dihapus karena sedang dipakai di " + presentation.count + " tempat." : null,
+    confirmationMessage: presentation.count ? null : "Hapus “" + name + "”? Gambar akan dihapus permanen dari Pustaka Media dan Storage.",
     references,
   };
 }
 
 export function mediaInUseActionState(references: readonly MediaUsageReference[]): MediaDeleteActionState {
-  const state = buildMediaDeleteState(references, "this image");
-  return { status: "error", code: "MEDIA_IN_USE", message: state.protectedMessage ?? "This image cannot be deleted.", references };
+  const state = buildMediaDeleteState(references, "gambar ini");
+  return { status: "error", code: "MEDIA_IN_USE", message: state.protectedMessage ?? "Gambar ini tidak dapat dihapus.", references };
 }

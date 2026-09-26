@@ -32,8 +32,8 @@ test("batched query rows feed Event, Promotion, and SEO references into core", a
   });
   const usage = await loadMediaUsageMapWithClient(client);
 
-  assert.deepEqual(usage.get("event-media"), [{ mediaId: "event-media", resource: "event", label: "Event", title: "Acoustic Night" }]);
-  assert.deepEqual(usage.get("promotion-media"), [{ mediaId: "promotion-media", resource: "promotion", label: "Promotion", title: "Weekend Offer" }]);
+  assert.deepEqual(usage.get("event-media"), [{ mediaId: "event-media", resource: "event", label: "Acara", title: "Acoustic Night" }]);
+  assert.deepEqual(usage.get("promotion-media"), [{ mediaId: "promotion-media", resource: "promotion", label: "Promosi", title: "Weekend Offer" }]);
   assert.deepEqual(usage.get("seo-media"), [{ mediaId: "seo-media", resource: "seo", label: "SEO", title: "events" }]);
   assert.equal(client.calls.length, 10);
   assert.deepEqual(client.calls.find((call) => call.table === "seo_settings"), { table: "seo_settings", columns: "og_media_id,page_key,title" });

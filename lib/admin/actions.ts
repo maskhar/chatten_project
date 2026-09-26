@@ -13,7 +13,7 @@ import { coerceFieldValue, optionalUuidSchema, parseField, uuidSchema } from "./
 // role can depend on which resource is being written (A9).
 async function authorizeResource(formData: FormData) {
   const resource = resourceFor(String(formData.get("resource")));
-  if (!resource) throw new Error("Unknown resource");
+  if (!resource) throw new Error("Modul CMS tidak dikenal.");
   await requireAdmin(minRoleFor(resource));
   return resource;
 }
@@ -29,15 +29,15 @@ function assertSafeUrls(payload: Record<string, unknown>) {
   for (const key of URL_FIELD_KEYS) {
     const raw = payload[key];
     if (typeof raw !== "string" || raw === "") continue;
-    if (!isSafeUrl(raw)) throw new Error(`"${key}" must be an http(s) URL.`);
+    if (!isSafeUrl(raw)) throw new Error(`"${key}" harus berupa URL http(s).`);
   }
   const mapEmbed = payload.map_embed_url;
   if (typeof mapEmbed === "string" && mapEmbed !== "" && !isSafeUrlWithHost(mapEmbed, MAP_EMBED_HOSTS, ["https:"])) {
-    throw new Error(`"map_embed_url" must be an https URL from a supported map provider (${MAP_EMBED_HOSTS.join(", ")}).`);
+    throw new Error(`"map_embed_url" harus berupa URL https dari penyedia peta yang didukung (${MAP_EMBED_HOSTS.join(", ")}).`);
   }
   const href = payload.href;
   if (typeof href === "string" && href !== "" && !isSafeInternalPath(href)) {
-    throw new Error('"href" must be a site-relative path starting with "/".');
+    throw new Error('"href" harus berupa path relatif situs yang diawali "/".');
   }
 }
 // Phase 6: a select is a convenience in the browser, not a boundary. The
@@ -50,7 +50,7 @@ function assertAllowedChoices(resource: Resource, payload: Record<string, unknow
     if (!allowed) continue;
     const raw = payload[field.key];
     if (raw === null || raw === undefined || raw === "") continue;
-    if (!allowed.includes(String(raw))) throw new Error(`"${field.label}" is not one of the available options.`);
+    if (!allowed.includes(String(raw))) throw new Error(`"${field.label}" bukan salah satu pilihan yang tersedia.`);
   }
 }
 
@@ -97,7 +97,24 @@ export async function saveResource(formData: FormData) {
 // A26: `offset` is the rank of the first submitted row within the whole table.
 // The list view is paginated, so without it page 2 would renumber its rows from
 // 0 and collide with page 1 instead of continuing after it.
-export async function reorderResource(formData: FormData) { const resource=await authorizeResource(formData); if(!resource.fields.some(field=>field.key==="sort_order")) throw new Error("This resource has no display order."); if(!isReorderableTable(resource.table)) throw new Error("This resource has no display order."); const ids=String(formData.get("ids") ?? "").split(",").filter(Boolean); if(!ids.length) throw new Error("The new order was not received. Reload the page and try reordering again."); await applyOrder(resource.table, ids, normalizeOffset(formData.get("offset")), "order"); revalidatePath("/"); revalidatePath(`/admin/${resource.key}`); }
+export async function reorderResource(formData: FormData) {
+  const resource = await authorizeResource(formData);
+  if (!resource.fields.some((field) => field.key === "sort_order")) {
+    throw new Error("Modul ini tidak memiliki urutan tampilan.");
+  }
+  if (!isReorderableTable(resource.table)) {
+    throw new Error("Modul ini tidak memiliki urutan tampilan.");
+  }
+
+  const ids = String(formData.get("ids") ?? "").split(",").filter(Boolean);
+  if (!ids.length) {
+    throw new Error("Urutan baru tidak diterima. Muat ulang halaman lalu coba atur urutan lagi.");
+  }
+
+  await applyOrder(resource.table, ids, normalizeOffset(formData.get("offset")), "urutan tampilan");
+  revalidatePath("/");
+  revalidatePath(`/admin/${resource.key}`);
+}
 export async function deleteResource(formData: FormData) {
   const resource = await authorizeResource(formData);
   // `String(null)` is "nope" — the old truthiness check let the literal string

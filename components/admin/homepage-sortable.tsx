@@ -22,7 +22,7 @@ const registry: Record<string, { name: string; description: string; href: string
     href: "/admin/hero",
   },
   moments: {
-    name: "Chatten Moments",
+    name: "Momen Chatten",
     description: "Cerita destinasi dari pagi sampai malam.",
     href: "/admin/moments",
   },
@@ -33,7 +33,7 @@ const registry: Record<string, { name: string; description: string; href: string
   },
   menu: {
     name: "Menu Unggulan",
-    description: "Pilihan menu yang tampil di homepage.",
+    description: "Pilihan menu yang tampil di beranda.",
     href: "/admin/menu",
   },
   spaces: {
@@ -109,7 +109,7 @@ export function HomepageSortable({ rows }: { rows: Section[] }) {
           ),
         }];
       })}
-      empty="Belum ada bagian homepage."
+      empty="Belum ada bagian beranda."
     />
   );
 }

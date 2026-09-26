@@ -14,10 +14,10 @@ test("an empty field clears the focal point rather than failing", () => {
 });
 
 test("values outside the numeric(5,4) domain are rejected", () => {
-  assert.throws(() => parseFocalValue("-0.1"), /between 0 and 1/);
-  assert.throws(() => parseFocalValue("1.5"), /between 0 and 1/);
-  assert.throws(() => parseFocalValue("left"), /must be a number/);
-  assert.throws(() => parseFocalValue("Infinity"), /must be a number/);
+  assert.throws(() => parseFocalValue("-0.1"), /antara 0 dan 1/);
+  assert.throws(() => parseFocalValue("1.5"), /antara 0 dan 1/);
+  assert.throws(() => parseFocalValue("left"), /harus berupa angka/);
+  assert.throws(() => parseFocalValue("Infinity"), /harus berupa angka/);
 });
 
 test("precision is rounded to what the column can hold", () => {
@@ -29,8 +29,8 @@ test("precision is rounded to what the column can hold", () => {
 });
 
 test("a half-filled pair is a form error, not a stored row", () => {
-  assert.throws(() => parseFocalPoint("0.3", ""), /both/);
-  assert.throws(() => parseFocalPoint("", "0.7"), /both/);
+  assert.throws(() => parseFocalPoint("0.3", ""), /kedua nilai titik fokus/);
+  assert.throws(() => parseFocalPoint("", "0.7"), /kedua nilai titik fokus/);
 });
 
 test("both empty clears both columns", () => {

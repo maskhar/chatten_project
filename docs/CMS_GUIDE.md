@@ -1,159 +1,158 @@
-# CMS Guide
+# Panduan CMS
 
 ## Homepage
 
-- Drag section cards, then select **Save display order**.
-- Use **Move up** and **Move down** for keyboard-friendly ordering.
-- Use **Show** or **Hide** to control public homepage visibility.
-- Use **Edit** to open each section editor. Public homepage reflects saved order and visibility.
+- Seret kartu bagian, lalu pilih **Simpan urutan tampilan**.
+- Gunakan tombol panah naik dan turun untuk mengurutkan dengan keyboard.
+- Gunakan **Tampilkan** atau **Sembunyikan** untuk mengatur visibilitas di homepage publik.
+- Gunakan **Edit** untuk membuka editor setiap bagian. Homepage publik mengikuti urutan dan visibilitas yang sudah disimpan.
 
-## Experiences
+## Pengalaman
 
-- View all experiences in a visual card layout showing thumbnail, title, slug, description, and status.
-- Use **Add Experience** to create a new experience with name, slug, description, and approved media.
-- Click **Edit** on any experience card to modify its details.
-- Experience name is the public display title shown on `/experience` and `/experience/[slug]`.
-- Slug must be URL-friendly (e.g., `morning-coffee`). It becomes the public URL path.
-- Description appears on both the experience list and detail pages.
-- Select approved images using the Media Picker.
-- Active checkbox controls whether the experience is visible (used with status for publishing).
-- Status can be **Draft** or **Published**. Only published + active experiences appear on the public website.
-- **Save Changes** updates the experience. **Cancel** returns to the experiences list without saving.
+- Lihat semua pengalaman dalam daftar kartu visual yang menampilkan thumbnail, judul, slug, deskripsi, dan status.
+- Gunakan **Tambah Pengalaman** untuk membuat pengalaman baru dengan nama, slug, deskripsi, dan gambar dari Media Picker.
+- Pilih **Edit** pada kartu pengalaman untuk mengubah detailnya.
+- Nama pengalaman menjadi judul publik pada `/experience` dan `/experience/[slug]`.
+- Slug harus ramah URL (misalnya `morning-coffee`). Nilai ini menjadi jalur URL publik.
+- Deskripsi tampil pada halaman daftar dan detail pengalaman.
+- Pilih gambar melalui Media Picker.
+- Kotak centang **Aktif** mengatur apakah pengalaman terlihat; nilainya digunakan bersama status penerbitan.
+- Status dapat berupa **Draf** atau **Terbit**. Hanya pengalaman yang Terbit dan Aktif yang tampil di situs publik.
+- **Simpan perubahan** memperbarui pengalaman. **Batal** kembali ke daftar pengalaman tanpa menyimpan.
 
-### Experience Ordering
+### Urutan Pengalaman
 
-- Drag experience cards to reorder them, then click **Save display order** to persist changes.
-- Use **Move Up** and **Move Down** buttons for keyboard-friendly and accessible ordering.
-- First experience cannot move up; last experience cannot move down.
-- Public `/experience` page displays experiences in saved order.
+- Seret kartu pengalaman untuk mengubah urutan, lalu pilih **Simpan urutan tampilan** untuk menyimpan perubahan.
+- Gunakan tombol panah naik dan turun untuk pengurutan yang dapat diakses dengan keyboard.
+- Pengalaman pertama tidak dapat dipindahkan ke atas; pengalaman terakhir tidak dapat dipindahkan ke bawah.
+- Halaman publik `/experience` menampilkan pengalaman sesuai urutan tersimpan.
 
-### Experience Visibility
+### Visibilitas Pengalaman
 
-- Use **Show** or **Hide** buttons to quickly toggle experience visibility without opening the editor.
-- An experience must be both **Active** and **Published** to appear on the public website.
-- **Draft** experiences remain hidden regardless of active state.
-- Status badges show current state: Draft (gray) or Published (green), plus Active (blue) or Inactive (gray).
+- Gunakan **Tampilkan** atau **Sembunyikan** untuk mengubah visibilitas pengalaman tanpa membuka editor.
+- Pengalaman harus berstatus **Aktif** dan **Terbit** agar tampil di situs publik.
+- Pengalaman **Draf** tetap tersembunyi, terlepas dari status Aktif.
+- Lencana status menunjukkan keadaan saat ini: Draf (abu-abu) atau Terbit (hijau), serta Aktif (biru) atau Nonaktif (abu-abu).
 
-### Deleting Experiences
+### Menghapus Pengalaman
 
-- Click **Delete** on any experience card to remove it permanently.
-- Confirmation dialog warns that deletion is permanent but preserves the associated media file.
-- Deleting an experience does not delete its image from Media Library.
-- The same image can be reused by other content after the experience is deleted.
+- Pilih **Hapus** pada kartu pengalaman untuk menghapusnya secara permanen.
+- Dialog konfirmasi menjelaskan bahwa penghapusan bersifat permanen, tetapi berkas media terkait tetap disimpan.
+- Menghapus pengalaman tidak menghapus gambarnya dari Pustaka Media.
+- Gambar yang sama dapat dipakai kembali oleh konten lain setelah pengalaman dihapus.
 
-## Spaces
+## Ruang
 
-- Use the dedicated **Spaces** manager at `/admin/spaces` to view Spaces as visual cards.
-- Select **Add Space** to create a Space, or **Edit** on an existing card to open its dedicated form.
-- Editable fields are Space Name, Slug, Description, approved Image, Active, and Status.
-- Leave Slug blank when creating to generate it from the Space name; edit slugs as URL-friendly lowercase identifiers.
-- The shared Media Picker shows approved media only. Existing images initialize as selected, and optional images can be replaced or removed without deleting the Media Library asset.
-- Use **Save Changes** to persist a Space and **Cancel** to return to the manager.
+- Gunakan pengelola **Ruang** di `/admin/spaces` untuk melihat Ruang sebagai kartu visual.
+- Pilih **Tambah Ruang** untuk membuat Ruang, atau **Edit** pada kartu yang ada untuk membuka formulir khususnya.
+- Bidang yang dapat diubah adalah Nama ruang, Slug, Deskripsi, gambar dari Media Picker, Aktif, dan Status.
+- Kosongkan Slug saat membuat Ruang agar nilainya dibuat dari nama Ruang; ubah slug sebagai pengenal huruf kecil yang ramah URL.
+- Media Picker menampilkan gambar dari Pustaka Media. Gambar yang sudah ada langsung ditandai sebagai pilihan; gambar opsional dapat diganti atau dihapus dari pilihan tanpa menghapus aset Pustaka Media.
+- Gunakan **Simpan perubahan** untuk menyimpan Ruang dan **Batal** untuk kembali ke pengelola.
 
-### Space Ordering
+### Urutan Ruang
 
-- Drag Space cards, then select **Save display order** to persist their public order.
-- Use **Move Up** and **Move Down** for keyboard-friendly and mobile ordering. Boundary controls disable on the first and last Space.
-- Ordering is visual; operators never enter raw sort-order numbers.
+- Seret kartu Ruang, lalu pilih **Simpan urutan tampilan** untuk menyimpan urutan publiknya.
+- Gunakan tombol panah naik dan turun untuk pengurutan dengan keyboard maupun perangkat seluler. Kontrol batas dinonaktifkan pada Ruang pertama dan terakhir.
+- Pengurutan bersifat visual; operator tidak perlu memasukkan angka `sort_order` mentah.
 
-### Space Visibility
+### Visibilitas Ruang
 
-- Use **Show** or **Hide** for quick active-state changes.
-- **Draft** and **Published** remain separate editorial states. Public routes require both Active and Published.
+- Gunakan **Tampilkan** atau **Sembunyikan** untuk mengubah status Aktif dengan cepat.
+- **Draf** dan **Terbit** adalah status editorial terpisah. Rute publik memerlukan status Aktif dan Terbit.
 
-### Deleting Spaces
+### Menghapus Ruang
 
-- **Delete** removes the selected Space record after confirmation.
-- Linked Media remains available in Media Library, and no Storage object is deleted.
-- Remaining Spaces keep normalized public ordering after deletion.
+- **Hapus** menghapus data Ruang yang dipilih setelah konfirmasi.
+- Media terkait tetap tersedia di Pustaka Media dan tidak ada objek Storage yang dihapus.
+- Ruang tersisa mempertahankan urutan publik yang ternormalisasi setelah penghapusan.
 
-## Events and Promotions
+## Acara dan Promosi
 
-- Use `/admin/events` and `/admin/promotions` for dedicated operator-friendly managers.
-- Add or edit titles, slugs, summaries, body content, approved images, dates, active state, and editorial status.
-- Event start date/time is required; Event end date/time is optional and cannot precede its start.
-- Promotion start and end date/times are optional; when both exist, the end cannot precede the start.
-- Shared Media Picker shows approved media only. Replacing or removing an image changes only the content relation and preserves the Media Library asset.
-- Events use chronological start-time ordering. Promotions use original homepage creation ordering. Show/Hide changes active state without changing Draft/Published status.
-- Delete removes only the Event or Promotion record; linked Media Library and Storage assets remain preserved.
+- Gunakan `/admin/events` dan `/admin/promotions` untuk pengelola khusus yang ramah operator.
+- Tambahkan atau ubah judul, slug, ringkasan, isi, gambar dari Media Picker, tanggal, status Aktif, dan status editorial.
+- Tanggal/waktu Mulai Acara wajib diisi; tanggal/waktu Selesai Acara opsional dan tidak boleh lebih awal daripada Mulai.
+- Tanggal/waktu Mulai dan Selesai Promosi bersifat opsional; bila keduanya diisi, Selesai tidak boleh lebih awal daripada Mulai.
+- Media Picker menampilkan gambar dari Pustaka Media. Mengganti atau menghapus pilihan gambar hanya mengubah relasi konten dan mempertahankan aset Pustaka Media.
+- Acara diurutkan berdasarkan waktu Mulai secara kronologis. Promosi mengikuti urutan pembuatan awal di homepage. **Tampilkan**/**Sembunyikan** mengubah status Aktif tanpa mengubah status Draf/Terbit.
+- **Hapus** hanya menghapus data Acara atau Promosi; aset Pustaka Media dan Storage terkait tetap disimpan.
+
 ## Menu
 
-- Add, edit, delete, drag, or move menu categories. Categories containing items cannot be deleted.
-- Add items with category, Rupiah price, availability, description, and approved media.
-- Edit, duplicate, delete, drag, or move items inside their category.
-- Availability changes publish immediately. Reused media remains in Media Library.
-- Enter prices as normal Rupiah numbers such as `25000`; lists display `Rp 25.000`.
+- Tambahkan, ubah, hapus, seret, atau pindahkan kategori menu. Kategori yang berisi item tidak dapat dihapus.
+- Tambahkan item dengan kategori, harga Rupiah, ketersediaan, deskripsi, dan gambar dari Media Picker.
+- Ubah, duplikat, hapus, seret, atau pindahkan item di dalam kategorinya.
+- Perubahan ketersediaan langsung dipublikasikan. Media yang dipakai kembali tetap berada di Pustaka Media.
+- Masukkan harga sebagai angka Rupiah biasa, misalnya `25000`; daftar menampilkan `Rp 25.000`.
 
-## Gallery
+## Galeri
 
-- Add approved images from Media Library, edit caption and alt text, replace image references, show or hide items, and remove Gallery records.
-- Drag items or use Move Up/Down to save public ordering.
-- Removing Gallery item does not delete shared Media Library asset.
+- Tambahkan gambar dari Pustaka Media, ubah keterangan dan teks alt, ganti referensi gambar, tampilkan atau sembunyikan item, serta hapus data Galeri.
+- Seret item atau gunakan tombol panah naik/turun untuk menyimpan urutan publik.
+- Menghapus item Galeri tidak menghapus aset Pustaka Media yang digunakan bersama.
 
-## Choosing Images
+## Memilih Gambar
 
-When selecting images for content (Hero, Moments, Menu, Gallery, Experiences, Events, Promotions), the Media Picker shows only **Approved** images. Images with **Needs Review** or **Restricted** rights status are not selectable.
+Saat memilih gambar untuk konten (Hero, Moments, Menu, Galeri, Pengalaman, Acara, atau Promosi), Media Picker menampilkan gambar dari Pustaka Media.
 
-### Search and Filter
+### Pencarian dan Filter
 
-- **Search** matches image titles, alt text, and categories (case-insensitive).
-- **Category filter** shows all unique categories from approved images, sorted alphabetically.
-- Search and Category combine with AND logic—both conditions must match.
-- Use **Clear filters** to reset search and category together.
+- **Cari gambar...** mencocokkan judul gambar, teks alt, dan kategori tanpa membedakan huruf besar/kecil.
+- **Filter kategori** menampilkan semua kategori unik dari gambar yang tersedia, diurutkan menurut abjad.
+- Pencarian dan kategori menggunakan logika AND; kedua kondisi harus cocok.
+- Gunakan **Bersihkan filter** untuk mengatur ulang pencarian dan kategori sekaligus.
 
-### Selecting Images
+### Memilih Gambar
 
-- Currently selected image shows a **Selected** label above the title for clarity.
-- The selected thumbnail displays a green ring border and shows selection state in the grid.
-- Click any image thumbnail to select it.
-- Use **Replace** to change the current selection without removing it first.
-- Use **Remove** to clear the selection (only available when the field is optional).
+- Gambar yang saat ini dipilih menampilkan label **Terpilih** di atas judul agar jelas.
+- Thumbnail terpilih menampilkan cincin batas hijau dan keadaan pilihan di grid.
+- Pilih thumbnail gambar mana pun untuk memilihnya.
+- Gunakan **Ganti** untuk mengosongkan pilihan saat ini sebelum memilih gambar lain.
+- Gunakan **Hapus pilihan** untuk mengosongkan pilihan; tombol ini hanya tersedia bila bidang bersifat opsional.
 
-### Empty States
+### Keadaan Kosong
 
-- If no approved images exist, the picker shows: **No approved images yet** with guidance to upload and approve images first.
-- **Open Media Library** button navigates directly to `/admin/media` for uploading and approval.
-- If filters exclude all results, the picker shows: **No images match your filters** with a **Clear filters** action.
+- Bila belum ada gambar, picker menampilkan **Belum ada gambar** dengan panduan untuk mengunggah gambar terlebih dahulu.
+- Tombol **Buka Pustaka Media** membuka `/admin/media` untuk mengunggah gambar.
+- Bila filter tidak menghasilkan gambar, picker menampilkan **Tidak ada gambar yang sesuai dengan filter.** dengan tindakan **Bersihkan filter**.
 
-### Workflow
+### Alur Kerja
 
-1. Upload images through Media Library
-2. Approve images by setting Rights status to **Approved**
-3. Return to content editor (Hero, Menu, Gallery, Experiences, etc.)
-4. Select approved images through the Media Picker
+1. Unggah gambar melalui Pustaka Media.
+2. Kembali ke editor konten (Hero, Menu, Galeri, Pengalaman, dan sebagainya).
+3. Pilih gambar melalui Media Picker.
 
-## Media Search
+## Pencarian Media
 
-- Type a word into **Search media...**, submit, then use **Clear search** to return to full library.
-- Media Rights filter: All rights, Approved, Needs Review, Restricted. Search and Rights combine.
-- Usage filter: All usage, Used, or Unused; combines with Search and Rights.
-- Category filter derives existing Media categories and combines with Search, Rights, and Usage.
-- **Clear filters** resets Search, Rights, Usage, and Category together.
+- Ketik kata pada **Cari media…**, kirim pencarian dengan **Cari**, lalu gunakan **Hapus filter** untuk kembali ke pustaka lengkap.
+- Filter **Penggunaan** menyediakan **Semua penggunaan**, **Digunakan**, atau **Belum digunakan** dan digabungkan dengan pencarian.
+- Filter **Kategori** menggunakan kategori Media yang ada dan digabungkan dengan pencarian serta Penggunaan.
+- **Hapus filter** mengatur ulang Cari, Penggunaan, dan Kategori sekaligus.
 
-## Uploading Multiple Images
+## Mengunggah Banyak Gambar
 
-- Choose multiple images in one file-picker interaction, or drag and drop images into the upload zone.
-- Each upload accepts a maximum of 20 files. Selections over the limit remain visible so files can be removed before submission.
-- Supported formats are JPEG, PNG, WebP, and AVIF, with a maximum size of 10 MB per image.
-- New uploads default to **Needs Review** until an authorized operator approves their rights status.
+- Pilih beberapa gambar dalam satu interaksi pemilih berkas, atau seret dan lepas gambar ke area unggah.
+- Setiap unggahan menerima paling banyak 20 berkas. Pilihan yang melampaui batas tetap terlihat agar berkas dapat dihapus sebelum dikirim.
+- Format yang didukung adalah JPEG, PNG, WebP, dan AVIF, dengan ukuran maksimum 10 MB per gambar.
+- Gambar yang berhasil diunggah langsung masuk ke Pustaka Media dan dapat digunakan.
 
-## Upload Results
+## Hasil Unggahan
 
-- Each selected file displays its own status: **Ready**, **Uploading**, **Complete**, or **Failed**.
-- Failed files show the specific reason, such as unsupported format, file size limit, or duplicate detection.
-- One failed file does not cancel successful uploads in the same batch.
-- After upload completes, a summary shows how many images uploaded successfully and how many failed.
-- Use **Clear results** to reset the queue and start a new upload batch.
+- Setiap berkas yang dipilih menampilkan statusnya sendiri: **Siap**, **Mengunggah**, **Berhasil**, atau **Gagal**.
+- Berkas yang gagal menampilkan alasan spesifik, seperti format tidak didukung, batas ukuran berkas, atau duplikasi terdeteksi.
+- Satu berkas yang gagal tidak membatalkan unggahan berkas lain yang berhasil dalam kumpulan yang sama.
+- Setelah unggahan selesai, ringkasan menunjukkan jumlah gambar yang berhasil diunggah dan jumlah yang gagal.
+- Gunakan **Kosongkan pilihan** selama antrean belum diproses. Setelah hasil muncul, tombol berubah menjadi **Hasil terkunci** dan antrean tidak dapat diubah lagi.
 
-## Used In
+## Digunakan di
 
-- Open a Media item from **View / Edit** in Media Library.
-- **Used In** shows every CMS resource currently referencing that image with human-readable resource and content names.
-- Images without references show `This image is not currently used anywhere.`
+- Buka item Media melalui **Lihat / Edit** di Pustaka Media.
+- **Digunakan di** menampilkan setiap sumber daya CMS yang saat ini merujuk gambar tersebut, beserta nama sumber daya dan konten yang mudah dibaca.
+- Gambar tanpa referensi menampilkan `Gambar ini belum dipakai di mana pun.`
 
-## Deleting Media
+## Menghapus Media
 
-- Unused images may be deleted from Media Library after confirming permanent removal from Storage.
-- Used images cannot be deleted. The Media card shows current usage count plus human-readable resource and content names.
-- Remove or change every listed content reference before deleting the image.
-- Server checks current usage again when Delete is submitted, so stale page state cannot bypass protection.
+- Gambar yang tidak digunakan dapat dihapus dari Pustaka Media setelah mengonfirmasi penghapusan permanen dari Storage.
+- Gambar yang digunakan tidak dapat dihapus. Kartu Media menampilkan jumlah penggunaan saat ini serta nama sumber daya dan konten yang mudah dibaca.
+- Hapus atau ganti setiap referensi konten yang terdaftar sebelum menghapus gambar.
+- Server memeriksa kembali penggunaan saat ini saat **Hapus dengan aman** dikirim, sehingga keadaan halaman yang sudah usang tidak dapat melewati perlindungan.

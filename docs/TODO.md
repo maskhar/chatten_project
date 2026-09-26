@@ -755,6 +755,77 @@ work items; the audit document holds the evidence.
       `events-promotions-manager-core`, dan `admin-overview`. Verifikasi akhir
       menutup lint tanpa galat setelah penyelarasan `SortableList` A79.
 
+- [x] **A85** Terjemahkan lapisan bersama yang terlewat A84, dan kunci dengan
+      kontrak. A84 menutup layar yang diklik operator, tetapi setiap pesan yang
+      benar-benar dibaca ketika simpan **gagal** berasal dari lapisan di
+      bawahnya — dan lapisan itu masih berbahasa Inggris. Akibatnya simpan
+      berhasil berbahasa Indonesia sementara simpan gagal berbahasa Inggris,
+      persis pada momen operator paling butuh mengerti.
+      Cakupan: pesan cadangan `ActionForm` (`Penyimpanan gagal. Perubahan Anda
+      masih ada. Periksa formulir lalu coba lagi.`), validasi dan penyimpanan
+      urutan (`reorder-core.ts`, `reorder.ts`, kini berlabel per modul sehingga
+      editor tahu daftar mana yang gagal), aksi resource generik
+      (`lib/admin/actions.ts`), simpan detail media dan validasi titik fokus,
+      kontrol hapus media beserta daftar penggunaannya, label sumber
+      `lib/media/usage.ts`, serta nilai mentah `draft`/`published` dan
+      `super_admin`/`admin`/`editor` yang sebelumnya tercetak apa adanya di
+      `/admin/preview` dan `/admin/users`.
+      Kata benda domain diseragamkan lintas modul: `experience` → `pengalaman`,
+      `space` → `ruang`, `Gallery` → `galeri`, `event` → `acara`,
+      `Media Library` → `Pustaka Media`, `homepage` → `beranda`.
+      Yang **tidak** diterjemahkan, dan alasannya sama seperti A84: nilai yang
+      disimpan di basis data tetap Inggris — `<option value="draft">` dan
+      `value="published"` tidak bergeser, kunci peran tetap kunci peran, kunci
+      map pada `usage.ts` tetap kontrak yang dibaca setiap konsumen, dan
+      pencocokan `^an error occurred in the server components render` pada
+      `action-form.tsx` tetap Inggris karena itu teks redaksi Next.js sendiri.
+      Komentar pengembang juga tetap Inggris.
+      Lima berkas yang masih terminifikasi jadi satu baris (`media-delete-control.tsx`,
+      `preview/page.tsx`, `reorderResource`, `saveMediaDetails`, dan empat
+      `lib/admin/*-actions.ts`) ditulis ulang berformat tanpa mengubah logika,
+      urutan operasi, maupun semantik penjaga — termasuk urutan hapus metadata
+      sebelum Storage pada `deleteMediaWithFeedback`.
+      Kontrak pengujian: `tests/admin-copy-indonesian.test.mjs` bertambah 7 kasus
+      (11 → 18) yang menutup lapisan bersama, dan menegaskan nilai tersimpan
+      tetap Inggris. Empat berkas uji yang terikat literal Inggris diselaraskan:
+      `reorder-core`, `media-focal-point`, `media-delete-protection`, dan
+      `media-detail-usage`.
+
+- [x] **A86** Selaraskan dokumentasi operator dengan antarmuka yang sudah
+      diterjemahkan, dan bukti audit responsif ulang. `docs/CMS_GUIDE.md`
+      mengutip label tombol secara verbatim, sehingga penerjemahan A84/A85
+      membuat panduan itu menyuruh operator mencari kontrol yang sudah tidak
+      ada: "klik **Delete safely**" padahal tombolnya berbunyi **Hapus dengan
+      aman**, "**View / Edit** di Media Library" padahal layarnya bernama
+      **Pustaka Media**, dan "**Search media...**" padahal kolomnya berbunyi
+      **Cari media…**. Panduan diterjemahkan penuh, lalu sepuluh kutipan
+      kontrol disesuaikan dengan string sumbernya.
+      Tiga pernyataan yang faktualnya salah juga diperbaiki, bukan hanya
+      diterjemahkan:
+      1. **Kosongkan pilihan** digambarkan dapat memulai kumpulan unggahan baru
+         kapan saja; `media-upload-dropzone.tsx` mematikan tombol itu begitu ada
+         hasil (`canModifyQueue`) dan mengubah labelnya menjadi **Hasil
+         terkunci**. Panduan kini menyatakan batas itu.
+      2. `docs/MEDIA_WORKFLOW.md` masih mendokumentasikan gerbang
+         `rights_status` (`Set rights_status to approved`, `rights_status:
+         unknown`, `approved is required before publishing`), padahal kolomnya
+         dihapus oleh `20260921000500_remove_media_rights_approval.sql`.
+         Klausa itu dihapus; kelayakan hak pakai dinyatakan sebagai kebijakan
+         editorial, bukan penjagaan basis data.
+      3. `Media Detail Used In UI remains next step` sudah tidak benar — UI itu
+         sudah tayang sebagai heading **Digunakan di**.
+      Kontrak pengujian bertambah 2 kasus (18 → 20): satu memasangkan setiap
+      label yang dikutip panduan dengan berkas sumber yang merendernya, satu
+      lagi menolak kembalinya dokumentasi `rights_status`. Dengan itu,
+      menerjemahkan tombol tanpa memperbarui panduan akan menggagalkan uji,
+      bukan lolos diam-diam.
+      Bukti audit responsif ulang setelah seluruh perubahan A84–A86:
+      `.e2e/overflow-audit.mjs` pada 30 rute publik + dasbor di lebar 375, 768,
+      dan 1440 melaporkan `findings: []`, `failures: []`, `consoleErrors: []`,
+      `failedRequests: []`. Tidak ada luapan horizontal, tidak ada rute 4xx/5xx,
+      tidak ada kebocoran redirect login, dan setiap halaman dasbor tetap punya
+      `h1`.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

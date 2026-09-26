@@ -66,8 +66,8 @@ test("foreign-key and reorder lookups stop on lookup errors", () => {
   assert.match(source("menu"), /categoryLookup\.error/);
   assert.match(source("menu"), /lookup\.error/);
   assert.match(source("menu"), /if \(error\) throw new Error\("Urutan menu tidak dapat dibaca/);
-  assert.match(source("space"), /if \(error\) throw new Error\("Daftar space tidak dapat dibaca/);
-  assert.match(source("experience"), /if \(error\) throw new Error\("Daftar experience tidak dapat dibaca/);
+  assert.match(source("space"), /if \(error\) throw new Error\("Daftar ruang tidak dapat dibaca/);
+  assert.match(source("experience"), /if \(error\) throw new Error\("Daftar pengalaman tidak dapat dibaca/);
   assert.match(source("role"), /if \(error\) throw new Error\("Peran Anda tidak dapat diperiksa/);
 });
 

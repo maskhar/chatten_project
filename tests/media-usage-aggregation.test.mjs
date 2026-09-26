@@ -25,15 +25,15 @@ test("aggregates structured Media usage across resources", () => {
 
   assert.deepEqual(usage.get(sharedMediaId), [
     { mediaId: sharedMediaId, resource: "hero", label: "Hero", title: "Panoramic Morning" },
-    { mediaId: sharedMediaId, resource: "gallery", label: "Gallery", title: "Gallery item" },
-    { mediaId: sharedMediaId, resource: "event", label: "Event", title: "Acoustic Night" },
-    { mediaId: sharedMediaId, resource: "promotion", label: "Promotion", title: "Weekend Offer" },
+    { mediaId: sharedMediaId, resource: "gallery", label: "Galeri", title: "Item galeri" },
+    { mediaId: sharedMediaId, resource: "event", label: "Acara", title: "Acoustic Night" },
+    { mediaId: sharedMediaId, resource: "promotion", label: "Promosi", title: "Weekend Offer" },
     { mediaId: sharedMediaId, resource: "seo", label: "SEO", title: "home" },
   ]);
   assert.equal(mediaUsageCount(usage, sharedMediaId), 5);
   assert.equal(isMediaUsed(usage, sharedMediaId), true);
   assert.deepEqual(usage.get("menu-media"), [{ mediaId: "menu-media", resource: "menu", label: "Menu", title: "Cappuccino" }]);
-  assert.deepEqual(usage.get("gallery-media"), [{ mediaId: "gallery-media", resource: "gallery", label: "Gallery", title: "Garden view" }]);
+  assert.deepEqual(usage.get("gallery-media"), [{ mediaId: "gallery-media", resource: "gallery", label: "Galeri", title: "Garden view" }]);
 });
 
 test("retains each same-resource usage and ignores null media fields", () => {

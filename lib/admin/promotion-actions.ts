@@ -49,7 +49,7 @@ export async function savePromotion(formData: FormData) {
   if (imageMediaId) {
     const mediaLookup = await supabase.from("media").select("id").eq("id", imageMediaId).maybeSingle();
     if (mediaLookup.error) throw new Error("Gambar tidak dapat diperiksa. Promo belum disimpan.");
-    if (!mediaLookup.data) throw new Error("Gambar tidak ditemukan di Media Library. Pilih gambar lain.");
+    if (!mediaLookup.data) throw new Error("Gambar tidak ditemukan di Pustaka Media. Pilih gambar lain.");
   }
   if (id) {
     const { error, count } = await supabase.from("promotions").update(payload, { count: "exact" }).eq("id", id);

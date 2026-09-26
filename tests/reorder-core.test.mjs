@@ -31,27 +31,27 @@ test("the old guard accepted a run of 36 dashes; this one does not", () => {
   const dashes = "-".repeat(36);
   // The guard every action used to carry, reproduced verbatim.
   assert.ok(/^[0-9a-f-]{36}$/i.test(dashes), "precondition: the old guard really did accept this");
-  assert.throws(() => validateReorderIds([dashes]), /Invalid order\./);
+  assert.throws(() => validateReorderIds([dashes]), /urutan tidak valid\./);
 });
 
 test("a hex run without dash positions is rejected", () => {
   // 32 hex digits and 4 more characters passed the old guard as well.
-  assert.throws(() => validateReorderIds(["a".repeat(36)]), /Invalid order\./);
+  assert.throws(() => validateReorderIds(["a".repeat(36)]), /urutan tidak valid\./);
 });
 
 test("duplicate ids are rejected", () => {
   // Two positions competing for one row means an entry silently vanishes from
   // the order. No action checked for this before.
-  assert.throws(() => validateReorderIds([uuid(1), uuid(1)]), /Invalid order\./);
+  assert.throws(() => validateReorderIds([uuid(1), uuid(1)]), /urutan tidak valid\./);
 });
 
 test("the label appears in the message so the editor knows which list failed", () => {
-  assert.throws(() => validateReorderIds(["nope"], "Gallery order"), /Invalid Gallery order\./);
+  assert.throws(() => validateReorderIds(["nope"], "urutan galeri"), /urutan galeri tidak valid\./);
 });
 
 test("a non-array is rejected rather than coerced", () => {
-  assert.throws(() => validateReorderIds("not-an-array"), /Invalid order\./);
-  assert.throws(() => validateReorderIds(null), /Invalid order\./);
+  assert.throws(() => validateReorderIds("not-an-array"), /urutan tidak valid\./);
+  assert.throws(() => validateReorderIds(null), /urutan tidak valid\./);
 });
 
 test("normalizeOffset refuses values that would write negative ranks", () => {
