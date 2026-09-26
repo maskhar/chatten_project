@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { PublicAbout, PublicCard, PublicContact, PublicEvent, PublicGalleryItem, PublicHour, PublicMedia, PublicMenuItem, PublicSocial } from "./types";
-import { mediaMap } from "./media";
+import { mediaMap, PUBLIC_MEDIA_COLUMNS } from "./media";
 import type { TableName } from "@/types/tables";
 
 // A39: getHomepageData has always swallowed its own failure so a database
@@ -45,7 +45,9 @@ async function publicVisibleRows<T>(table: VisibleTable, order = "sort_order") {
 export async function publicMedia() {
   return guard(async () => {
     const supabase = await createServerSupabaseClient();
-    const result = await supabase.from("media").select("*");
+    // A93: kolomnya disebut satu per satu. `select("*")` sebagai anon ditolak
+    // sejak hak SELECT dipersempit per kolom — lihat PUBLIC_MEDIA_COLUMNS.
+    const result = await supabase.from("media").select(PUBLIC_MEDIA_COLUMNS);
     return mediaMap(result.data ?? []);
   }, {} as Record<string, PublicMedia>);
 }
@@ -73,7 +75,7 @@ export async function publicMediaById(id: string | null | undefined) {
   if (!id) return null;
   return guard(async () => {
     const supabase = await createServerSupabaseClient();
-    const result = await supabase.from("media").select("*").eq("id", id).maybeSingle();
+    const result = await supabase.from("media").select(PUBLIC_MEDIA_COLUMNS).eq("id", id).maybeSingle();
     return (result.data as PublicMedia | null) ?? null;
   }, null as PublicMedia | null);
 }

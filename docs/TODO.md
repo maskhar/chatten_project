@@ -1158,6 +1158,117 @@ adalah uji yang akhirnya dilewati. Sifat yang dipaku di sini struktural, sehingg
 membaca strukturnya cukup; urutan fokus sebenarnya di peramban tetap belum ada
 yang mengujinya secara otomatis.
 
+### A93 — persempit pemaparan baca media ke peran anonim
+
+`supabase/migrations/20260927000100_media_read_exposure.sql`. Tiga lubang baca
+yang saling menutupi, semuanya warisan dari migrasi awal.
+
+Pertama, kebijakan `public_media` adalah `using (true)`. Setiap baris di
+`chatten_cafe.media` terbaca oleh siapa pun yang memegang kunci anon — termasuk
+gambar yang belum pernah dipakai konten mana pun, yang berarti seluruh Pustaka
+Media dapat dibaca dari luar CMS. Kebijakannya sekarang mensyaratkan adanya
+baris konten yang merujuk gambar itu. Subkueri rujukannya sendiri dievaluasi di
+bawah RLS pemanggil, sehingga `public_content` sudah menyaring `is_active and
+status = 'published'` untuk `anon` tanpa perlu diulang di sini. Pustaka Media di
+CMS tetap utuh: kebijakan permisif di-OR-kan, dan `cms_manage` tidak disentuh —
+gambar yang belum dipakai harus tetap terlihat di CMS, atau ia tidak akan pernah
+bisa dipilih. `seo_settings` ikut dihitung sebagai rujukan karena kebijakannya
+`using (true)` dan gambar Open Graph memang harus dapat dirayapi.
+
+Kedua, RLS tidak dapat menyembunyikan kolom. Kebijakan baris mempersempit
+*baris*; pemaparan kolom adalah soal hak SQL, dan migrasi awal memberi
+`grant select on all tables … to anon`. Jadi `bucket`, `storage_path`,
+`sha256`, `original_filename`, `mime_type`, `file_size`, dan `uploaded_by`
+semuanya terbaca publik. Penyempitannya butuh dua langkah: `revoke select`
+lalu `grant select (…)` per kolom. Enam kolom yang tersisa — `id`, `alt_text`,
+`width`, `height`, `focal_x`, `focal_y` — adalah tepat yang dirender permukaan
+publik; `MediaImage` sendiri hanya membaca `id` (lewat `mediaHref`), `alt_text`,
+dan kedua titik fokusnya, sementara `width`/`height` dipakai untuk rasio aspek.
+`authenticated` tetap memegang seluruh kolom, karena layar Pustaka Media
+menampilkan nama berkas, tipe, ukuran, dan sha256.
+
+Konsekuensinya di sisi aplikasi tidak halus: setelah hak SELECT dipersempit per
+kolom, `select("*")` pada tabel media sebagai `anon` tidak mengembalikan lebih
+sedikit kolom — ia **gagal seluruhnya**, dan setiap gambar di halaman publik
+hilang. Karena itu tiga pemanggilan `select("*")` diganti dengan
+`PUBLIC_MEDIA_COLUMNS` di `lib/public-data/media.ts`, satu sumber kebenaran yang
+membuat batas itu terbaca di kode, dan `PublicMedia` serta `Media` dipersempit
+supaya bentuk tipenya tidak lagi menjanjikan kolom yang tidak boleh dibaca.
+
+Ketiga, bucket `chatten-media` disisipkan dengan `public = true` sementara
+kebijakan `storage.objects` bernama `"chatten public read"` juga ada. Keduanya
+saling membatalkan: dengan bucket publik, storage-api melayani
+`/object/public/...` **tanpa mengevaluasi RLS sama sekali**, jadi kebijakan itu
+tidak pernah dibaca. Bucket dipaksa `public = false`, dan kebijakannya
+**dihapus, bukan dipersempit** — ia tidak punya pemanggil yang sah. Byte publik
+mengalir lewat `app/api/media/[id]/route.ts` di bawah service role, yang
+BYPASSRLS dan karenanya tidak pernah menyentuh kebijakan itu; CMS memakai
+`"chatten cms manage"`, yang tidak diubah.
+
+### A94 — tolak penghapusan media yang masih dipakai, di basis data
+
+`supabase/migrations/20260927000200_media_delete_guard.sql`. `delete from
+media` pada gambar yang masih dipakai saat ini **berhasil**, dan diam-diam
+mengosongkan gambar di setiap baris yang merujuknya.
+
+Itu akibat langsung `20260921000500_database_integrity.sql`, yang memasang
+sepuluh foreign key dengan `on delete set null`. Pilihan itu benar untuk masalah
+yang diselesaikannya — sebelumnya kolomnya `uuid` biasa, jadi media yang dihapus
+meninggalkan id menggantung yang gagal dirender — tetapi ia mengubah penghapusan
+yang seharusnya *ditolak* menjadi penghapusan yang *berhasil dengan kerusakan
+tersebar*. Satu perintah dapat mengosongkan gambar hero, empat item menu, dan
+gambar Open Graph sekaligus, tanpa satu pun galat.
+
+Perlindungan yang ada hari ini hanya di aplikasi: `deleteMediaWithFeedback`
+memuat peta penggunaan lalu menolak. Itu lapisan yang benar untuk *pesannya* —
+ia dapat menyebut konten mana yang memakai gambar itu — tetapi ia bukan batas.
+Token sesi CMS bekerja tanpa Server Action: `DELETE /rest/v1/media?id=eq.<uuid>`
+lewat PostgREST melewatinya sepenuhnya, dan `cms_manage` mengizinkannya untuk
+peran editor. Ada juga balapan yang tidak dapat ditutup di aplikasi — peta
+penggunaan dibaca, lalu baris konten baru menunjuk gambar itu, lalu penghapusan
+berjalan.
+
+Trigger `media_refuse_delete_in_use` adalah BEFORE DELETE, jadi ia menolak
+sebelum `on delete set null` sempat menyentuh apa pun. Ia **SECURITY DEFINER**,
+dan ini satu-satunya tempat di skema ini yang memakainya dengan sengaja —
+berlawanan dengan `reorder_rows`, yang justru INVOKER supaya `cms_manage` tetap
+memutuskan siapa yang boleh menulis. Alasannya berlawanan pula: sebagai INVOKER,
+hitungan rujukan berjalan di bawah RLS pemanggil, sehingga baris konten yang
+tidak terlihat bagi peran itu tidak terhitung — dan penjaga yang bergantung pada
+visibilitas pemanggil bukan penjaga. `search_path` dipatok ke
+`chatten_cafe, pg_temp`, dan fungsinya di-`revoke all … from public`.
+
+errcode `23503` (`foreign_key_violation`) dipilih dengan sengaja: inilah yang
+akan terjadi bila kesepuluh foreign key itu `on delete restrict` sejak awal, dan
+PostgREST memetakannya ke HTTP 409 Conflict — bukan 500.
+`isMediaInUseDatabaseError` di `lib/media/delete-state.ts` memetakannya kembali
+ke `mediaInUseActionState`, sehingga penolakan dari basis data berbunyi sama
+seperti penolakan dari aplikasi. Ia mencocokkan `hint = 'MEDIA_IN_USE'` lebih
+dulu, dengan pasangan kode + teks pesan sebagai cadangan, karena PostgREST
+meneruskan errcode apa adanya tetapi tidak selalu meneruskan hint.
+
+`tests/media-exposure-boundary.test.mjs` (13 uji) memaku kedua sisi: enam kolom
+di migrasi harus sama dengan enam kolom di `PUBLIC_MEDIA_COLUMNS`, tidak ada
+permukaan publik yang boleh `select("*")` pada media, dan daftar sepuluh tabel
+rujukan harus identik di tiga tempat — kebijakan baca, trigger penjaga, dan
+`mediaUsageQueryDefinitions`. Larangan `select("*")` sengaja mengecualikan
+pohon `admin/`: Pustaka Media berjalan sebagai `authenticated` dan memang
+membutuhkan seluruh kolom.
+
+Verifikasi: 436/436 uji, typecheck, lint, dan build lulus.
+
+**Penerapan butuh jendela pemeliharaan.** Basis data ini dipakai bersama tenant
+lain, dan kedua migrasi ini mengubah hak baca serta memasang trigger pada tabel
+yang hidup. Tidak ada mutasi basis data yang dilakukan saat menulis keduanya —
+yang ada di repositori baru berupa berkas.
+
+Prapemeriksaan buku besar: tidak ada skema `supabase_migrations` dan tidak ada
+buku besar migrasi Chatten di basis data ini, sehingga tidak ada cara otomatis
+mengetahui migrasi mana yang sudah diterapkan. Buku besar itu **tidak dibuat**
+di sini: membuatnya mengubah struktur basis data bersama dan memerlukan
+otorisasi tersendiri. Urutan penerapan harus dipastikan manual sebelum
+menjalankan keduanya.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

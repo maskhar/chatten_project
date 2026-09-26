@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { HomepageData, Media } from "./types";
+import { PUBLIC_MEDIA_COLUMNS } from "@/lib/public-data/media";
 import type { TableName } from "@/types/tables";
 
 const empty: HomepageData = { settings: null, hero: null, moments: [], stories: [], experiences: [], spaces: [], categories: [], menu: [], gallery: [], testimonials: [], feature: null, hours: [], contact: null, socials: [], navigation: [], media: {} };
@@ -9,7 +10,7 @@ export async function getHomepageData(): Promise<HomepageData> {
   try {
     const supabase = await createServerSupabaseClient();
     const [settings, hero, moments, stories, experiences, spaces, categories, menu, gallery, testimonials, promotions, events, hours, contact, socials, navigation, media] = await Promise.all([
-      supabase.from("site_settings").select("*").limit(1).maybeSingle(), rows(supabase, "hero_slides"), rows(supabase, "moments"), rows(supabase, "about_sections"), rows(supabase, "experiences"), rows(supabase, "spaces"), rows(supabase, "menu_categories"), rows(supabase, "menu_items"), rows(supabase, "gallery_items"), rows(supabase, "testimonials"), rows(supabase, "promotions", "created_at"), rows(supabase, "events", "starts_at"), rows(supabase, "opening_hours", "day_of_week"), supabase.from("contact_information").select("*").eq("is_active", true).limit(1).maybeSingle(), rows(supabase, "social_links"), rows(supabase, "navigation_items"), supabase.from("media").select("*")
+      supabase.from("site_settings").select("*").limit(1).maybeSingle(), rows(supabase, "hero_slides"), rows(supabase, "moments"), rows(supabase, "about_sections"), rows(supabase, "experiences"), rows(supabase, "spaces"), rows(supabase, "menu_categories"), rows(supabase, "menu_items"), rows(supabase, "gallery_items"), rows(supabase, "testimonials"), rows(supabase, "promotions", "created_at"), rows(supabase, "events", "starts_at"), rows(supabase, "opening_hours", "day_of_week"), supabase.from("contact_information").select("*").eq("is_active", true).limit(1).maybeSingle(), rows(supabase, "social_links"), rows(supabase, "navigation_items"), supabase.from("media").select(PUBLIC_MEDIA_COLUMNS)
     ]);
     const now = Date.now();
     const featureRows = [...(promotions as unknown as HomepageData["feature"][]), ...(events as unknown as HomepageData["feature"][])];

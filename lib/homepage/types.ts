@@ -1,6 +1,10 @@
 // focal_x/focal_y are optional because the columns are nullable: an asset whose
 // focal point was never set renders from the centre, as it always did.
-export type Media = { id: string; bucket: string; storage_path: string; alt_text: string | null; focal_x?: number | null; focal_y?: number | null };
+//
+// A93: `bucket`/`storage_path` dibuang. Beranda tidak pernah membacanya, dan
+// peran `anon` tidak lagi punya hak SELECT atasnya sejak 20260927000100 —
+// lihat PUBLIC_MEDIA_COLUMNS di lib/public-data/media.ts.
+export type Media = { id: string; alt_text: string | null; focal_x?: number | null; focal_y?: number | null };
 export type SiteSettings = { site_name: string; tagline: string | null; description: string | null };
 export type HeroSlide = { id: string; title: string; subtitle: string | null; image_media_id: string | null; cta_label: string | null; cta_url: string | null };
 export type Moment = { id: string; name: string; description: string | null; image_media_id: string | null; sort_order: number };

@@ -1,4 +1,9 @@
-export type PublicMedia = { id: string; bucket: string; storage_path: string; alt_text: string | null; width: number | null; height: number | null; focal_x?: number | null; focal_y?: number | null };
+// A93: `bucket` dan `storage_path` dibuang dari bentuk publik. Tidak ada
+// permukaan publik yang pernah membacanya — gambar dialamatkan dengan id lewat
+// /api/media/[id] — dan sejak 20260927000100 peran `anon` tidak lagi punya hak
+// SELECT atas kedua kolom itu. Menyebutkannya di tipe berarti kueri baru bisa
+// menuliskannya tanpa galat kompilasi, lalu gagal di runtime sebagai anon.
+export type PublicMedia = { id: string; alt_text: string | null; width: number | null; height: number | null; focal_x?: number | null; focal_y?: number | null };
 export type PublicCard = { id: string; name: string; slug: string; description: string | null; image_media_id: string | null; sort_order: number; status?: string; is_active?: boolean };
 export type PublicMenuItem = PublicCard & { category_id: string; price: number | null };
 export type PublicEvent = { id: string; title: string; slug: string; summary: string | null; body: string | null; image_media_id: string | null; starts_at: string; ends_at: string | null; status: string; is_active: boolean };

@@ -42,6 +42,30 @@ export function isMediaDeleteSettled(state: MediaDeleteActionState): boolean {
   return state.status === "success" || state.code === "MEDIA_DELETE_ORPHANED";
 }
 
+/**
+ * A94: benarkah penolakan ini datang dari trigger penjaga di basis data?
+ *
+ * `20260927000200_media_delete_guard.sql` menolak DELETE pada media yang masih
+ * dirujuk konten, dengan errcode 23503 dan hint `MEDIA_IN_USE`. Tanpa
+ * pemeriksaan ini, penolakan itu jatuh ke pesan generik "tidak ada yang
+ * dihapus" — benar secara teknis, tetapi tidak menyebutkan satu-satunya hal
+ * yang dapat dilakukan operator, yaitu melepas rujukannya lebih dulu.
+ *
+ * Jalur normalnya tetap pemeriksaan di aplikasi, yang dapat menamai konten
+ * yang memakai gambar itu. Trigger menangkap dua kasus yang tidak dapat
+ * ditutup di sana: permintaan PostgREST langsung dengan token sesi CMS, dan
+ * balapan di mana baris konten baru menunjuk gambar itu setelah peta
+ * penggunaan dibaca.
+ */
+export function isMediaInUseDatabaseError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const shape = error as { code?: unknown; hint?: unknown; message?: unknown };
+  if (shape.hint === "MEDIA_IN_USE") return true;
+  // PostgREST meneruskan errcode apa adanya, tetapi tidak selalu meneruskan
+  // hint. Pasangan kode + teks pesan trigger adalah cadangannya.
+  return shape.code === "23503" && /referenced by \d+ content row/.test(String(shape.message ?? ""));
+}
+
 export function mediaOrphanActionState(storagePath: string): MediaDeleteActionState {
   return {
     status: "error",

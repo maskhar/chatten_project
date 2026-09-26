@@ -2,12 +2,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { mediaInUseActionState, mediaOrphanActionState, type MediaDeleteActionState } from "@/lib/media/delete-state";
+import { isMediaInUseDatabaseError, mediaInUseActionState, mediaOrphanActionState, type MediaDeleteActionState } from "@/lib/media/delete-state";
 import { processMediaUploadFile, type MediaUploadAdapter, type MediaUploadFileResult } from "@/lib/media/upload-core";
 import { parseFocalPoint } from "@/lib/media/focal-point";
 import { MEDIA_BUCKET } from "@/lib/media/private-object";
 import { assertAffectedRows, uuidSchema } from "@/lib/admin/form-schema";
 import { loadMediaUsageMap } from "@/lib/media/usage-server";
+import type { MediaUsageReference } from "@/lib/media/usage";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function mediaDeleteFailure(message: string): MediaDeleteActionState {
@@ -84,7 +85,25 @@ export async function deleteMediaWithFeedback(_previousState: MediaDeleteActionS
   // concurrent delete) must not be followed by a Storage removal that would
   // destroy bytes still referenced by a surviving row.
   const { data: deleted, error: deleteError } = await supabase.from("media").delete().eq("id", id).select("id,bucket,storage_path");
-  if (deleteError) return mediaDeleteFailure("Catatan gambar tidak dapat dihapus dari Pustaka Media. Tidak ada yang dihapus.");
+  if (deleteError) {
+    // A94: trigger penjaga di basis data menolak penghapusan media yang masih
+    // dirujuk konten. Itu terjadi di sini hanya pada dua kasus yang tidak dapat
+    // ditutup oleh pemeriksaan di atas — baris konten baru muncul setelah peta
+    // penggunaan dibaca, atau peta itu terbaca kosong karena RLS. Keduanya
+    // adalah "gambar ini sedang dipakai", bukan "gagal menghapus".
+    if (isMediaInUseDatabaseError(deleteError)) {
+      let current: readonly MediaUsageReference[] = [];
+      try {
+        current = (await loadMediaUsageMap()).get(id) ?? [];
+      } catch {
+        // Peta penggunaan tidak terbaca. Penolakannya tetap dilaporkan: yang
+        // hilang hanya daftar konten yang memakainya, bukan alasannya.
+        current = [];
+      }
+      return mediaInUseActionState(current);
+    }
+    return mediaDeleteFailure("Catatan gambar tidak dapat dihapus dari Pustaka Media. Tidak ada yang dihapus.");
+  }
   const deletedRows = deleted ?? [];
   if (deletedRows.length !== 1) return mediaDeleteFailure("Catatan gambar tidak dapat dihapus dari Pustaka Media. Tidak ada berkas yang dihapus dari Storage.");
 
