@@ -5,9 +5,10 @@ import zlib from "node:zlib";
 import ts from "typescript";
 
 // upload-core.ts is loaded as a data: module so it can be exercised without a
-// bundler. A relative specifier cannot resolve from a data: URL, so its one
-// import — the shared limits module (A78) — is inlined as a data: URL of its
-// own before the transpiled source is handed to import().
+// bundler. A relative specifier cannot resolve from a data: URL, so each of its
+// relative imports — the shared limits module (A78) and the media bucket
+// constant — is inlined as a data: URL of its own before the transpiled source
+// is handed to import().
 const read = (name) => fs.readFileSync(new URL(`../lib/media/${name}.ts`, import.meta.url), "utf8");
 const compile = (name) => ts.transpileModule(read(name), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
@@ -17,8 +18,12 @@ const compile = (name) => ts.transpileModule(read(name), {
 // itself, not on its behaviour.
 const src = read("upload-core");
 
-const limitsUrl = "data:text/javascript," + encodeURIComponent(compile("upload-limits"));
-const js = compile("upload-core").replace(/from\s*"\.\/upload-limits"/g, `from "${limitsUrl}"`);
+const inlineModule = (name) => "data:text/javascript," + encodeURIComponent(compile(name));
+const limitsUrl = inlineModule("upload-limits");
+const privateObjectUrl = inlineModule("private-object");
+const js = compile("upload-core")
+  .replace(/from\s*"\.\/upload-limits"/g, `from "${limitsUrl}"`)
+  .replace(/from\s*"\.\/private-object"/g, `from "${privateObjectUrl}"`);
 const { MAX_MEDIA_UPLOAD_BYTES, MAX_MEDIA_UPLOAD_FILES, processMediaUploadBatch, processMediaUploadFile } = await import("data:text/javascript," + encodeURIComponent(js));
 
 function bytes(values, length = values.length) {

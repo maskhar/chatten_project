@@ -57,10 +57,11 @@ test("the migration drops the column and opens both policies", () => {
   assert.match(migration, /create policy "chatten public read"[\s\S]*using \(bucket_id = 'chatten-media'\)/);
 });
 
-test("the bucket stays private, so bytes still go through the proxy route", () => {
+test("the bucket stays private and the application proxy uses a fixed download target", () => {
   // Removing the approval gate is a content decision. It is not a decision to
-  // make storage paths guessable: the bucket was flipped private by
-  // 20260921000400 and app/api/media/[id] is still the only way in.
+  // make the bucket public: 20260921000400 flipped the bucket private, while
+  // app/api/media/[id] remains the application's media delivery path. Narrowing
+  // the historical anonymous storage.objects policy is separate database work.
   const flip = fs.readFileSync("supabase/migrations/20260921000400_make_chatten_media_bucket_private.sql", "utf8");
   assert.match(flip, /public\s*=\s*false|set public = f/i, "the bucket is no longer flipped private");
 
@@ -69,7 +70,10 @@ test("the bucket stays private, so bytes still go through the proxy route", () =
 
   const route = fs.readFileSync("app/api/media/[id]/route.ts", "utf8");
   assert.match(route, /createServiceRoleSupabaseClient/);
-  assert.match(route, /storage\.from\(media\.bucket\)\.download/);
+  // A89: the download target is this application's own bucket constant, never
+  // the row's editor-writable `bucket` column. See media-private-object.test.mjs.
+  assert.match(route, /storage\.from\(MEDIA_BUCKET\)\.download/);
+  assert.ok(!/storage\.from\(media\.bucket\)/.test(route), "the route forwards a row-supplied bucket to the service-role client again");
 });
 
 test("alt text is optional everywhere an operator can type one", () => {

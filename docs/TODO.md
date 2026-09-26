@@ -886,6 +886,36 @@ work items; the audit document holds the evidence.
       Super admin menunjukkan state kontrol yang tepat, tanpa error console atau
       server. Verifikasi akhir: 368/368 uji, lint, typecheck, dan build lulus.
 
+- [x] **A89** Keras-kan batas service-role Media Library tanpa mengubah bucket
+      privat atau kebijakan RLS. `app/api/media/[id]` kini hanya meneruskan
+      `chatten-media` konstan ke Storage; `bucket`, `storage_path`, dan
+      `mime_type` dari baris database diperlakukan sebagai data tidak tepercaya.
+      Helper murni baru menolak bucket asing, path traversal, path absolut,
+      pemisah kosong, dan karakter bermakna URL seperti `#`/`?` yang sebelumnya
+      dapat memotong URL Storage lalu mengalias objek lain. Hanya JPEG, PNG,
+      WebP, dan AVIF tervalidasi yang dikirim `inline`; nilai MIME lain turun
+      menjadi `application/octet-stream` sebagai `attachment`, tetap dengan
+      `X-Content-Type-Options: nosniff`. Upload, kompensasi upload, dan delete
+      memakai konstan bucket yang sama. Delete metadata dengan bucket asing
+      tidak pernah mengarahkan service role ke bucket itu; metadata dihapus dan
+      operator menerima laporan berkas yatim yang perlu diperiksa. Simpan detail
+      media juga kini mensyaratkan tepat satu baris berubah agar RLS atau race
+      tidak terlihat sebagai simpan berhasil.
+
+      Diverifikasi 2026-09-26 dengan fixture audit `zzz-audit-*` sementara dan
+      pembersihan terverifikasi: bucket asing serta path traversal memberi 404,
+      metadata `text/html` pada objek PNG nyata memberi 200 dengan
+      `application/octet-stream; attachment; nosniff`, dan PNG valid tetap 200
+      `image/png; inline`. Audit menemukan alias fragment (`#`) pada URL Storage;
+      gate allowlist diperketat lalu seluruh path media nyata diperiksa sudah
+      kompatibel. Kontrak baru mencakup bucket, path, URL-alias, MIME, proxy,
+      mutasi bucket tetap, dan affected-row update. Verifikasi akhir: 374/374
+      uji, lint, typecheck, build, serta proxy PNG nyata lulus.
+      Batas ini adalah lapisan aplikasi saja. Kebijakan `storage.objects`
+      anonim historis pada `20260921000500_remove_media_rights_approval.sql`
+      belum dipersempit; pekerjaan database itu masih menunggu preflight
+      ledger migrasi dan tidak diklaim selesai oleh A89.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

@@ -5,7 +5,8 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { mediaInUseActionState, type MediaDeleteActionState } from "@/lib/media/delete-state";
 import { processMediaUploadFile, type MediaUploadAdapter, type MediaUploadFileResult } from "@/lib/media/upload-core";
 import { parseFocalPoint } from "@/lib/media/focal-point";
-import { uuidSchema } from "@/lib/admin/form-schema";
+import { MEDIA_BUCKET } from "@/lib/media/private-object";
+import { assertAffectedRows, uuidSchema } from "@/lib/admin/form-schema";
 import { loadMediaUsageMap } from "@/lib/media/usage-server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -21,7 +22,7 @@ function mediaUploadAdapter(supabase: Awaited<ReturnType<typeof createServerSupa
       return data ? { id: String(data.id) } : null;
     },
     async upload(path, content, contentType) {
-      const { error } = await supabase.storage.from("chatten-media").upload(path, content, { contentType, upsert: false });
+      const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, content, { contentType, upsert: false });
       return error ? { error } : {};
     },
     async insert(record) {
@@ -32,7 +33,7 @@ function mediaUploadAdapter(supabase: Awaited<ReturnType<typeof createServerSupa
       // Supabase Storage reports failed removals in its result; it does not
       // throw. Convert that error to a rejection so upload-core can surface an
       // orphan instead of falsely claiming compensation succeeded.
-      const { error } = await supabase.storage.from("chatten-media").remove([path]);
+      const { error } = await supabase.storage.from(MEDIA_BUCKET).remove([path]);
       if (error) throw error;
     },
   };
@@ -87,8 +88,17 @@ export async function deleteMediaWithFeedback(_previousState: MediaDeleteActionS
   const deletedRows = deleted ?? [];
   if (deletedRows.length !== 1) return mediaDeleteFailure("Catatan gambar tidak dapat dihapus dari Pustaka Media. Tidak ada berkas yang dihapus dari Storage.");
 
+  // The bucket comes from this application, not from the row: `bucket` is an
+  // editor-writable column, and a row edited to name another bucket would aim
+  // this removal at objects the Media Library does not own. A row that does not
+  // name our own bucket keeps its bytes and is reported as an orphan instead.
   const removedRow = deletedRows[0];
-  const storageResult = await supabase.storage.from(String(removedRow.bucket)).remove([String(removedRow.storage_path)]);
+  if (String(removedRow.bucket) !== MEDIA_BUCKET) {
+    revalidatePath("/admin/media");
+    revalidatePath("/");
+    return mediaDeleteFailure("Catatan gambar sudah dihapus dari Pustaka Media, tetapi berkasnya berada di luar penyimpanan Chatten sehingga tidak dihapus. Minta administrator memeriksanya.");
+  }
+  const storageResult = await supabase.storage.from(MEDIA_BUCKET).remove([String(removedRow.storage_path)]);
   revalidatePath("/admin/media");
   revalidatePath("/");
   if (storageResult.error) {
@@ -117,8 +127,9 @@ export async function saveMediaDetails(formData: FormData) {
       .filter(Boolean),
     ...parseFocalPoint(formData.get("focal_x"), formData.get("focal_y")),
   };
-  const { error } = await supabase.from("media").update(payload).eq("id", id);
+  const { error, count } = await supabase.from("media").update(payload, { count: "exact" }).eq("id", id);
   if (error) throw new Error("Detail media gagal disimpan.");
+  assertAffectedRows(count, 1, "Media tidak ditemukan atau tidak boleh diubah.");
 
   revalidatePath("/admin/media");
   revalidatePath("/");

@@ -104,6 +104,6 @@ test("a failed Storage removal is reported as an orphan, not as success", () => 
 test("the upload adapter inspects Storage removal errors", () => {
   const actionSource = fs.readFileSync(new URL("../lib/admin/media-actions.ts", import.meta.url), "utf8");
   const adapterSource = actionSource.slice(actionSource.indexOf("function mediaUploadAdapter"), actionSource.indexOf("export async function uploadMedia"));
-  assert.match(adapterSource, /const \{ error \} = await supabase\.storage\.from\("chatten-media"\)\.remove\(\[path\]\)/);
+  assert.match(adapterSource, /const \{ error \} = await supabase\.storage\.from\(MEDIA_BUCKET\)\.remove\(\[path\]\)/);
   assert.match(adapterSource, /if \(error\) throw error/);
 });

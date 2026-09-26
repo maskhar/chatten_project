@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 
 import { MAX_MEDIA_UPLOAD_BYTES, MAX_MEDIA_UPLOAD_FILES, formatMediaSizeLimit } from "./upload-limits";
+import { MEDIA_BUCKET } from "./private-object";
 
 export { MAX_MEDIA_UPLOAD_BYTES, MAX_MEDIA_UPLOAD_FILES };
 
@@ -392,7 +393,7 @@ export async function processMediaUploadFile(file: MediaUploadFile, adapter: Med
 
   try {
     const insert = await adapter.insert({
-      bucket: "chatten-media",
+      bucket: MEDIA_BUCKET,
       storage_path: storagePath,
       original_filename: file.name,
       mime_type: image.mimeType,
