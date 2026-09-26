@@ -1789,6 +1789,61 @@ Gerbang lokal: 455/455 uji, typecheck, lint, build.
 **Catatan.** Beranda publik memuat 0 gambar — bukan akibat perubahan ini,
 melainkan karena tidak ada satu pun media yang dirujuk konten (lihat A99).
 
+### A101 — dua kebijakan tulis anonim pada storage.objects dicabut
+
+A99 mempersempit **baca** pada `storage.objects`. Pemeriksaan lanjutannya
+menemukan bahwa **tulis** masih terbuka lebar untuk siapa pun tanpa login:
+
+| Kebijakan | Perintah | Peran | Syarat |
+| --- | --- | --- | --- |
+| `Public upload for development` | INSERT | `{public}` | `with_check: bucket_id = '3d-models'` |
+| `Public update for development` | UPDATE | `{public}` | `using: bucket_id = '3d-models'`, `with_check` **kosong** |
+
+`PUBLIC` mencakup `anon`, dan kunci anon tertanam di bundel peramban setiap
+pengunjung, jadi ini bukan celah teoretis: siapa pun di internet dapat
+menitipkan berkas ke bucket `3d-models` dan menimpa baris metadata yang sudah
+ada. `with_check` yang kosong pada UPDATE lebih buruk lagi — baris yang lolos
+`using` boleh dipindahkan ke bucket **mana pun**, termasuk bucket privat.
+Dibuktikan sebagai `anon` di transaksi yang di-rollback: `insert` berhasil,
+`update` menyentuh 11 baris.
+
+Seperti A99, ini temuan di luar batas Chatten — `storage.objects` milik instance
+Supabase swakelola bersama, bukan skema `chatten_cafe`. Karena itu perbaikannya
+ada di [`ops/storage-drop-public-write-dev.sql`](../ops/storage-drop-public-write-dev.sql),
+bukan di `supabase/migrations/`.
+
+**Pertanyaan yang menentukan** bukan "apakah kebijakan ini dipakai" melainkan
+"apakah pengguna yang login punya jalur sah lain". Dijawab dengan menjatuhkan
+kedua kebijakan di dalam transaksi yang di-rollback lalu menulis sebagai
+masing-masing peran:
+
+```
+ANON insert TANPA kebijakan publik: ditolak (42501) — celah tertutup
+AUTH insert TANPA kebijakan publik: BERHASIL (jalur sah utuh)
+AUTH update TANPA kebijakan publik: 11 baris
+```
+
+Jalur sahnya berasal dari kebijakan tenant sendiri — `Authenticated users can
+upload/update/delete 3D models`. Satu jebakan halus di sini: kolom `roles`
+ketiga kebijakan itu **juga** `{public}`, sehingga sekilas tampak sama
+longgarnya dengan yang dicabut. Yang membedakan bukan perannya melainkan
+ekspresinya, `auth.role() = 'authenticated'`, yang menolak `anon` di dalam
+kebijakan itu sendiri. Membaca kolom `roles` saja akan menghasilkan kesimpulan
+yang salah.
+
+**Setelah diterapkan**, diverifikasi lewat HTTP dengan kunci anon sungguhan:
+
+- `POST /storage/v1/object/3d-models/probe/anon-*.glb` → **400**,
+  `{"statusCode":"403","message":"new row violates row-level security policy"}`
+- `GET /object/public/3d-models/Erik%20Thohir.glb` → **200** (galeri 3D publik
+  tenant tetap tampil; 12 kebijakan SELECT tidak disentuh)
+- `POST /object/list/{article,avatars,gallery,blog-covers}` → **200** dengan isi,
+  jadi A99 tidak mengalami regresi
+- 11 objek di `3d-models` utuh; delapan halaman publik Chatten 200
+
+Pemulihan satu perintah, bila ternyata ada alur yang bergantung padanya, dicatat
+di kepala berkas SQL-nya.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a
