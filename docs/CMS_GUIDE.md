@@ -1,5 +1,32 @@
 # Panduan CMS
 
+## Aksi Baris dan Urutan Tampilan
+
+Aturan ini berlaku sama pada pengelola Homepage, Pengalaman, Ruang, Menu, dan Galeri.
+
+- Satu aksi baris berjalan pada satu waktu. Selama satu baris diproses, tombol
+  **Tampilkan**/**Sembunyikan**, **Duplikat**, **Hapus**, dan **Edit** pada semua
+  baris terkunci sampai aksi itu selesai.
+- Baris yang sedang diproses memakai label sementara, yaitu **Menyimpan…** untuk
+  perubahan status dan **Menghapus…** untuk penghapusan.
+- Hasil aksi tampil tepat di baris yang dioperasikan. Keberhasilan ditulis dengan
+  kalimatnya sendiri, misalnya `Ruang disembunyikan.`, dan kegagalan ditulis
+  sebagai peringatan, misalnya `Ruang gagal dihapus.` Warna bukan satu-satunya
+  penanda; keduanya selalu berupa kalimat.
+- Selama aksi baris berjalan, pengurutan ikut terkunci: seret, tombol panah, dan
+  **Simpan urutan tampilan** tidak aktif. Sebaliknya, saat urutan sedang
+  disimpan, semua aksi baris terkunci.
+- Bila urutan di layar sama dengan urutan yang sudah tersimpan, tombol simpan
+  tidak mengirim apa pun dan menjawab
+  `Urutan belum berubah, jadi tidak ada yang perlu disimpan.`
+- Bila penyimpanan urutan gagal, daftar dikembalikan ke urutan tersimpan terakhir
+  dan pesan menutup dengan `Urutan tersimpan telah dipulihkan.` Penyimpanan yang
+  berhasil menjawab `Urutan berhasil disimpan.`
+- Perubahan data dari tab lain atau dari aksi lain tidak membatalkan urutan yang
+  sedang diatur namun belum disimpan, selama daftar barisnya tetap sama. Bila ada
+  baris yang ditambah atau dihapus, daftar mengikuti versi server; atur ulang
+  urutan lalu simpan kembali.
+
 ## Homepage
 
 - Seret kartu bagian, lalu pilih **Simpan urutan tampilan**.

@@ -169,10 +169,48 @@ test("the CMS error boundary explains the failure in Indonesian", () => {
 test("the shared save-failure fallback is Indonesian and still detects Next's redaction", () => {
   const form = read("components/admin/action-form.tsx");
   assert.ok(form.includes("Penyimpanan gagal. Perubahan Anda masih ada. Periksa formulir lalu coba lagi."));
+  assert.match(form, /role="alert"/);
+  // A91: the redaction sniff moved to lib/admin/action-feedback.ts so the row
+  // actions inside the managers share it instead of re-deriving it. Pin it
+  // where it now lives, and pin that the form reads it from there rather than
+  // keeping a second copy that could drift.
+  assert.match(form, /from "@\/lib\/admin\/action-feedback"/);
+  assert.match(form, /actionErrorMessage\(error, SAVE_FAILED\)/);
+  const feedback = read("lib/admin/action-feedback.ts");
   // The sniff matches the framework's own English redaction text, not UI copy;
   // translating it would echo the raw boilerplate to the operator instead.
-  assert.match(form, /\^an error occurred in the server components render/i);
-  assert.match(form, /role="alert"/);
+  assert.match(feedback, /\^an error occurred in the server components render/i);
+  assert.match(feedback, /NEXT_REDIRECT/);
+});
+
+// A91: a row action that fails must say so in Indonesian, next to the row that
+// failed. Before this, spaces/experiences swallowed the rejection entirely or
+// raised a blocking `alert()`, and the reorder list painted every outcome in the
+// success colour under `role="status"`.
+test("row actions and the reorder list report their outcome in Indonesian", () => {
+  const list = read("components/admin/sortable-list.tsx");
+  for (const phrase of [
+    "Gagal menyimpan urutan.",
+    "Urutan tersimpan telah dipulihkan.",
+    "Urutan belum berubah, jadi tidak ada yang perlu disimpan.",
+    "Urutan berhasil disimpan.",
+  ]) {
+    assert.ok(list.includes(phrase), `the reorder list no longer says "${phrase}"`);
+  }
+  assert.match(list, /role="alert"/, "a failed reorder must be an alert, not a polite status");
+
+  const managers = [
+    ["components/admin/spaces-manager-client.tsx", "Ruang gagal dihapus."],
+    ["components/admin/experiences-manager-client.tsx", "Pengalaman gagal dihapus."],
+    ["components/admin/gallery-manager-client.tsx", "Item galeri gagal dihapus."],
+    ["components/admin/menu-manager-client.tsx", "Item menu gagal dihapus."],
+    ["components/admin/homepage-sortable.tsx", "Status tampil bagian beranda gagal diperbarui."],
+  ];
+  for (const [file, fallback] of managers) {
+    const source = read(file);
+    assert.ok(source.includes(fallback), `${file} no longer carries the Indonesian fallback "${fallback}"`);
+    assert.ok(!/\balert\(/.test(source), `${file} reports a row failure with a blocking alert() again`);
+  }
 });
 
 test("reorder validation and persistence report failures in Indonesian", () => {

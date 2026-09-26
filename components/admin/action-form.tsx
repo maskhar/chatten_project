@@ -3,6 +3,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { useActionState } from "react";
 import { UnsavedChangesGuard, type SaveStatus } from "@/components/admin/unsaved-changes-guard";
+import { actionErrorMessage, isRedirectError } from "@/lib/admin/action-feedback";
 
 // Server Actions were originally bound straight to `<form action={saveThing}>`.
 // That is fine for a redirecting success, but a thrown validation/database error
@@ -18,26 +19,10 @@ type ServerAction = (formData: FormData) => Promise<unknown>;
 type ActionState = { status: Exclude<SaveStatus, "saving">; message: string | null };
 const initialState: ActionState = { status: "idle", message: null };
 
-function isRedirectError(error: unknown): boolean {
-  return Boolean(
-    error
-    && typeof error === "object"
-    && "digest" in error
-    && typeof error.digest === "string"
-    && error.digest.startsWith("NEXT_REDIRECT"),
-  );
-}
-
-function feedbackMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message.trim() : "";
-  // Production Server Actions intentionally redact error details. Do not echo
-  // framework boilerplate, but still tell the operator the form is intact and
-  // what they can do next.
-  if (!message || /^an error occurred in the server components render/i.test(message)) {
-    return "Penyimpanan gagal. Perubahan Anda masih ada. Periksa formulir lalu coba lagi.";
-  }
-  return message;
-}
+// A91: the redirect sniff and the redaction-aware message both moved to
+// lib/admin/action-feedback.ts. The row actions inside SortableList need the
+// same two rules, and a second copy is how one of them drifts.
+const SAVE_FAILED = "Penyimpanan gagal. Perubahan Anda masih ada. Periksa formulir lalu coba lagi.";
 
 export function ActionForm({ action, children, ...props }: Omit<ComponentProps<"form">, "action"> & { action: ServerAction; children: ReactNode }) {
   const [state, formAction, pending] = useActionState(
@@ -47,7 +32,7 @@ export function ActionForm({ action, children, ...props }: Omit<ComponentProps<"
         return { status: "saved", message: null };
       } catch (error) {
         if (isRedirectError(error)) throw error;
-        return { status: "error", message: feedbackMessage(error) };
+        return { status: "error", message: actionErrorMessage(error, SAVE_FAILED) };
       }
     },
     initialState,

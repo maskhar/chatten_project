@@ -283,8 +283,14 @@ test("ActionForm rethrows redirects rather than reporting them as failures", () 
   // redirect() throws NEXT_REDIRECT as control flow. Swallowing it would break
   // every save that redirects to ?saved=1 — and would report a success as an
   // error, which is the same class of bug as the one being fixed.
-  assert.match(actionFormCode, /NEXT_REDIRECT/);
   assert.match(actionFormCode, /if\s*\(\s*isRedirectError\(error\)\s*\)\s*throw error;/);
+  // A91: the digest sniff itself moved to lib/admin/action-feedback.ts so the
+  // row actions in the managers share one rule instead of re-deriving it. Pin
+  // the form's import of it and pin the sniff where it now lives, otherwise a
+  // future edit could reintroduce a second, drifting copy.
+  assert.match(actionFormCode, /from "@\/lib\/admin\/action-feedback"/);
+  const feedback = fs.readFileSync(path.join(root, "lib", "admin", "action-feedback.ts"), "utf8");
+  assert.match(feedback, /NEXT_REDIRECT/);
 });
 
 test("ActionForm drives the guard with the real outcome, not a guess", () => {

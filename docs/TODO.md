@@ -946,6 +946,44 @@ work items; the audit document holds the evidence.
       terpisah dan keluarkan tiga tabel ini dari allowlist RPC lama tanpa merusak
       jalur A26.
 
+- [x] **A91** Tutup balapan antara pengurutan dan mutasi per baris, serta beri
+      hasil yang teratribusikan pada baris yang dioperasikan. Sebelumnya daftar
+      Sortable dapat mengirim dua simpanan dalam satu event turn, menerima toggle
+      atau hapus saat RPC pengurutan memilih rank, atau mengirim pengurutan saat
+      mutasi sedang menghapus salah satu ID. Keberhasilan dan kegagalan juga
+      bercampur: beberapa manager menelan penolakan, satu memakai `alert()` yang
+      memblokir, dan pesan gagal pengurutan diumumkan sebagai `role="status"`
+      dengan warna sukses.
+
+      `useRowOperation` dan reducer murni `row-operations` sekarang menjalankan
+      tepat satu mutasi per manager. Guard `useRef` menutup klik ganda dalam tick
+      yang sama; reducer mengikat completion hanya ke `pendingId` asal sehingga
+      completion usang tidak dapat melabeli baris lain. `RowFeedback` memisahkan
+      sukses (`role="status"`, token `leaf`) dari gagal (`role="alert"`, token
+      `rust`); `RowLink` juga keluar dari urutan tab dan mencegah navigasi ketika
+      terkunci. Semua manager Ruang, Pengalaman, Galeri, Menu, dan Beranda
+      meneruskan `rowBusy` ke `SortableList`, lalu menerima `reorderBusy` kembali:
+      mutasi per baris mengunci seret/panah/simpan urutan dan simpan urutan
+      mengunci toggle, duplikat, hapus, edit, serta edit kategori.
+
+      `SortableList` memakai guard single-flight kedua untuk pengurutan, tidak
+      memanggil server bagi urutan identik, dan memulihkan baseline tersimpan bila
+      penyimpanan gagal. Revalidasi server yang masuk saat simpan berjalan tidak
+      lagi dianggap sudah tersinkron terlalu dini: setelah request selesai,
+      objek baris baru digabungkan sambil mempertahankan posisi drag lokal bila
+      keanggotaan sama; tambah/hapus anggota mengganti daftar dengan versi server.
+      Pesan framework produksi yang diredaksi tidak diteruskan mentah; helper
+      bersama memberi fallback Indonesia yang dapat ditindaklanjuti. Formulir
+      buat Ruang/Pengalaman/Galeri/Menu juga memakai `ActionForm`, sehingga gagal
+      simpan tidak melepas formulir dan peringatan perubahan belum tersimpan.
+
+      Kontrak uji mencakup reducer single-flight dan completion usang, guard klik
+      ganda, lock dua arah semua manager, tautan terkunci, live-region terpisah,
+      urutan identik, rekonsiliasi objek/membership, rollback baseline, serta
+      deteksi error Server Action. Batas: lock hanya mengoordinasikan interaksi
+      dalam satu manager klien; aksi server dan RPC tetap mempertahankan validasi
+      database/RLS sendiri untuk tab atau klien lain.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

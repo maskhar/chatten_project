@@ -14,7 +14,15 @@ import ts from "typescript";
 
 const source = fs.readFileSync("lib/admin/reorder-core.ts", "utf8");
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
-const { REORDERABLE_TABLES, isCompleteReorderSet, isReorderableTable, normalizeOffset, validateReorderIds } = await import(`data:text/javascript,${encodeURIComponent(js)}`);
+const {
+  REORDERABLE_TABLES,
+  isCompleteReorderSet,
+  isReorderableTable,
+  isSameOrder,
+  normalizeOffset,
+  reconcileOrder,
+  validateReorderIds,
+} = await import(`data:text/javascript,${encodeURIComponent(js)}`);
 const correctiveMigration = fs.readFileSync(
   "supabase/migrations/20260926000100_homepage_order_deferrable.sql",
   "utf8",
@@ -66,6 +74,59 @@ test("isCompleteReorderSet rejects unknown and duplicate ids", () => {
   assert.equal(isCompleteReorderSet([uuid(1), uuid(2), uuid(4)], [uuid(1), uuid(2), uuid(3)]), false);
   assert.equal(isCompleteReorderSet([uuid(1), uuid(1), uuid(2)], [uuid(1), uuid(2), uuid(3)]), false);
   assert.equal(isCompleteReorderSet([uuid(1), uuid(2), uuid(3)], [uuid(1), uuid(1), uuid(2)]), false);
+});
+
+// A91: an unchanged order must not take the write path. The comparison is
+// positional rather than set-based: the same ids in another order are dirty.
+test("isSameOrder distinguishes an identical order from a rearrangement", () => {
+  assert.equal(isSameOrder([uuid(1), uuid(2)], [uuid(1), uuid(2)]), true);
+  assert.equal(isSameOrder([uuid(2), uuid(1)], [uuid(1), uuid(2)]), false);
+  assert.equal(isSameOrder([uuid(1)], [uuid(1), uuid(2)]), false);
+});
+
+// A91: an unrelated server refresh must update row content without discarding
+// the operator's unsaved positions. A membership change is different: keeping
+// an order containing a deleted id would submit a set the server must refuse.
+test("reconcileOrder preserves local positions while refreshing row objects", () => {
+  const local = [
+    { id: uuid(2), label: "Dua lama" },
+    { id: uuid(1), label: "Satu lama" },
+  ];
+  const incoming = [
+    { id: uuid(1), label: "Satu baru" },
+    { id: uuid(2), label: "Dua baru" },
+  ];
+  const result = reconcileOrder(local, incoming);
+  assert.deepEqual(result, [incoming[1], incoming[0]]);
+  // Objects must be the new server instances: fresh visibility/detail data
+  // reaches the retained on-screen positions, not only equivalent old values.
+  assert.equal(result[0], incoming[1]);
+  assert.equal(result[1], incoming[0]);
+});
+
+test("reconcileOrder accepts the server list when membership changes", () => {
+  const local = [{ id: uuid(2) }, { id: uuid(1) }];
+  const incoming = [{ id: uuid(1) }, { id: uuid(3) }];
+  assert.equal(reconcileOrder(local, incoming), incoming);
+});
+
+test("reconcileOrder resets duplicate, added, and removed memberships", () => {
+  const incoming = [{ id: uuid(1) }, { id: uuid(2) }];
+  assert.equal(
+    reconcileOrder([{ id: uuid(1) }, { id: uuid(1) }], incoming),
+    incoming,
+    "a duplicate local id cannot preserve an invalid order",
+  );
+  assert.equal(
+    reconcileOrder([{ id: uuid(1) }], incoming),
+    incoming,
+    "an added server row replaces the incomplete local membership",
+  );
+  assert.equal(
+    reconcileOrder([{ id: uuid(1) }, { id: uuid(2) }, { id: uuid(3) }], incoming),
+    incoming,
+    "a removed server row replaces the stale local membership",
+  );
 });
 
 test("normalizeOffset refuses values that would write negative ranks", () => {
@@ -122,6 +183,34 @@ test("sortable rollback uses its last persisted baseline", () => {
   assert.match(component, /setPersisted\(submitted\)/);
   assert.match(component, /setOrder\(persisted\)/);
   assert.ok(!/setPersisted\(order\)/.test(component), "the baseline must never advance to unsaved on-screen order");
+});
+
+test("sortable defers incoming props until an in-flight save settles", () => {
+  const component = fs.readFileSync("components/admin/sortable-list.tsx", "utf8");
+  // Updating syncedItems while saving would consume a newer server identity and
+  // never merge it after completion. The state gate leaves it unsynced until
+  // setSaving(false) triggers a render.
+  assert.match(component, /if \(syncedItems !== items && !saving\)/);
+  assert.ok(
+    !/if \(syncedItems !== items\) \{\s*setSyncedItems\(items\)/.test(component),
+    "incoming props are marked as seen before the in-flight request settles",
+  );
+  assert.match(component, /setOrder\(\[\.\.\.reconcileOrder\(order, items\)\]\)/);
+});
+
+test("sortable save is single-flight, skips no-op writes and exposes both locks", () => {
+  const component = fs.readFileSync("components/admin/sortable-list.tsx", "utf8");
+  assert.match(component, /const inFlight = useRef\(false\)/);
+  assert.match(component, /if \(inFlight\.current \|\| rowBusy \|\| !order\.length\) return/);
+  assert.match(component, /inFlight\.current = true/);
+  assert.match(component, /isSameOrder\(ids\(submitted\), ids\(persisted\)\)/);
+  assert.match(component, /disabled=\{saving \|\| rowBusy\}/);
+  assert.match(component, /item\.actions\?\.\(\{ reorderBusy: saving \}\)/);
+  assert.match(component, /aria-busy=\{saving\}/);
+  // The baseline advances only on a confirmed save, and a failure restores
+  // exactly that baseline — the two halves of the rollback contract.
+  assert.match(component, /setPersisted\(submitted\)/);
+  assert.match(component, /setOrder\(persisted\)/);
 });
 
 test("the drag context id is stable across server and client render", () => {

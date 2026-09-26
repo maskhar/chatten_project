@@ -1,12 +1,17 @@
 "use client";
 
-import Link from "next/link";
+import { RowFeedback } from "@/components/admin/row-feedback";
+import { RowLink } from "@/components/admin/row-link";
 import { SortableList } from "@/components/admin/sortable-list";
+import { useRowOperation } from "@/components/admin/use-row-operation";
 import {
   reorderHomepageSections,
   toggleHomepageSection,
 } from "@/lib/admin/homepage-actions";
-import { ROW_ACTION_BORDERED, ROW_ACTION_PRIMARY } from "@/components/ui/control";
+import {
+  ROW_ACTION_BORDERED,
+  ROW_ACTION_PRIMARY,
+} from "@/components/ui/control";
 
 type Section = {
   id: string;
@@ -69,9 +74,19 @@ const registry: Record<string, { name: string; description: string; href: string
 };
 
 export function HomepageSortable({ rows }: { rows: Section[] }) {
+  const rowOperation = useRowOperation();
+
+  function toggle(id: string, visible: boolean) {
+    const formData = new FormData();
+    formData.append("id", id);
+    formData.append("visible", String(visible));
+    return toggleHomepageSection(formData);
+  }
+
   return (
     <SortableList
       onSave={reorderHomepageSections}
+      rowBusy={rowOperation.busy}
       items={rows.flatMap((row) => {
         const item = registry[row.section_key];
         if (!item) return [];
@@ -86,27 +101,44 @@ export function HomepageSortable({ rows }: { rows: Section[] }) {
               </p>
             </>
           ),
-          // One client-side order is saved atomically. The old secondary server
-          // action buttons raced the list order and hit the immediate unique
-          // index during every adjacent swap.
-          actions: (
-            <>
-              <form action={toggleHomepageSection}>
-                <input type="hidden" name="id" value={row.id} />
-                <input
-                  type="hidden"
-                  name="visible"
-                  value={String(!row.is_visible)}
-                />
-                <button className={ROW_ACTION_BORDERED}>
-                  {row.is_visible ? "Sembunyikan" : "Tampilkan"}
+          actions: ({ reorderBusy }: { reorderBusy: boolean }) => {
+            const pending = rowOperation.isPending(row.id);
+            const locked = reorderBusy || rowOperation.busy;
+            return (
+              <>
+                <button
+                  type="button"
+                  disabled={locked}
+                  aria-busy={pending}
+                  className={ROW_ACTION_BORDERED}
+                  onClick={() =>
+                    rowOperation.run(
+                      row.id,
+                      () => toggle(row.id, !row.is_visible),
+                      row.is_visible
+                        ? "Bagian beranda disembunyikan."
+                        : "Bagian beranda ditampilkan.",
+                      "Status tampil bagian beranda gagal diperbarui.",
+                    )
+                  }
+                >
+                  {pending
+                    ? "Menyimpan…"
+                    : row.is_visible
+                      ? "Sembunyikan"
+                      : "Tampilkan"}
                 </button>
-              </form>
-              <Link className={ROW_ACTION_PRIMARY} href={item.href}>
-                Edit
-              </Link>
-            </>
-          ),
+                <RowLink
+                  locked={locked}
+                  className={ROW_ACTION_PRIMARY}
+                  href={item.href}
+                >
+                  Edit
+                </RowLink>
+                <RowFeedback feedback={rowOperation.feedback(row.id)} />
+              </>
+            );
+          },
         }];
       })}
       empty="Belum ada bagian beranda."

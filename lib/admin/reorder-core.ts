@@ -74,6 +74,47 @@ export function isCompleteReorderSet(submittedIds: readonly string[], existingId
   );
 }
 
+/**
+ * True when two id lists describe the same order, position for position.
+ *
+ * A91: the reorder button used to POST whatever was on screen, including an
+ * order identical to the one the server already holds — a drag started and
+ * dropped back, or a second press on an unchanged list. That write cannot
+ * improve anything and still takes the RLS round trip, the revalidation and the
+ * risk of colliding with a row mutation, so the button refuses it instead.
+ */
+export function isSameOrder(a: readonly string[], b: readonly string[]) {
+  return a.length === b.length && a.every((id, index) => id === b[index]);
+}
+
+/**
+ * Merge a fresh server list into the order held on screen.
+ *
+ * A91: SortableList used to reset its local order on every new `items`
+ * identity. A server component re-render has a new identity each time, so an
+ * unrelated revalidation — a visibility toggle on one row, `router.refresh()`
+ * after a delete elsewhere — discarded an unsaved drag the operator was still
+ * arranging.
+ *
+ * The distinction that matters is membership, not identity:
+ *
+ *   - Same rows, any order: the positions on screen are the operator's unsaved
+ *     work and are kept. The row *objects* are taken from the server, so a
+ *     toggled label or a replaced image still refreshes.
+ *   - Rows added or removed: the local order describes a list that no longer
+ *     exists, so the server list replaces it outright.
+ */
+export function reconcileOrder<T extends { id: string }>(
+  local: readonly T[],
+  incoming: readonly T[],
+): readonly T[] {
+  if (!isCompleteReorderSet(local.map((row) => row.id), incoming.map((row) => row.id))) {
+    return incoming;
+  }
+  const byId = new Map(incoming.map((row) => [row.id, row]));
+  return local.map((row) => byId.get(row.id) ?? row);
+}
+
 /** Rejects a negative or non-integer offset, which would write negative ranks. */
 export function normalizeOffset(raw: unknown) {
   const value = Number(raw ?? 0);
