@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { PublicShell } from "@/components/public/public-shell";
 import { getHomepageData } from "@/lib/homepage/data";
+import { publicMetadata } from "@/lib/seo";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { MediaImage } from "@/components/public/media-image";
 import { CtaLink } from "@/components/ui/cta";
@@ -11,7 +12,27 @@ import type { Card, HomepageData, Media, Moment } from "@/lib/homepage/types";
 export const dynamic = "force-dynamic";
 export const revalidate = 300;
 
-export async function generateMetadata(): Promise<Metadata> { const data = await getHomepageData(); return { title: data.settings?.site_name ?? "Chatten Cafe", description: data.settings?.description ?? "A place to eat, talk, and experience Batu." }; }
+// A104: beranda menulis `title`/`description` sendiri dan tidak memakai satu
+// pun pembantu bersama. Dua akibatnya nyata dan tidak disengaja: ia
+// satu-satunya halaman tanpa `<link rel="canonical">`, dan karena `openGraph`
+// tidak ikut ditimpa, nilainya diwarisi apa adanya dari layout — sehingga
+// `og:description` tetap berbahasa Inggris sementara `description` halamannya
+// sudah Indonesia dari CMS. Bagi pengayak tautan, justru deskripsi OG itulah
+// yang terlihat, jadi versi yang salah yang tersebar.
+//
+// Sengaja memakai `publicMetadata`, BUKAN `seoMetadata`. Sumber metadata
+// beranda adalah `site_settings`; menyambungkannya ke `seo_settings` juga akan
+// membuat dua layar CMS mengedit tag yang sama. Keputusan itu sudah dipatok
+// oleh tes "the home page is deliberately not an SEO page key" dan masih benar
+// — yang perlu diperbaiki hanya canonical dan OG-nya.
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getHomepageData();
+  return publicMetadata(
+    data.settings?.site_name ?? "Chatten Cafe",
+    data.settings?.description ?? "A place to eat, talk, and experience Batu.",
+    "/",
+  );
+}
 
 const sectionTitle = "font-serif text-4xl leading-[.95] sm:text-5xl lg:text-6xl";
 const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

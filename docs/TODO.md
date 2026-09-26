@@ -1936,6 +1936,81 @@ Satu jebakan perkakas ikut dicatat karena sempat menyesatkan saya sendiri:
 karena stdin sudah dipakai compose, sehingga dump yang **sehat** tampak rusak.
 Pakai `docker cp` lalu baca berkasnya di dalam kontainer.
 
+### A104 — identitas SEO: judul berganda, beranda tanpa canonical, sitemap tanpa halaman detail
+
+Baris "SEO identity verified" belum tercentang. Berbeda dari sisa item #4, ini
+tidak menunggu aset apa pun dari operator — seluruhnya kode, jadi bisa diaudit
+sekarang. Tiga cacat ditemukan, dan ketiganya **hanya terlihat dari HTML yang
+benar-benar terkirim**, bukan dari membaca berkas halaman satu per satu.
+
+**1. Beranda tidak punya `canonical`, dan `og:description`-nya salah bahasa.**
+Tujuh halaman publik melewati pembantu bersama; beranda satu-satunya yang menulis
+`title`/`description` sendiri. Akibatnya ia tidak pernah memancarkan
+`<link rel="canonical">`, dan karena `openGraph` tidak ikut ditimpa, nilainya
+diwarisi apa adanya dari `app/layout.tsx` — sehingga:
+
+```
+<meta name="description"     content="Kafe bertema retro di perbukitan Bumiaji, …">
+<meta property="og:description" content="A place to eat, talk, and experience Batu.">
+```
+
+Deskripsi Indonesia dari CMS tampil di `meta description`, tetapi pengayak
+tautan — WhatsApp, Facebook, X, Slack — membaca `og:description`. Jadi justru
+versi bahasa Inggris yang tersebar setiap kali seseorang membagikan beranda,
+halaman yang paling sering dibagikan.
+
+Perbaikannya sengaja memakai `publicMetadata`, **bukan** `seoMetadata`. Metadata
+beranda bersumber dari `site_settings`; menyambungkannya ke `seo_settings` akan
+membuat dua layar CMS mengedit tag yang sama. Keputusan itu sudah dipatok tes
+"the home page is deliberately not an SEO page key" dan masih benar — yang perlu
+diperbaiki hanya canonical dan OG-nya, bukan sumber datanya. Percobaan pertama
+saya justru melanggar tes itu, dan tesnya benar.
+
+**2. Judul beranda akan berganda.** `publicMetadata` menambahkan sufiks
+`| Chatten Cafe` tanpa syarat, sementara judul beranda **berasal dari**
+`site_settings.site_name` yang berisi `Chatten Cafe` — hasilnya
+`Chatten Cafe | Chatten Cafe`. Cacat laten yang baru muncul justru ketika
+beranda dipindahkan ke pembantu bersama, jadi perbaikan (1) akan memperkenalkan
+cacat baru tanpa ini. Sufiksnya dipusatkan di `pageTitle()` sehingga jalur
+penimpa `seo_settings` mendapat aturan yang sama.
+
+**3. Sitemap hanya mengumumkan delapan path statis.** `/spaces/[slug]`,
+`/experience/[slug]` dan `/events/[slug]` punya `generateMetadata` sendiri —
+memang dimaksudkan untuk diindeks — tetapi tidak pernah masuk sitemap. Saat
+pemeriksaan ini **8 halaman detail terbitan** luput (4 space, 4 experience; 0
+event terbitan). Pembacaannya lewat `publicCards`/`publicEvents` yang sudah
+dibungkus `guard` (A39): sitemap yang melempar menjatuhkan route-nya dan ditandai
+rusak oleh pengayak — lebih buruk daripada sitemap yang pendek.
+
+**Diverifikasi pada HTML sungguhan** setelah container dibangun ulang:
+
+```
+<title>Chatten Cafe                      (tidak berganda)
+<link rel="canonical" href="…/">         (sebelumnya tidak ada)
+og:description = deskripsi Indonesia     (sebelumnya Inggris)
+sitemap: 8 → 16 <loc>
+```
+
+Sembilan halaman diperiksa ulang: semuanya 200, sufiks judul tetap benar
+(`Menu | Chatten Cafe`, `Rooftop | Chatten Cafe`, …), canonical utuh. Log
+container 0 error. Thumbnail CMS tetap 5/5 di enam layar, jadi A100 tidak
+mengalami regresi.
+
+Tiga uji baru memaku ketiganya, dan uji judul-berganda dibuktikan **bisa gagal**
+lebih dulu — dengan mengembalikan sufiks tanpa syarat, yang menghasilkan
+`actual: 'Chatten Cafe | Chatten Cafe'` — lalu berkasnya dipulihkan.
+
+**Satu hal yang sengaja TIDAK diubah: `<html lang="en">`.** Sekilas tampak
+salah karena sebagian isi CMS berbahasa Indonesia. Tetapi antarmukanya —
+navigasi, tombol, "Skip to content", "Plan Your Visit", mayoritas heading —
+berbahasa Inggris. Mengubahnya ke `id` akan membuat pembaca layar melafalkan
+teks Inggris dengan fonem Indonesia, lebih buruk daripada keadaan sekarang.
+Yang benar adalah memilih satu bahasa untuk antarmuka publik, dan itu keputusan
+konten milik operator, bukan cacat kode. Dicatat di sini, tidak disentuh.
+
+Sisa item #4 yang memang menunggu operator: domain produksi, foto Chatten asli,
+kontak/arah, dan jam buka.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

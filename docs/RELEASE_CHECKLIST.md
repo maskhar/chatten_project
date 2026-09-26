@@ -6,7 +6,7 @@
 - [ ] Real Chatten imagery uploaded
 - [ ] Contact / directions verified
 - [ ] Opening hours verified
-- [ ] SEO identity verified
+- [x] SEO identity verified
 - [x] Docker container healthy
 - [x] Database backup restore drill verified
 - [x] Media backup verified
@@ -39,6 +39,21 @@ pernah commit rahasia". Yang diverifikasi:
 
 Baris "Authenticated browser E2E confirmed by operator" sengaja **belum**
 dicentang: pengujiannya dijalankan di sini, bukan dikonfirmasi oleh operator.
+
+### Identitas SEO (A104)
+
+Diaudit dari HTML yang benar-benar terkirim, bukan dari membaca berkas halaman.
+Tiga cacat diperbaiki: beranda tidak memancarkan `canonical` dan
+`og:description`-nya masih berbahasa Inggris padahal `meta description` sudah
+Indonesia (pengayak tautan membaca yang OG, jadi versi salah yang tersebar);
+judul beranda akan berganda menjadi `Chatten Cafe | Chatten Cafe`; sitemap hanya
+mengumumkan 8 path statis sehingga 8 halaman detail terbitan luput. Sitemap kini
+16 URL.
+
+`<html lang="en">` sengaja tidak diubah — antarmukanya berbahasa Inggris, dan
+memaksanya ke `id` akan membuat pembaca layar melafalkan teks Inggris dengan
+fonem Indonesia. Memilih satu bahasa untuk antarmuka publik adalah keputusan
+konten operator, bukan cacat kode.
 
 ### Siklus CRUD terautentikasi (A102)
 
