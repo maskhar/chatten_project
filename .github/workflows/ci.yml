@@ -1,0 +1,111 @@
+# Gerbang otomatis untuk setiap PR ke main dan setiap push ke branch kerja.
+#
+# Sebelum ini, satu-satunya bukti bahwa sebuah PR sehat adalah verifikasi manual
+# di mesin lokal, yang tidak terlihat oleh peninjau dan tidak terulang. PR #1
+# terbuka dengan `0 passing / 0 failing / 0 pending` — artinya tidak ada apa pun
+# yang menghalangi perubahan yang gagal uji untuk ikut ter-merge.
+#
+# Empat langkah dipisah dengan sengaja, bukan digabung dalam satu `run`: bila
+# gagal, nama langkah yang merah langsung menunjuk lapisan mana yang rusak
+# (perilaku, tipe, gaya, atau build) tanpa perlu membaca log.
+#
+# Tidak ada secret yang dipakai di sini, dan itu disengaja. Uji bersifat murni,
+# dan `next build` tidak menghubungi Supabase — lihat catatan NEXT_PUBLIC_APP_URL
+# di bawah. Menaruh kredensial nyata di CI hanya akan memperluas permukaan
+# kebocoran tanpa menambah satu pun jaminan.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, dev-maskhar]
+
+# Hak paling sempit yang cukup: workflow ini hanya membaca kode dan tidak
+# pernah menulis kembali ke repo, rilis, atau paket.
+permissions:
+  contents: read
+
+# Push beruntun ke PR yang sama membatalkan run sebelumnya. Tanpa ini, tiga
+# push cepat menyisakan tiga run yang saling berlomba dan hasil yang sudah usang
+# tetap dilaporkan ke PR.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Uji, tipe, gaya, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Siapkan Node
+        uses: actions/setup-node@v4
+        with:
+          # Samakan dengan Dockerfile (`FROM node:24-alpine`). Membiarkan CI
+          # berjalan di versi mayor lain berarti gerbang ini menguji runtime
+          # yang tidak pernah dipakai saat produksi.
+          node-version: 24
+          cache: npm
+
+      - name: Pasang dependensi
+        # `npm ci` menuntut package-lock.json konsisten dengan package.json dan
+        # memasang tepat versi yang terkunci. `npm install` akan diam-diam
+        # memperbarui lock, sehingga CI menguji pohon dependensi yang berbeda
+        # dari yang di-commit.
+        run: npm ci
+
+      - name: Jalankan uji
+        # Pola glob dikutip agar diperluas oleh Node, bukan oleh shell: `sh` di
+        # runner tidak mengaktifkan globstar, jadi tanpa kutip `tests/**/*.test.mjs`
+        # diteruskan mentah dan Node hanya menemukan satu jalur yang tidak ada.
+        # Keluaran di-tee karena langkah berikutnya membaca baris ringkasannya.
+        run: npm test 2>&1 | tee test-output.log
+
+      - name: Pastikan ringkasan uji nol kegagalan
+        # Pengaman ganda di atas exit code. `node --test` memang mengembalikan 1
+        # saat ada assertion gagal, dan itu sudah diverifikasi — tetapi `npm test`
+        # di sini berada di ujung pipe, dan satu perubahan pada baris script bisa
+        # menelan status itu tanpa terlihat. Baris `ℹ fail` adalah pernyataan
+        # Node sendiri tentang hasilnya, jadi inilah yang diperiksa.
+        #
+        # Polanya `^[^ ]* fail`, bukan `^. fail`: Node menulis awalan `ℹ`, yang
+        # tiga byte UTF-8, sehingga `.` tidak pernah cocok pada grep yang berjalan
+        # di locale byte. `-a` dipakai agar log dengan byte ganjil tetap
+        # diperlakukan sebagai teks, bukan diam-diam dilewati sebagai biner.
+        run: |
+          fail_line="$(grep -aE '^[^ ]* fail [0-9]+$' test-output.log | tail -1)"
+          if [ -z "$fail_line" ]; then
+            echo "Baris ringkasan 'fail' tidak ditemukan; keluaran uji tidak dapat dipercaya." >&2
+            exit 1
+          fi
+          echo "$fail_line"
+          failures="$(printf '%s' "$fail_line" | grep -oE '[0-9]+$')"
+          if [ "$failures" != "0" ]; then
+            echo "Ada $failures uji yang gagal." >&2
+            exit 1
+          fi
+
+      - name: Periksa tipe
+        run: npm run typecheck
+
+      - name: Periksa gaya
+        run: npm run lint
+
+      - name: Build produksi
+        # next.config.ts memanggil assertAppUrl(), yang menggagalkan build
+        # produksi bila NEXT_PUBLIC_APP_URL tidak ada (A47). Nilai placeholder
+        # dipakai di sini, bukan ALLOW_MISSING_APP_URL=1, supaya jalur sukses
+        # gerbang itu yang benar-benar diuji — bukan jalur pintasnya.
+        #
+        # Origin ini tidak pernah dikirim ke mana pun: ia hanya terpanggang ke
+        # dalam artefak build CI yang langsung dibuang. Deployment nyata
+        # memakai nilai sebenarnya lewat docker compose build args.
+        env:
+          NEXT_PUBLIC_APP_URL: https://chatten.example
+        run: npm run build

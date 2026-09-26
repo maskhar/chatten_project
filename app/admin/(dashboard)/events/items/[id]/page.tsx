@@ -1,0 +1,3 @@
+import { notFound } from "next/navigation"; import { createServerSupabaseClient } from "@/lib/supabase/server"; import { EventPromotionEditForm } from "@/components/admin/event-promotion-manager";
+export const dynamic="force-dynamic";
+export default async function EventEditPage({params}:{params:Promise<{id:string}>}){const {id}=await params;const supabase=await createServerSupabaseClient();const [{data:row},{data:media}]=await Promise.all([supabase.from("events").select("*").eq("id",id).maybeSingle(),supabase.from("media").select("id,title,alt_text,category,width,height,bucket,storage_path").order("created_at",{ascending:false})]);if(!row)notFound();return <EventPromotionEditForm kind="event" row={row as never} media={(media??[]) as never[]}/>}

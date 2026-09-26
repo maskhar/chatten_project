@@ -1,0 +1,21 @@
+// focal_x/focal_y are optional because the columns are nullable: an asset whose
+// focal point was never set renders from the centre, as it always did.
+//
+// A93: `bucket`/`storage_path` dibuang. Beranda tidak pernah membacanya, dan
+// peran `anon` tidak lagi punya hak SELECT atasnya sejak 20260927000100 —
+// lihat PUBLIC_MEDIA_COLUMNS di lib/public-data/media.ts.
+export type Media = { id: string; alt_text: string | null; focal_x?: number | null; focal_y?: number | null };
+export type SiteSettings = { site_name: string; tagline: string | null; description: string | null };
+export type HeroSlide = { id: string; title: string; subtitle: string | null; image_media_id: string | null; cta_label: string | null; cta_url: string | null };
+export type Moment = { id: string; name: string; description: string | null; image_media_id: string | null; sort_order: number };
+export type Story = { id: string; title: string; body: string; image_media_id: string | null; sort_order: number };
+export type Card = { id: string; name: string; slug: string; description: string | null; image_media_id: string | null; sort_order: number };
+export type MenuItem = Card & { category_id: string; price: number | null; status: string };
+export type GalleryItem = { id: string; title: string | null; image_media_id: string | null; alt_text: string; sort_order: number };
+export type Testimonial = { id: string; author_name: string; quote: string; source: string | null; sort_order: number };
+export type Feature = { id: string; title: string; slug: string; summary: string | null; body: string | null; image_media_id: string | null; starts_at?: string; ends_at?: string | null };
+export type OpeningHour = { day_of_week: number; opens_at: string | null; closes_at: string | null; is_closed: boolean };
+export type Contact = { address: string | null; phone: string | null; whatsapp_url: string | null; directions_url: string | null };
+export type Social = { platform: string; label: string | null; url: string };
+export type NavItem = { label: string; href: string; sort_order: number };
+export type HomepageData = { settings: SiteSettings | null; hero: HeroSlide | null; moments: Moment[]; stories: Story[]; experiences: Card[]; spaces: Card[]; categories: { id: string; name: string }[]; menu: MenuItem[]; gallery: GalleryItem[]; testimonials: Testimonial[]; feature: Feature | null; hours: OpeningHour[]; contact: Contact | null; socials: Social[]; navigation: NavItem[]; media: Record<string, Media> };

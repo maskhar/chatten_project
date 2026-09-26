@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "autoPort": true
+    },
+    {
+      "name": "docker",
+      "port": 3010,
+      "url": "http://localhost:3010"
+    }
+  ]
+}

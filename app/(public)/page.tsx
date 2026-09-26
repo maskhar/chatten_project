@@ -1,0 +1,72 @@
+import type { Metadata } from "next";
+import { Container } from "@/components/ui/container";
+import { PublicShell } from "@/components/public/public-shell";
+import { getHomepageData } from "@/lib/homepage/data";
+import { publicMetadata } from "@/lib/seo";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { MediaImage } from "@/components/public/media-image";
+import { CtaLink } from "@/components/ui/cta";
+import { TEXT_LINK } from "@/components/ui/control";
+import type { Card, HomepageData, Media, Moment } from "@/lib/homepage/types";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 300;
+
+// A104: beranda menulis `title`/`description` sendiri dan tidak memakai satu
+// pun pembantu bersama. Dua akibatnya nyata dan tidak disengaja: ia
+// satu-satunya halaman tanpa `<link rel="canonical">`, dan karena `openGraph`
+// tidak ikut ditimpa, nilainya diwarisi apa adanya dari layout — sehingga
+// `og:description` tetap berbahasa Inggris sementara `description` halamannya
+// sudah Indonesia dari CMS. Bagi pengayak tautan, justru deskripsi OG itulah
+// yang terlihat, jadi versi yang salah yang tersebar.
+//
+// Sengaja memakai `publicMetadata`, BUKAN `seoMetadata`. Sumber metadata
+// beranda adalah `site_settings`; menyambungkannya ke `seo_settings` juga akan
+// membuat dua layar CMS mengedit tag yang sama. Keputusan itu sudah dipatok
+// oleh tes "the home page is deliberately not an SEO page key" dan masih benar
+// — yang perlu diperbaiki hanya canonical dan OG-nya.
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getHomepageData();
+  return publicMetadata(
+    data.settings?.site_name ?? "Chatten Cafe",
+    data.settings?.description ?? "A place to eat, talk, and experience Batu.",
+    "/",
+  );
+}
+
+const sectionTitle = "font-serif text-4xl leading-[.95] sm:text-5xl lg:text-6xl";
+const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+// A42: was a CSS background, which next/image cannot size — every card and
+// tile shipped its full-resolution original to a phone. `sizes` is per call
+// site because a 4-up gallery tile and a full-bleed hero need very different
+// candidates from the same asset.
+function visual(media: Media | undefined, sizes: string, className = "", priority = false, scrim: "soft" | "strong" = "soft") { return <MediaImage media={media} sizes={sizes} alt="" scrim={scrim} className={className} priority={priority} />; }
+function CardGrid({ items, media, heading }: { items: Card[]; media: HomepageData["media"]; heading: string }) { if (!items.length) return <p className="mt-8 max-w-lg text-ink">{heading} will be curated soon.</p>; return <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{items.slice(0, 3).map((item) => <article key={item.id} className="group overflow-hidden bg-sand"><div className="h-64 overflow-hidden">{visual(media[item.image_media_id ?? ""], "(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw", "h-full transition-transform duration-500 group-hover:scale-[1.03]")}</div><div className="p-6"><p className="font-serif text-2xl">{item.name}</p>{item.description ? <p className="mt-3 text-sm leading-6 text-ink">{item.description}</p> : null}</div></article>)}</div>; }
+function MomentCard({ moment, media, index }: { moment: Moment; media: HomepageData["media"]; index: number }) { return <article className="relative min-h-80 overflow-hidden rounded-sm border border-white/15 p-6 text-white" key={moment.id}>{visual(media[moment.image_media_id ?? ""], "(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw", "absolute inset-0", false, "strong")}<div className="relative flex h-full min-h-64 flex-col justify-between"><span className="text-xs uppercase tracking-[.2em] text-peach-light">0{index + 1}</span><div><h3 className="font-serif text-4xl">{moment.name}</h3>{moment.description ? <p className="mt-3 max-w-xs text-sm leading-6 text-white/80">{moment.description}</p> : null}</div></div></article>; }
+
+export default async function HomePage() {
+  const data = await getHomepageData(); const supabase = await createServerSupabaseClient(); const { data: configuredSections } = await supabase.from("homepage_sections").select("section_key,sort_order,is_visible").order("sort_order"); const sections = (configuredSections ?? []) as { section_key: string; sort_order: number; is_visible: boolean }[]; const sectionStyle = (key: string) => { const section = sections.find((item) => item.section_key === key); return section ? { order: section.sort_order, display: section.is_visible ? undefined : "none" } : undefined; }; const heroMedia = data.media[data.hero?.image_media_id ?? ""]; const heroTitle = data.hero?.title ?? "Datang karena pemandangannya. Pulang membawa ceritanya."; const heroText = data.hero?.subtitle ?? data.settings?.tagline ?? "A place to eat, talk, and experience Batu."; const story = data.stories[0];
+  return <PublicShell navigation={data.navigation} socials={data.socials}><div id="top" className="flex flex-col overflow-x-hidden bg-cream text-forest">
+    <section style={sectionStyle("hero")} className="relative flex min-h-[70svh] items-end bg-forest text-white sm:min-h-[760px]">{visual(heroMedia, "100vw", "absolute inset-0", true, "strong")}<Container className="relative z-10 pb-20 pt-28 sm:pb-28 sm:pt-44"><p className="text-xs uppercase tracking-[.26em] text-peach-light">Chatten Cafe · Batu</p><h1 className="mt-6 max-w-4xl font-serif text-5xl leading-[.9] sm:text-7xl lg:text-8xl">{heroTitle}</h1><p className="mt-7 max-w-xl text-base leading-7 text-white/85 sm:text-lg">{heroText}</p><div className="mt-10 flex flex-wrap gap-3"><CtaLink href="#experience" variant="accent">Explore Chatten</CtaLink><CtaLink href="#visit" variant="onDark">Get Directions</CtaLink></div></Container></section>
+    <section style={sectionStyle("moments")} id="moments" className="bg-forest py-24 text-white"><Container><p className="text-xs uppercase tracking-[.2em] text-peach-light">Through every hour</p><h2 className={`${sectionTitle} mt-5 max-w-xl`}>One place. Four different stories.</h2><div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{data.moments.map((moment, index) => <MomentCard key={moment.id} moment={moment} media={data.media} index={index} />)}</div></Container></section>
+    <section style={sectionStyle("about")} id="about" className="py-24 lg:py-32"><Container className="grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:items-end"><div><p className="text-xs uppercase tracking-[.2em] text-rust">More than a table</p><h2 className={`${sectionTitle} mt-5`}>{story?.title ?? "Come for the view. Stay for the conversation."}</h2></div><div className="border-l border-line pl-6 sm:pl-10"><p className="max-w-2xl text-lg leading-8 text-ink">{story?.body ?? data.settings?.description ?? "Chatten is being shaped as a destination for slow meals, long conversations, and the changing light of Batu."}</p><a className={`${TEXT_LINK} mt-7`} href="#experience">Discover the Experience</a></div></Container></section>
+    <section style={sectionStyle("feature")} id="experience" className="bg-line-soft py-12 lg:py-20"><Container><div className="relative min-h-[380px] overflow-hidden bg-moss p-8 text-white sm:min-h-[480px] sm:p-12 lg:min-h-[560px] lg:p-16">{visual(story ? data.media[story.image_media_id ?? ""] : heroMedia, "(min-width: 1280px) 1280px, 100vw", "absolute inset-0", false, "strong")}<div className="relative flex min-h-0 max-w-2xl flex-col justify-end sm:min-h-[350px] lg:min-h-[430px]"><p className="text-xs uppercase tracking-[.22em] text-peach-light">The view is part of the table</p><h2 className={`${sectionTitle} mt-5`}>See Batu. Taste Batu. Talk more.</h2><p className="mt-6 max-w-lg leading-7 text-white/85">From first light to city lights, every visit gives the landscape a different voice.</p><CtaLink href="#visit" variant="onDark" className="mt-8 w-fit">Plan Your Visit</CtaLink></div></div></Container></section>
+    <section style={sectionStyle("menu")} id="menu" className="py-24 lg:py-32"><Container><div className="flex flex-wrap items-end justify-between gap-6"><div><p className="text-xs uppercase tracking-[.2em] text-rust">Taste the moment</p><h2 className={`${sectionTitle} mt-5`}>Featured from kitchen &amp; bar.</h2></div><a href="#menu" className={TEXT_LINK}>View Full Menu</a></div><div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">{data.menu.length ? data.menu.slice(0, 4).map((item) => <article key={item.id} className="bg-sand p-5"><div className="h-44">{visual(data.media[item.image_media_id ?? ""], "(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw", "h-full")}</div><p className="mt-5 font-serif text-2xl">{item.name}</p>{item.description ? <p className="mt-2 text-sm leading-6 text-ink">{item.description}</p> : null}{item.price && item.price > 0 ? <p className="mt-4 text-sm font-semibold">{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(item.price)}</p> : null}</article>) : <p className="text-ink">Menu selections will arrive soon.</p>}</div></Container></section>
+    <section style={sectionStyle("spaces")} id="spaces" className="bg-sand py-24"><Container><p className="text-xs uppercase tracking-[.2em] text-rust">Find your place</p><h2 className={`${sectionTitle} mt-5`}>Spaces for every pace.</h2><CardGrid items={data.spaces} media={data.media} heading="Spaces" /></Container></section>
+    <section style={sectionStyle("experiences")} className="py-24"><Container><p className="text-xs uppercase tracking-[.2em] text-rust">Made for memory</p><h2 className={`${sectionTitle} mt-5`}>Experiences to share.</h2><CardGrid items={data.experiences} media={data.media} heading="Experiences" /></Container></section>
+    {data.feature ? <section style={sectionStyle("feature")} id="events" className="bg-terracotta-deep py-20 text-white"><Container className="grid gap-8 md:grid-cols-[1fr_auto] md:items-end"><div><p className="text-xs uppercase tracking-[.2em] text-peach-pale">Now at Chatten</p><h2 className={`${sectionTitle} mt-5 max-w-2xl`}>{data.feature.title}</h2>{data.feature.summary ? <p className="mt-5 max-w-xl leading-7 text-white/85">{data.feature.summary}</p> : null}</div><CtaLink href="#visit" variant="onDark">Discover Event</CtaLink></Container></section> : null}
+    <section style={sectionStyle("gallery")} id="gallery" className="py-24 lg:py-32"><Container><div className="flex flex-wrap items-end justify-between gap-6"><div><p className="text-xs uppercase tracking-[.2em] text-rust">A glimpse of Chatten</p><h2 className={`${sectionTitle} mt-5`}>Framed by Batu.</h2></div><a href="#gallery" className={TEXT_LINK}>Explore Gallery</a></div>{data.gallery.length ? <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">{data.gallery.map((item, index) => <figure className={`${index === 0 || index === 5 ? "md:col-span-2 md:row-span-2" : ""} min-h-48`} key={item.id}>{/* A95: these tiles went through `visual()`, which hardcodes alt="", so the
+        one band on the homepage where the image *is* the content was the one
+        band that threw away its CMS alt text — /gallery passes it. MediaImage
+        is called directly here because `visual()` exists precisely to force
+        alt="" for the decorative backgrounds, and that is the right default
+        everywhere else on this page. */}<MediaImage media={data.media[item.image_media_id ?? ""]} alt={item.alt_text} sizes={index === 0 || index === 5 ? "(min-width: 768px) 50vw, 50vw" : "(min-width: 768px) 25vw, 50vw"} className="h-full" /></figure>)}</div> : <div className="mt-10 grid min-h-80 place-items-center bg-moss text-center text-white"><p className="font-serif text-3xl">More views are on their way.</p></div>}</Container></section>
+    {/* A95: this section had no accessible name — no aria-label, no heading, only
+        a styled <p> lead-in — so it was invisible to region navigation while
+        every other homepage band was reachable. The lead-in is promoted to the
+        h2 it was already acting as visually; "Shared stories" keeps the eyebrow
+        role above it. */}
+    {data.testimonials.length ? <section style={sectionStyle("testimonials")} aria-labelledby="testimonials-heading" className="bg-forest py-24 text-white"><Container><p className="text-xs uppercase tracking-[.2em] text-peach-light">Shared stories</p><h2 id="testimonials-heading" className={`${sectionTitle} mt-5`}>What people take home.</h2><div className="mt-10 grid gap-5 md:grid-cols-2">{data.testimonials.map((item) => <figure className="border-t border-white/25 pt-6" key={item.id}><blockquote className="font-serif text-3xl leading-tight">“{item.quote}”</blockquote><figcaption className="mt-6 text-sm text-white/70">{item.author_name}{item.source ? ` · ${item.source}` : ""}</figcaption></figure>)}</div></Container></section> : null}
+    <section style={sectionStyle("visit")} id="visit" className="bg-line-soft py-24"><Container className="grid gap-12 lg:grid-cols-2"><div><p className="text-xs uppercase tracking-[.2em] text-rust">Visit Chatten</p><h2 className={`${sectionTitle} mt-5`}>Make a day of it.</h2><p className="mt-6 max-w-lg leading-7 text-ink">{data.contact?.address ?? "Visit details are being prepared. Check back soon for directions and opening information."}</p><div className="mt-8 flex flex-wrap gap-3">{data.contact?.directions_url ? <CtaLink href={data.contact.directions_url} target="_blank" rel="noreferrer">Get Directions</CtaLink> : null}{data.contact?.whatsapp_url ? <CtaLink variant="outline" href={data.contact.whatsapp_url} target="_blank" rel="noreferrer">Chat on WhatsApp</CtaLink> : null}</div></div><div className="border-t border-line-deep pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0"><p className="text-xs uppercase tracking-[.2em] text-rust">Opening hours</p><dl className="mt-6 grid gap-3 text-sm">{data.hours.length ? data.hours.map((hour) => <div className="flex justify-between border-b border-line-deep pb-3" key={hour.day_of_week}><dt>{days[hour.day_of_week]}</dt><dd>{hour.is_closed ? "Closed" : `${hour.opens_at?.slice(0, 5) ?? "—"} – ${hour.closes_at?.slice(0, 5) ?? "—"}`}</dd></div>) : <p>Hours coming soon.</p>}</dl></div></Container></section>
+  </div></PublicShell>;
+}

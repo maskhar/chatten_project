@@ -1,0 +1,24 @@
+-- Audit remediation A6, final step.
+--
+-- storage-api serves /storage/v1/object/public/<bucket>/<path> without
+-- evaluating RLS at all when the bucket row has public = true. That is why
+-- 20260921000200 tightening "chatten public read" changed nothing for
+-- anonymous readers: the policy was never consulted on that route. Verified
+-- empirically on 2026-09-21 — an object whose media row was rights_status =
+-- 'unknown' returned HTTP 200 both before and after that migration.
+--
+-- Flipping the bucket to private closes the route. Reads now go through the
+-- application at /api/media/[id] (app/api/media/[id]/route.ts), which looks
+-- the media row up with the caller's own RLS-bound session before streaming
+-- the object, so rights_status is finally enforced on the read path.
+--
+-- Applied only after that route was verified working: approved media served
+-- 200 with bytes, unapproved and unknown ids returned 404.
+--
+-- CMS writes are unaffected. Upload and delete use the authenticated session
+-- client and match "chatten cms manage"
+-- (bucket_id = 'chatten-media' AND has_role('editor')), which does not depend
+-- on bucket.public. Only chatten-media is touched; the other buckets on this
+-- shared host keep their current visibility.
+
+update storage.buckets set public = false where id = 'chatten-media';

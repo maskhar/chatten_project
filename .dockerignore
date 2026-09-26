@@ -1,0 +1,10 @@
+.git
+.codegraph
+.codegraphy
+.next
+node_modules
+.env
+.env.*
+!.env.example
+coverage
+npm-debug.log*

@@ -1,0 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
+import { createClient } from "@supabase/supabase-js";
+import { requiredEnv, validateState } from "./e2e-auth-common.mjs";
+const state=validateState(JSON.parse(fs.readFileSync(path.resolve(".e2e/auth-user.local.json"),"utf8"))); const env=requiredEnv(process.env); const client=createClient(env.url,env.anonKey,{auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false},db:{schema:"chatten_cafe"}}); const {data,error}=await client.auth.signInWithPassword({email:state.email,password:state.password}); if(error||!data.user||!data.session) throw error??new Error("Authentication failed."); if(data.user.id!==state.userId) throw new Error("Authenticated user ID mismatch."); console.log("Authentication: PASS"); console.log("User ID match: PASS"); console.log("Session received: PASS"); await client.auth.signOut(); console.log("Sign out: PASS");

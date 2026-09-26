@@ -1,0 +1,1 @@
+export function normalizeGalleryOrder(ids:string[]){return ids.filter((id,index)=>id&&ids.indexOf(id)===index);} export function validGalleryMedia(id:string){return /^[0-9a-f-]{36}$/i.test(id);} export function publicGalleryVisible(isActive:boolean,status:string,imageId:string|null){return Boolean(imageId)&&isActive&&status==="published";}

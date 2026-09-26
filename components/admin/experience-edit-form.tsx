@@ -1,0 +1,167 @@
+"use client";
+import { CmsImage } from "@/components/admin/cms-image";
+import Link from "next/link";
+import { MediaPicker } from "@/components/admin/media-picker";
+import { saveExperience } from "@/lib/admin/experience-actions";
+import { ActionForm } from "@/components/admin/action-form";
+import { mediaHrefById } from "@/lib/media/url";
+import { SubmitButton } from "@/components/admin/submit-button";
+
+type Experience = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_media_id: string | null;
+  is_active: boolean;
+  status: string;
+};
+
+type Media = {
+  id: string;
+  title: string | null;
+  alt_text: string | null;
+  category: string | null;
+  width: number | null;
+  height: number | null;
+  bucket: string;
+  storage_path: string;
+};
+
+const field = "mt-1 w-full rounded border px-3 py-2";
+
+export function ExperienceEditForm({
+  experience,
+  media,
+}: {
+  experience: Experience;
+  media: Media[];
+}) {
+  const image = (id: string | null) => mediaHrefById(media.find((item) => item.id === id)?.id) ?? null;
+
+  const imgUrl = image(experience.image_media_id);
+
+  return (
+    <section>
+      <div className="mb-6">
+        <Link
+          href="/admin/experiences"
+          className="text-sm text-ink-muted hover:text-forest"
+        >
+          ← Kembali ke Pengalaman
+        </Link>
+      </div>
+
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-clay">
+            Edit Pengalaman
+          </p>
+          <h1 className="mt-2 font-serif text-3xl sm:text-4xl lg:text-5xl">{experience.name}</h1>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <ActionForm action={saveExperience} className="grid gap-6">
+          <input type="hidden" name="id" value={experience.id} />
+
+          <div>
+            <label className="block text-sm font-semibold">
+              Nama pengalaman
+              <input
+                name="name"
+                required
+                defaultValue={experience.name}
+                className={field}
+              />
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold">
+              Slug
+              <input
+                name="slug"
+                required
+                defaultValue={experience.slug}
+                className={field}
+              />
+              <span className="mt-1 block text-xs text-ink-muted">
+                Pengenal ramah-URL (mis. morning-coffee)
+              </span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold">
+              Deskripsi
+              <textarea
+                name="description"
+                required
+                rows={6}
+                defaultValue={experience.description ?? ""}
+                className={field}
+              />
+            </label>
+          </div>
+
+          <div>
+            <MediaPicker
+              name="image_media_id"
+              media={media}
+              value={experience.image_media_id ?? undefined}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                name="is_active"
+                type="checkbox"
+                defaultChecked={experience.is_active}
+              />
+              Aktif
+            </label>
+
+            <label className="flex items-center gap-2 text-sm">
+              Status:
+              <select
+                name="status"
+                defaultValue={experience.status}
+                className="rounded border px-2 py-1 text-sm"
+              >
+                <option value="draft">Draf</option>
+                <option value="published">Terbit</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white hover:bg-forest-soft">
+              Simpan perubahan
+            </SubmitButton>
+            <Link
+              href="/admin/experiences"
+              className="rounded border border-forest px-6 py-3 text-sm font-semibold text-forest hover:bg-paper"
+            >
+              Batal
+            </Link>
+          </div>
+        </ActionForm>
+
+        {imgUrl && (
+          <div className="h-fit rounded border bg-white p-4">
+            <p className="text-sm font-semibold">Gambar saat ini</p>
+            <CmsImage
+              src={imgUrl}
+              alt={experience.name}
+              width={320}
+              height={240}
+              className="mt-3 w-full rounded object-cover"
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

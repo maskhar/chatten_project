@@ -1,0 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
+import { createClient } from "@supabase/supabase-js";
+import { requiredEnv, requireRemoteOptIn, validateState } from "./e2e-auth-common.mjs";
+requireRemoteOptIn(process.env.E2E_ALLOW_REMOTE_SUPABASE); const statePath=path.resolve(".e2e/auth-user.local.json"); if(!fs.existsSync(statePath)){console.log("No temporary Auth state found."); process.exit(0);} const state=validateState(JSON.parse(fs.readFileSync(statePath,"utf8"))); const env=requiredEnv(process.env); const admin=createClient(env.url,env.serviceRoleKey,{auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false},db:{schema:"chatten_cafe"}}); const [roleResult,profileResult]=await Promise.all([admin.from("user_roles").delete().eq("user_id",state.userId),admin.from("profiles").delete().eq("id",state.userId)]); if(roleResult.error||profileResult.error) throw roleResult.error??profileResult.error; const {error}=await admin.auth.admin.deleteUser(state.userId); if(error&&error.status!==404) throw error; fs.rmSync(statePath); console.log("Temporary Auth user and local credentials removed.");

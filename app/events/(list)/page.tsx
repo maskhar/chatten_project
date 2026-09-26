@@ -1,0 +1,10 @@
+import type { Metadata } from "next";
+import { MediaImage } from "@/components/public/media-image";
+import { PageHero } from "@/components/public/page-hero";
+import { PublicShell } from "@/components/public/public-shell";
+import { publicEvents, publicMedia } from "@/lib/public-data/queries";
+import { seoMetadata } from "@/lib/public-data/seo";
+import { CARD_FOCUS } from "@/components/ui/control";
+export const dynamic = "force-dynamic";
+export async function generateMetadata(): Promise<Metadata> { return seoMetadata("events", "Events", "Discover upcoming moments at Chatten Cafe.", "/events"); }
+export default async function EventsPage() { const [events,media]=await Promise.all([publicEvents(),publicMedia()]); return <PublicShell><PageHero eyebrow="What's happening" title="Make room for a new story." description="Gatherings, special moments, and seasonal reasons to return."/><div className="py-20"><div className="mx-auto max-w-7xl px-6 lg:px-12">{events.length?<div className="grid gap-5 md:grid-cols-2">{events.map(event=>{const asset=media[event.image_media_id??""];return <a className={`overflow-hidden border border-line bg-sand transition-colors hover:bg-sand-deep ${CARD_FOCUS}`} href={`/events/${event.slug}`} key={event.id}><MediaImage media={asset} alt={asset?.alt_text??""} sizes="(min-width: 768px) 50vw, 100vw" className="aspect-[3/2] w-full"/><div className="p-7"><p className="text-xs uppercase tracking-[.18em] text-rust">At Chatten</p><h2 className="mt-4 font-serif text-4xl">{event.title}</h2><p className="mt-4 text-sm text-ink">{new Intl.DateTimeFormat("id-ID",{dateStyle:"long",timeStyle:"short"}).format(new Date(event.starts_at))}</p>{event.summary?<p className="mt-5 leading-7 text-ink">{event.summary}</p>:null}</div></a>})}</div>:<p className="text-ink">No public events are scheduled right now. Follow Chatten for future moments.</p>}</div></div></PublicShell>; }

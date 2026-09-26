@@ -1,0 +1,12 @@
+alter table chatten_cafe.media add column if not exists title text;
+alter table chatten_cafe.media add column if not exists caption text;
+alter table chatten_cafe.media add column if not exists source_type text;
+alter table chatten_cafe.media add column if not exists source_reference text;
+alter table chatten_cafe.media add column if not exists attribution text;
+alter table chatten_cafe.media add column if not exists rights_status text not null default 'unknown' check (rights_status in ('approved','unknown','restricted'));
+alter table chatten_cafe.media add column if not exists sha256 text;
+alter table chatten_cafe.media add column if not exists tags text[] not null default '{}';
+alter table chatten_cafe.media add column if not exists category text;
+alter table chatten_cafe.media add column if not exists focal_x numeric(5,4);
+alter table chatten_cafe.media add column if not exists focal_y numeric(5,4);
+create unique index if not exists media_sha256_unique on chatten_cafe.media (sha256) where sha256 is not null;

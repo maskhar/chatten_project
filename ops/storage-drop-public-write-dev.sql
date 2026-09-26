@@ -1,0 +1,55 @@
+-- Mencabut dua kebijakan tulis anonim pada storage.objects:
+--   "Public upload for development"  INSERT  PUBLIC  bucket_id = '3d-models'
+--   "Public update for development"  UPDATE  PUBLIC  tanpa with_check
+--
+-- Seperti ops/storage-public-access-narrow.sql, kebijakan ini BUKAN milik
+-- Chatten. Ia ada di tabel bersama sebuah instance Supabase swakelola
+-- multi-tenant, dan berkas ini ada di ops/ — bukan supabase/migrations/ —
+-- karena migrasi Chatten hanya boleh menyentuh skema chatten_cafe dan bucket
+-- miliknya sendiri.
+--
+-- Apa yang dibuka. Perannya PUBLIC, yang mencakup `anon`, dan kunci anon
+-- tertanam di bundel peramban setiap pengunjung. Jadi siapa pun di internet
+-- dapat menitipkan berkas ke bucket `3d-models` dan menimpa baris metadata
+-- objek yang sudah ada di sana. Dibuktikan sebagai `anon` di dalam transaksi
+-- yang di-rollback pada 2026-09-27:
+--   insert into storage.objects (bucket_id, name, ...) values ('3d-models', ...)
+--     -> BERHASIL
+--   update storage.objects set name = name where bucket_id = '3d-models'
+--     -> 11 baris terkena
+-- Kebijakan UPDATE itu bahkan tidak punya `with_check`, sehingga baris yang
+-- lolos `using` dapat dipindahkan ke bucket mana pun.
+--
+-- Mengapa aman dicabut, dan bagaimana itu dipastikan. Pertanyaannya bukan
+-- "apakah kebijakan ini dipakai" melainkan "apakah ada jalur sah LAIN untuk
+-- pengguna yang login". Diuji dengan menjatuhkan kedua kebijakan di dalam
+-- transaksi yang di-rollback, lalu mencoba menulis sebagai masing-masing peran:
+--   authenticated  insert -> BERHASIL,  update -> 11 baris
+--   anon           insert -> ditolak, 42501
+-- Jalur sahnya datang dari kebijakan tenant sendiri yang jauh lebih ketat:
+--   "Authenticated users can upload 3D models"  INSERT
+--     with_check: bucket_id = '3d-models' AND auth.role() = 'authenticated'
+--   "Authenticated users can update 3D models"  UPDATE
+--     using + with_check: keduanya memakai syarat yang sama
+-- Perhatikan: kolom `roles` ketiga kebijakan itu juga `{public}`, jadi sekilas
+-- tampak sama longgarnya dengan yang dicabut di sini. Yang membedakan bukan
+-- perannya melainkan ekspresinya — `auth.role() = 'authenticated'` menolak
+-- `anon` di dalam kebijakan itu sendiri. Itu sebabnya probe di atas dapat
+-- menulis sebagai `authenticated` dan gagal sebagai `anon` setelah kedua
+-- kebijakan "for development" hilang.
+-- Keduanya tetap berlaku. Yang hilang hanya kemampuan menulis TANPA login —
+-- yang tidak mungkin merupakan alur produk, dan namanya sendiri
+-- ("for development") menyiratkan sisa pengembangan yang lupa dicabut.
+--
+-- Baca tetap tidak berubah: "Public Access" (sudah dipersempit ke 16 bucket
+-- publik), "Public Access for 3D Models" dan "Public read" semuanya SELECT dan
+-- tidak disentuh berkas ini, jadi galeri 3D publik tenant itu tetap tampil.
+--
+-- Pemulihan bila ternyata ada yang bergantung padanya:
+--   create policy "Public upload for development" on storage.objects
+--     for insert with check (bucket_id = '3d-models');
+--   create policy "Public update for development" on storage.objects
+--     for update using (true);
+
+drop policy if exists "Public upload for development" on storage.objects;
+drop policy if exists "Public update for development" on storage.objects;

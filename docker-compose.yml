@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      # NEXT_PUBLIC_* is compiled into the browser bundle, so it has to be
+      # present at build time — `env_file` below only covers runtime. Supply
+      # the values with: docker compose --env-file .env.local build
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        # Optional: both together enable the Chatwoot live-chat widget, and
+        # also widen the CSP to admit its origin. Neither set ships without it.
+        NEXT_PUBLIC_CHATWOOT_BASE_URL: ${NEXT_PUBLIC_CHATWOOT_BASE_URL:-}
+        NEXT_PUBLIC_CHATWOOT_TOKEN: ${NEXT_PUBLIC_CHATWOOT_TOKEN:-}
+    env_file:
+      - .env.local
+    ports:
+      - "${APP_PORT:-3010}:3000"
+    networks:
+      - carubra-network
+      - buzzerhood-network
+      - epochstream-network
+      - soundpub-network
+      - maskhar-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  # All five already exist on the host and are shared with other projects
+  # (carubra-network alone carries 30+ containers). `external: true` says this
+  # compose file joins them and does not own them — without it compose claims
+  # them, warns on every up, and would remove a shared network on `down`.
+  carubra-network:
+    external: true
+  buzzerhood-network:
+    external: true
+  epochstream-network:
+    external: true
+  soundpub-network:
+    external: true
+  maskhar-network:
+    external: true

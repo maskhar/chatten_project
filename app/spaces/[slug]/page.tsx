@@ -1,0 +1,32 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { PageHero } from "@/components/public/page-hero";
+import { PublicShell } from "@/components/public/public-shell";
+import { CtaLink } from "@/components/ui/cta";
+import { publicCardBySlug, publicMediaById } from "@/lib/public-data/queries";
+import { publicMetadata } from "@/lib/seo";
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const item = await publicCardBySlug("spaces", slug);
+  if (!item) return publicMetadata("Space", "This space could not be found.", `/spaces/${slug}`);
+  return publicMetadata(item.name, item.description ?? `${item.name} at Chatten Cafe.`, `/spaces/${item.slug}`);
+}
+
+export default async function SpaceDetail({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const item = await publicCardBySlug("spaces", slug);
+  if (!item) notFound();
+  const image = await publicMediaById(item.image_media_id);
+  return (
+    <PublicShell>
+      <PageHero eyebrow="A space at Chatten" title={item.name} description={item.description ?? undefined} image={image} />
+      <div className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
+        <p className="text-lg leading-8 text-ink">{item.description ?? "Details for this space are being prepared."}</p>
+        <CtaLink href="/visit" className="mt-10">Plan Your Visit</CtaLink>
+      </div>
+    </PublicShell>
+  );
+}
