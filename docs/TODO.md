@@ -678,7 +678,14 @@ work items; the audit document holds the evidence.
       dihapus. CMS menghapus jalur swap dua-update, hanya menyimpan daftar
       lengkap melalui RPC atomik, memvalidasi seluruh set bagian, dan
       `SortableList` memulihkan baseline terakhir yang benar-benar tersimpan.
-      Kontrak pengujian: `node --test tests/reorder-core.test.mjs` (16 lulus).
+      Kontrak pengujian: `node --test tests/reorder-core.test.mjs` (17 lulus).
+      Diterapkan pada Supabase self-hosted 2026-09-26 melalui `psql` terhadap
+      service `db` dalam satu transaksi `ON_ERROR_STOP`: constraint terverifikasi
+      `condeferrable=true` dan `condeferred=true`, fungsi tetap
+      `SECURITY INVOKER`, dan hak `EXECUTE` hanya untuk `authenticated`.
+      Uji DB langsung membalik seluruh 10 bagian di dalam transaksi lalu
+      `ROLLBACK`: RPC memperbarui 10 baris, hasilnya tetap 10 peringkat unik
+      `0..9`, dan urutan asli terkonfirmasi pulih setelah rollback.
 
 - [x] **A80** Pertahankan status kotor sampai server mengonfirmasi simpan berhasil.
       `UnsavedChangesGuard` kini membandingkan snapshot baseline server dengan

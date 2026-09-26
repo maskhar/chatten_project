@@ -2,9 +2,21 @@
 
 Build application image with `docker compose build`. Runtime configuration loads from the ignored `.env.local` file through `env_file`; Docker does not copy it into the image. Start only Chatten application services and preserve existing self-hosted Supabase volumes and services.
 
-Default host port is `3002` because ports `3000` and `3001` are occupied in the current environment. Override with `APP_PORT` when needed, for example `APP_PORT=3010 docker compose up -d`.
+Default host port is `3010`, because `3000`, `3001` and `3002` are all taken by other projects on this host. Override with `APP_PORT`, for example `APP_PORT=3020 docker compose up -d`.
 
-The application joins these Docker networks: `carubra-network`, `buzzerhood-network`, `epochstream-network`, `soundpub-network`, and `maskhar-network`. Compose creates them as bridge networks when absent.
+`NEXT_PUBLIC_*` values are compiled into the browser bundle, so they must be present at **build** time — the compose `env_file` only reaches runtime. Always build through the env file:
+
+```bash
+docker compose --env-file .env.local build
+```
+
+The application joins five Docker networks: `carubra-network`, `buzzerhood-network`, `epochstream-network`, `soundpub-network`, and `maskhar-network`. All five are declared `external: true` and are **not** owned by this compose file — they already exist on the host and are shared with unrelated projects (`carubra-network` alone carries 30+ containers). Create a missing one explicitly before `up`:
+
+```bash
+docker network create carubra-network
+```
+
+Without `external: true`, compose would claim a shared network and `docker compose down` would try to remove it out from under every other container attached to it.
 
 The application exposes `/api/health` for liveness and `/api/ready` for Supabase readiness. Docker healthchecks use the liveness endpoint. Set `NEXT_PUBLIC_APP_URL`, browser-safe Supabase URL/key, and server-only service role key in `.env.local`. No authorized Chatten application deployment host or production domain is configured in this repository.
 
