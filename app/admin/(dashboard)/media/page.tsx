@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { CmsImage } from "@/components/admin/cms-image";
 import { MediaDeleteControl } from "@/components/admin/media-delete-control";
 import { MediaUploadDropzone } from "@/components/admin/media-upload-dropzone";
 import { filterMediaBySearch, mediaCategories } from "@/lib/media/search";
@@ -75,7 +75,7 @@ export default async function MediaPage({ searchParams }: { searchParams: Search
               const id = String(row.id);
               return (
                 <article className="min-w-0 border border-line bg-sand p-5" key={id}>
-                  <Image
+                  <CmsImage
                     className="aspect-square w-full object-cover"
                     src={`/api/media/${id}`}
                     alt={String(row.alt_text ?? "")}

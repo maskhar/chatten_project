@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CmsImage } from "@/components/admin/cms-image";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { saveMediaDetails } from "@/lib/admin/media-actions";
 import { ActionForm } from "@/components/admin/action-form";
@@ -63,7 +63,7 @@ export default async function MediaDetails({ params }: { params: Promise<{ id: s
               after a save. */}
           {href ? (
             <div className="relative aspect-[4/3] overflow-hidden rounded bg-mist">
-              <Image src={href} alt={item.alt_text ?? item.title ?? "Pratinjau media"} fill sizes="320px" className="object-cover" style={{ objectPosition: focalObjectPosition(item) }} />
+              <CmsImage src={href} alt={item.alt_text ?? item.title ?? "Pratinjau media"} fill className="object-cover" style={{ objectPosition: focalObjectPosition(item) }} />
             </div>
           ) : null}
           <dl className="mt-4 grid gap-2 text-sm">

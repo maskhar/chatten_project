@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CmsImage } from "@/components/admin/cms-image";
 import { ActionForm } from "@/components/admin/action-form";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { RowFeedback } from "@/components/admin/row-feedback";
@@ -74,7 +74,7 @@ export function SpacesManagerClient({
     detail: (
       <div className="mt-1 flex items-center gap-3">
         {imageUrl(space.image_media_id) ? (
-          <Image
+          <CmsImage
             src={imageUrl(space.image_media_id) as string}
             alt={space.name}
             width={80}

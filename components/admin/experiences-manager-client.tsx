@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CmsImage } from "@/components/admin/cms-image";
 import { ActionForm } from "@/components/admin/action-form";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { RowFeedback } from "@/components/admin/row-feedback";
@@ -76,7 +76,7 @@ export function ExperiencesManagerClient({
       detail: (
         <div className="mt-1 flex items-center gap-2">
           {imageUrl ? (
-            <Image
+            <CmsImage
               src={imageUrl}
               alt={experience.name}
               width={80}

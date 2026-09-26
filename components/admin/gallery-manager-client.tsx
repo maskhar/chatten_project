@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CmsImage } from "@/components/admin/cms-image";
 import { ActionForm } from "@/components/admin/action-form";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { RowFeedback } from "@/components/admin/row-feedback";
@@ -73,7 +73,7 @@ export function GalleryManagerClient({
       detail: (
         <div className="mt-2 flex items-center gap-3">
           {imageUrl ? (
-            <Image
+            <CmsImage
               src={imageUrl}
               alt={item.alt_text}
               width={120}

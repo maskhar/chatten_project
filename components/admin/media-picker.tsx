@@ -1,7 +1,7 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CmsImage } from "@/components/admin/cms-image";
 import { mediaHrefById } from "@/lib/media/url";
 import { filterPickerMedia, pickerCategories } from "@/lib/media/picker-filter";
 import { FOCUS_RING } from "@/components/ui/control";
@@ -142,7 +142,7 @@ export function MediaPicker({
       ) : null}
       {current ? (
         <div className="flex min-w-0 flex-wrap items-center gap-3 rounded border border-sage-deep bg-white p-3 shadow-sm">
-          <Image
+          <CmsImage
             src={mediaHrefById(current.id)!}
             alt={current.alt_text ?? current.title ?? ""}
             width={96}
@@ -245,7 +245,7 @@ export function MediaPicker({
                 aria-label={`Pilih ${item.title ?? item.alt_text ?? "gambar"}`}
                 aria-pressed={isSelected}
               >
-                <Image
+                <CmsImage
                   src={url}
                   alt={item.alt_text ?? item.title ?? ""}
                   width={180}

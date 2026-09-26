@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import { CmsImage } from "@/components/admin/cms-image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveExperience } from "@/lib/admin/experience-actions";
@@ -152,7 +152,7 @@ export function ExperienceEditForm({
         {imgUrl && (
           <div className="h-fit rounded border bg-white p-4">
             <p className="text-sm font-semibold">Gambar saat ini</p>
-            <Image
+            <CmsImage
               src={imgUrl}
               alt={experience.name}
               width={320}

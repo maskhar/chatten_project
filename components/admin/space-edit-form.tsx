@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { CmsImage } from "@/components/admin/cms-image";
 import Link from "next/link";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { saveSpace } from "@/lib/admin/space-actions";
@@ -34,7 +34,7 @@ export function SpaceEditForm({ space, media }: { space: Space; media: Media[] }
           </div>
           <div className="flex flex-wrap gap-3"><SubmitButton className="rounded bg-forest px-6 py-3 text-sm font-semibold text-white">Simpan perubahan</SubmitButton><Link href="/admin/spaces" className="rounded border border-forest px-6 py-3 text-sm font-semibold">Batal</Link></div>
         </ActionForm>
-        {image ? <aside className="h-fit rounded border bg-white p-4"><p className="text-sm font-semibold">Gambar saat ini</p><Image src={image} alt={space.name} width={320} height={240} className="mt-3 w-full rounded object-cover" /></aside> : null}
+        {image ? <aside className="h-fit rounded border bg-white p-4"><p className="text-sm font-semibold">Gambar saat ini</p><CmsImage src={image} alt={space.name} width={320} height={240} className="mt-3 w-full rounded object-cover" /></aside> : null}
       </div>
     </section>
   );

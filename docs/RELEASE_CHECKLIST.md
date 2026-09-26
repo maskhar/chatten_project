@@ -2,7 +2,7 @@
 
 - [ ] Production domain configured
 - [x] Production runtime environment strategy verified
-- [ ] Initial super_admin assigned
+- [x] Initial super_admin assigned
 - [ ] Real Chatten imagery uploaded
 - [ ] Contact / directions verified
 - [ ] Opening hours verified
@@ -10,7 +10,7 @@
 - [x] Docker container healthy
 - [x] Database backup restore drill verified
 - [ ] Media backup verified
-- [ ] Admin login verified with CMS role
+- [x] Admin login verified with CMS role
 - [x] Public smoke test verified
 
 - [x] Self-hosted Supabase TLS trust gate verified
@@ -19,6 +19,26 @@
 
 - [ ] Authenticated browser E2E confirmed by operator
 - [x] Operator-assisted Auth E2E tooling prepared
+
+## Verifikasi login CMS (2026-09-27)
+
+Diperiksa di peramban sungguhan dengan akun uji yang disediakan operator —
+kredensialnya **tidak dicatat di repositori mana pun**, sesuai aturan "jangan
+pernah commit rahasia". Yang diverifikasi:
+
+- Akun itu memegang peran `super_admin` dan merupakan **satu-satunya** pemegang
+  peran di `chatten_cafe.user_roles`, sehingga baris "Initial super_admin
+  assigned" dan "Admin login verified with CMS role" dicentang.
+- Login lewat `/admin/login` berhasil dan mengarah ke `/admin`; tujuh layar CMS
+  (`/admin`, `media`, `gallery`, `menu`, `users`, `homepage`, `account`)
+  menjawab 200.
+- Verifikasi inilah yang memunculkan A100: seluruh thumbnail CMS gelap karena
+  pengoptimal gambar mengambil tanpa cookie sesi. Tidak akan terlihat tanpa
+  benar-benar login, dan tidak terlihat oleh satu pun pemeriksaan `curl`
+  sebelumnya.
+
+Baris "Authenticated browser E2E confirmed by operator" sengaja **belum**
+dicentang: pengujiannya dijalankan di sini, bukan dikonfirmasi oleh operator.
 
 ## Gerbang otomatis
 

@@ -1709,6 +1709,86 @@ Chatten di `3d-models`, jadi ini tidak memengaruhi proyek ini, dan namanya
 **Tidak diubah** — ia milik tenant lain dan mencabutnya dapat mematahkan alur
 unggah mereka; dilaporkan ke operator instance untuk diputuskan.
 
+### A100 — pengoptimal gambar menggelapkan seluruh thumbnail CMS setelah A93
+
+Ditemukan saat verifikasi item #2, dengan cara yang tidak bisa ditemukan cara
+lain: login ke CMS sebagai operator sungguhan. Semua pemeriksaan A98 dan A99
+dijalankan di sisi publik dan lewat `curl`, dan semuanya hijau — tetapi Pustaka
+Media dan setiap pemilih gambar menampilkan kotak kosong. Lima permintaan
+`_next/image` menjawab **400**, dan log container mengatakan
+`The requested resource isn't a valid image for /api/media/<id> received null`.
+
+**Sebabnya bukan RLS dan bukan route.** Pengoptimal gambar Next mengambil `src`
+dari SISI SERVER — proses Next yang meminta URL-nya, bukan peramban — sehingga
+cookie sesi operator tidak pernah ikut terkirim. Sejak A93 mempersempit
+`public_media` ke media yang benar-benar dirujuk konten, `/api/media/<id>` yang
+diminta tanpa sesi berjalan sebagai `anon`, tidak menemukan baris, dan menjawab
+404; pengoptimal menerjemahkannya menjadi 400. Dibuktikan berdampingan di satu
+konteks peramban yang sudah login:
+
+```
+dengan cookie sesi  /api/media/<id>                     -> 200
+lewat pengoptimal   /_next/image?url=%2Fapi%2Fmedia%2F… -> 400
+```
+
+Route-nya benar. Kebijakan `public_media`-nya benar. Yang salah adalah **siapa
+yang mengambil**.
+
+**Kenapa ini bukan kasus khusus satu layar.** Pengoptimal tidak membawa
+identitas pemanggil, jadi ia tidak akan pernah bisa melayani gambar yang butuh
+otorisasi — apa pun yang berhasil ia ambil justru yang `anon` juga boleh ambil.
+Karena itu menambal `src` tidak menyelesaikan apa pun; yang harus berubah adalah
+pengambilnya.
+
+**Perbaikan.** `components/admin/cms-image.tsx` menjadi satu-satunya jalur
+gambar CMS: `<img>` biasa, sehingga peramban operator yang mengambil, cookie
+sesinya terkirim, dan route yang sudah benar menjawab 200. Dua belas pemakaian
+`<Image>` di sembilan berkas sisi admin dipindahkan ke sana. Tidak ada jalur
+baca baru, tidak ada perubahan basis data, batas A93 utuh.
+
+Dipilih setelah menimbang alternatifnya: route bisa saja menerbitkan URL
+bertanda tangan berbatas waktu yang boleh diambil pengoptimal tanpa cookie, dan
+thumbnail tetap teroptimasi — tetapi itu menambah jalur baca kedua ke media yang
+berlaku **tanpa sesi**, persis permukaan yang baru saja dipersempit A93, beserta
+HMAC, kedaluwarsa, penolakan replay, dan uji negatifnya. Harga keamanannya tidak
+sebanding dengan keuntungan yang hanya dirasakan operator.
+
+**Harga yang dibayar, dengan sadar.** Thumbnail CMS memuat berkas aslinya tanpa
+resize (terbesar 1.8 MB dari 5 media). Yang menanggung hanya operator di
+jaringan yang ia kenal, bukan pengunjung; `loading="lazy"` menahan yang di luar
+viewport. Bila pustaka tumbuh sampai ini terasa, jawabannya adalah turunan
+ukuran kecil yang dibuat saat unggah dan disimpan sebagai objek tersendiri —
+bukan menghidupkan kembali pengoptimal di jalur yang tidak membawa sesi.
+
+**Sisi publik sengaja TIDAK ikut berubah** dan itu dipaku oleh tes.
+`components/public/media-image.tsx` tetap memakai `next/image`: media yang
+dirujuk konten memang boleh dibaca `anon`, jadi ambilan pengoptimal berhasil di
+sana — dan justru di sanalah resize dibutuhkan, karena yang mengunduh adalah
+pengunjung dengan kuota data. Menyalin pola CMS ke sisi publik akan mengirim
+berkas asli ke setiap ponsel.
+
+**Tes.** `tests/cms-image-fetcher.test.mjs` (5 uji) memaku pembagian itu dari
+kedua arah: tidak ada berkas admin yang mengimpor `next/image`, `CmsImage`
+merender `<img>` dan tidak membungkus `next/image`, sisi publik tetap memakai
+pengoptimal dengan `sizes`, dan tidak ada berkas publik yang mengimpor
+`CmsImage`. Kemampuannya menangkap regresi dibuktikan, bukan diasumsikan:
+`<Image>` dipasang kembali di Pustaka Media dan uji pertama gagal dengan
+`next/image fetches server-side without the session cookie, so these screens
+will render empty boxes: app\admin\(dashboard)\media\page.tsx`, lalu berkasnya
+dipulihkan dan `git diff --stat` memastikan hanya perubahan yang dimaksud.
+
+**Verifikasi di peramban sungguhan**, setelah container dibangun ulang, login
+sebagai operator: `/admin/media`, `/admin/gallery`, `/admin/spaces`,
+`/admin/experiences`, `/admin/events`, `/admin/promotions` masing-masing
+**5/5 gambar terlukis** (`naturalWidth > 0`, jadi byte-nya benar-benar tiba dan
+ter-dekode), `loading="lazy"` aktif, dan **nol** respons ≥ 400. Tangkapan layar
+Pustaka Media memperlihatkan kelima thumbnail terpasang.
+
+Gerbang lokal: 455/455 uji, typecheck, lint, build.
+
+**Catatan.** Beranda publik memuat 0 gambar — bukan akibat perubahan ini,
+melainkan karena tidak ada satu pun media yang dirujuk konten (lihat A99).
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a
