@@ -2011,6 +2011,58 @@ konten milik operator, bukan cacat kode. Dicatat di sini, tidak disentuh.
 Sisa item #4 yang memang menunggu operator: domain produksi, foto Chatten asli,
 kontak/arah, dan jam buka.
 
+### A105 — kontak, arah, dan jam buka diverifikasi (bukan placeholder)
+
+Dua baris checklist yang tersisa dan tidak menunggu aset operator —
+"Contact / directions verified" dan "Opening hours verified" — tidak pernah
+diverifikasi, hanya belum dicentang. Pemeriksaan dilakukan dari **dua sisi yang
+saling menguji**: baris asli di basis data, dan HTML yang benar-benar terkirim
+dari container. Membaca salah satunya saja tidak membuktikan apa pun — kolom
+terisi bisa gagal dirender, dan halaman yang tampak benar bisa menampilkan
+fallback yang kebetulan masuk akal.
+
+Yang ada di `chatten_cafe.contact_information` adalah data nyata, bukan contoh:
+alamat Jl. Kopral Kasdi, Gg. Dayaan, Dusun Banaran, Desa Bumiaji, Kec. Bumiaji,
+Kota Batu, Jawa Timur; telepon `+62 858-0672-9500`; WhatsApp
+`https://wa.me/6285806729500`; arah `https://maps.app.goo.gl/Ca1xTLwQ4NjK2twz6`.
+`chatten_cafe.opening_hours` berisi 7 baris lengkap, tidak ada hari yang hilang
+dan tidak ada yang tutup: Sabtu–Minggu 05:00–22:00, Senin–Jumat 09:00–22:00.
+
+`/visit` (HTTP 200) merender semuanya dan JSON-LD `Restaurant`-nya cocok dengan
+baris basis data satu per satu: `streetAddress` sama persis, `telephone`
+`+62 858-0672-9500`, `hasMap` menunjuk tautan Maps yang sama, **7**
+`OpeningHoursSpecification` dengan `HH:MM` yang terpangkas benar dari
+`HH:MM:SS`, dan `sameAs` berisi Instagram. Daftar jam yang terlihat mata juga
+tujuh baris dan sama angkanya — jadi yang dibaca pengayak dan yang dibaca
+pengunjung tidak berbeda.
+
+**Dua hal diperiksa sebagai dugaan cacat dan terbukti bukan.** Keduanya dicatat
+supaya tidak "diperbaiki" oleh orang berikutnya menjadi lebih buruk:
+
+1. `href="tel:+62858-0672-9500"` masih memuat tanda hubung, karena
+   `phone.replace(/\s/g, "")` hanya membuang spasi. Sekilas tampak salah. Tetapi
+   RFC 3966 justru **mengizinkan** `-` sebagai *visual separator* di dalam
+   `tel:` URI; yang tidak boleh adalah spasi, dan spasi itulah yang dibuang.
+   Nomornya sah dan bisa ditelepon. Membuang tanda hubung tidak menambah
+   kebenaran apa pun, hanya menghapus keterbacaan. Tidak diubah.
+2. Kolom `email` kosong, sementara `/visit` punya tombol "Email Chatten". String
+   kosong bersifat falsy, jadi `contact?.email ? … : null` tidak merender
+   tombolnya, dan `structured-data.ts` juga menghilangkan propertinya alih-alih
+   memancarkan `"email":""` — sesuai aturannya sendiri bahwa string kosong di
+   data terstruktur adalah sinyal yang lebih buruk daripada properti yang absen.
+   Tidak ada `mailto:` kosong di HTML terkirim. Terkonfirmasi lewat pencarian
+   `mailto:` di seluruh berkas terlacak: satu pemakaian, dan sudah terjaga.
+
+`map_embed_url` tetap kosong. Itu bukan kerusakan: kolomnya ada, field CMS-nya
+ada beserta teks bantuan, host-nya sudah masuk allowlist, `frame-src` CSP sudah
+mengizinkannya, dan iframe-nya lazy — seluruh jalurnya tersambung ujung ke
+ujung dan hanya menunggu operator menempelkan URL sematan. Karena itu baris
+checklist dicentang: arah sudah tersedia lewat tautan Maps yang berfungsi, peta
+sematan adalah tambahan, bukan prasyarat.
+
+Tidak ada perubahan kode pada siklus ini — temuan yang benar adalah bahwa
+keduanya sudah benar, dan itu hanya bisa diketahui dengan memeriksanya.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

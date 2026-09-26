@@ -4,8 +4,8 @@
 - [x] Production runtime environment strategy verified
 - [x] Initial super_admin assigned
 - [ ] Real Chatten imagery uploaded
-- [ ] Contact / directions verified
-- [ ] Opening hours verified
+- [x] Contact / directions verified
+- [x] Opening hours verified
 - [x] SEO identity verified
 - [x] Docker container healthy
 - [x] Database backup restore drill verified
@@ -54,6 +54,32 @@ mengumumkan 8 path statis sehingga 8 halaman detail terbitan luput. Sitemap kini
 memaksanya ke `id` akan membuat pembaca layar melafalkan teks Inggris dengan
 fonem Indonesia. Memilih satu bahasa untuk antarmuka publik adalah keputusan
 konten operator, bukan cacat kode.
+
+### Kontak, arah, dan jam buka (A105)
+
+Diperiksa dari dua sisi yang saling menguji — baris asli di basis data dan HTML
+yang benar-benar terkirim — karena kolom terisi bisa gagal dirender dan halaman
+yang tampak benar bisa menampilkan fallback yang kebetulan masuk akal.
+
+Datanya nyata, bukan contoh: alamat Bumiaji (Jl. Kopral Kasdi, Gg. Dayaan, Dusun
+Banaran), telepon `+62 858-0672-9500`, WhatsApp `wa.me/6285806729500`, arah
+`maps.app.goo.gl/Ca1xTLwQ4NjK2twz6`, dan **7** baris jam buka lengkap
+(Sabtu–Minggu 05:00–22:00, Senin–Jumat 09:00–22:00). `/visit` menjawab 200 dan
+JSON-LD `Restaurant`-nya cocok baris per baris dengan basis data: `streetAddress`
+identik, `telephone`, `hasMap`, 7 `OpeningHoursSpecification` dengan `HH:MM`
+terpangkas benar, dan `sameAs` Instagram.
+
+Dua dugaan cacat diperiksa dan terbukti bukan cacat: tanda hubung di
+`tel:+62858-0672-9500` sah menurut RFC 3966 (yang dilarang adalah spasi, dan
+spasi sudah dibuang), dan kolom `email` yang kosong tidak memancarkan `mailto:`
+kosong karena string kosong bersifat falsy di komponen maupun di data
+terstruktur. Keduanya dicatat di `docs/TODO.md` supaya tidak "diperbaiki"
+menjadi lebih buruk.
+
+`map_embed_url` masih kosong dan itu memang menunggu operator, tetapi jalurnya
+tersambung ujung ke ujung (kolom, field CMS, allowlist host, `frame-src` CSP,
+iframe lazy). Arah sudah tersedia lewat tautan Maps yang berfungsi — peta
+sematan tambahan, bukan prasyarat — sehingga kedua baris dicentang.
 
 ### Siklus CRUD terautentikasi (A102)
 
