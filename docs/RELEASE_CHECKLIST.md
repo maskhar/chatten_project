@@ -9,7 +9,7 @@
 - [ ] SEO identity verified
 - [x] Docker container healthy
 - [x] Database backup restore drill verified
-- [ ] Media backup verified
+- [x] Media backup verified
 - [x] Admin login verified with CMS role
 - [x] Public smoke test verified
 

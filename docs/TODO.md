@@ -1884,6 +1884,58 @@ sebelum audit.
 Kredensial akun uji diberikan lewat variabel lingkungan saat menjalankan skrip,
 tidak pernah ditulis ke berkas mana pun di repositori.
 
+### A103 — cadangan media diverifikasi, dan jebakan `version` yang membuatnya bisa gagal senyap
+
+Baris "Media backup verified" pada daftar rilis sebelumnya belum tercentang, dan
+`docs/BACKUP_RESTORE.md` hanya memuat nasihat satu paragraf — tanpa perintah,
+tanpa bukti. Itu bentuk kesiapan yang paling berbahaya: terlihat sudah dipikirkan
+padahal belum pernah dicoba.
+
+Yang ditemukan saat mencobanya: media Chatten tersebar di **tiga** tempat, dan
+satu di antaranya berada **di luar** skema `chatten_cafe`, sehingga tidak ikut
+dalam `pg_dump -n chatten_cafe` yang sudah didokumentasikan:
+
+| Bagian | Di mana |
+| --- | --- |
+| `chatten_cafe.media` (metadata) | ikut dump `chatten_cafe` |
+| `storage.objects` + `storage.buckets` | **tidak** ikut — harus diambil eksplisit |
+| byte berkas | bind mount host (`STORAGE_BACKEND: file`) |
+
+**Jebakan yang menentukan.** Byte disimpan pada berkas yang dinamai
+`storage.objects.version` (UUID), bukan dinamai objeknya:
+
+```
+volumes/storage/stub/stub/chatten-media/operator/<nama-objek>/<version-uuid>
+```
+
+Jadi menyalin direktori berkas tanpa baris `storage.objects` dari titik yang sama
+menghasilkan objek yang **ada di disk tetapi tidak dapat dialamatkan** —
+storage-api mencari UUID versi yang tidak lagi cocok dan menjawab 404. Kegagalan
+ini senyap: arsipnya terbuka, berkasnya ada, ukurannya benar, dan baru terasa
+ketika seseorang membuka gambar di produksi.
+
+Kueri `storage.objects` juga sengaja dibatasi `bucket_id = 'chatten-media'`.
+Instance ini bersama beberapa tenant; mencadangkan seluruh tabel akan membawa
+metadata penyewa lain ke dalam arsip Chatten.
+
+**Drill dijalankan dan isinya diverifikasi**, bukan hanya dibuat:
+
+- Keselarasan diuji **dua arah**: 0 baris metadata tanpa objek, 0 objek tanpa
+  baris metadata. 5 objek, semuanya ber-`sha256`.
+- Arsip diekstrak ke direktori terpisah, lalu `sha256sum` setiap berkas
+  dibandingkan dengan `chatten_cafe.media.sha256` — pembanding **independen**,
+  bukan membandingkan arsip dengan dirinya sendiri. Hasil: `cocok=5 gagal=0`.
+- Dump diperiksa `pg_restore -l`: 241 entri termasuk
+  `TABLE DATA chatten_cafe media`.
+- Bucket `chatten-media` dikonfirmasi privat (`public = f`), konsisten dengan A93
+  dan A99.
+- Artefak drill dihapus; volume sumber tetap 5 berkas, tidak tersentuh.
+
+Satu jebakan perkakas ikut dicatat karena sempat menyesatkan saya sendiri:
+`pg_restore -l /dev/stdin` di balik `docker compose exec -T` menjawab kosong
+karena stdin sudah dipakai compose, sehingga dump yang **sehat** tampak rusak.
+Pakai `docker cp` lalu baca berkasnya di dalam kontainer.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a
