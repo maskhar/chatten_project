@@ -1613,6 +1613,102 @@ tenant yang bergantung padanya; karena itu ia **tidak diubah** dan dicatat di
 sini sebagai keputusan operator instance. Perbaikan yang benar ada di pihak
 pemiliknya: mengganti `true` dengan daftar bucket yang memang publik.
 
+> **Ditindaklanjuti 2026-09-27.** Setelah dikuantifikasi, dampaknya jauh lebih
+> besar daripada sekadar "jendela tetangga terbuka" dan operator memutuskan
+> mempersempit kebijakannya. Lihat A99.
+
+### A99 — kebijakan `Public Access` pada storage.objects dipersempit ke 16 bucket publik
+
+A98 mencatat `"Public Access"` sebagai temuan di luar batas dan tidak
+menyentuhnya. Pengukuran lanjutan menunjukkan itu keputusan yang salah untuk
+dibiarkan: yang bocor bukan hanya byte objek Chatten bagi orang yang sudah tahu
+`storage_path`-nya, melainkan **dokumen privat tenant lain, dengan jalur yang
+dapat dienumerasi**. Dibuktikan dengan kunci `anon` Chatten — kunci yang
+tertanam di bundel peramban setiap pengunjung, jadi setara publik:
+
+```
+GET  /storage/v1/object/authenticated/release-invoices/<uid>/<id>/SPB-202609-….pdf → 200
+POST /storage/v1/object/list/release-invoices                                     → 200  (berisi user id)
+```
+
+Yang pertama menyerahkan faktur pembayaran per-pengguna milik tenant SoundPub.
+Yang kedua berarti jalurnya tidak perlu ditebak: isi bucket privat dapat
+didaftar. Sembilan bucket privat terpapar; delapan di antaranya punya kebijakan
+baca sendiri yang jauh lebih ketat, dan semuanya sia-sia — **kebijakan permisif
+di-OR-kan**, jadi satu `using (true)` mengalahkan setiap kebijakan lain di tabel
+yang sama.
+
+**Yang dilakukan.** `ops/storage-public-access-narrow.sql` mengganti
+`using (true)` dengan daftar literal ke-16 bucket yang memang `public = true`.
+Berkasnya di `ops/`, bukan `supabase/migrations/`, karena `storage.objects`
+adalah tabel bersama di luar `chatten_cafe`; migrasi Chatten tidak boleh
+menyentuhnya, dan penerapannya adalah tindakan operator instance, bukan bagian
+dari rilis aplikasi ini.
+
+Tiga alasan bentuknya seperti itu:
+
+- **Tidak dihapus, dipersempit.** Jalur `/object/public/<bucket>/…` tidak
+  mengevaluasi RLS sama sekali untuk bucket `public = true` — diverifikasi
+  dengan mengambil objek tanpa kunci apa pun (200). Akses publik yang sah tidak
+  bergantung pada kebijakan ini. Tetapi delapan bucket publik tidak punya
+  kebijakan baca sendiri (`article`, `blog-covers`, `contracts`, `learning`,
+  `lelanganproperti`, `mentor`, `school-logo`, `template`), sehingga menghapus
+  kebijakan ini akan mematahkan tenant yang membacanya lewat
+  `/object/authenticated/` atau `/object/list/`.
+- **Daftar literal, bukan subkueri ke `storage.buckets`.** Kebijakan yang
+  membaca kolom `public` akan otomatis ikut membuka bucket privat mana pun yang
+  kelak dijadikan publik oleh tenant lain — tanpa keputusan sadar siapa pun.
+- **Pemulihan satu perintah**, tercatat di kepala berkas, bila ada tenant yang
+  ternyata patah.
+
+**Gladi bersih lebih dulu.** Dijalankan di `psql --single-transaction` yang
+di-rollback: 9 bucket privat turun ke 0 baris terlihat `anon`, 12 bucket publik
+yang berisi objek tetap utuh, total terlihat `anon` 2937, `EXIT=0`. Baru setelah
+angkanya persis sesuai harapan, kebijakannya diterapkan sungguhan.
+
+**Verifikasi setelah penerapan.**
+
+- `GET /object/authenticated/release-invoices/<uid>/…/SPB-….pdf` → **400**
+  (sebelumnya 200).
+- `POST /object/list/` untuk `release-invoices`, `contracts`, `chatten-media`,
+  `task`, `school-logo`, `mentor` → `[]`. Perhatikan: storage-api menjawab
+  **200 dengan array kosong** ketika RLS menyaring seluruh baris, jadi kode
+  status saja menyesatkan di sini — badan jawabannya yang menentukan.
+- Bucket publik tetap terbaca: `gallery` 2, `avatars` 56, `daily-report` 100,
+  `iccn-gallery` 1, `article` 1, `template` 1 objek.
+- `GET /object/public/article/…png` dan `/object/public/avatars/…/avatar.png`
+  tanpa kunci apa pun → 200.
+- Delapan halaman publik Chatten (`/`, `/menu`, `/gallery`, `/about`, `/visit`,
+  `/events`, `/experience`, `/spaces`) → 200; log container bersih.
+- `pg_policies` mengonfirmasi ekspresi barunya `bucket_id = ANY (ARRAY[...])`.
+
+**Catatan `/api/media/<id>` → 404 itu benar.** Basis data berisi 5 baris media
+dan **nol** rujukan dari tabel konten mana pun (`hero_slides`, `menu_items`,
+`gallery_items`, `about_sections`, `spaces`, dst. semuanya 0). Kebijakan
+`public_media` A93 menyaring media ke yang benar-benar dirujuk konten, jadi 404
+untuk kelima baris itu adalah perilaku yang dirancang, bukan regresi. Angka ini
+juga menjelaskan mengapa halaman publik tidak kehilangan gambar apa pun: belum
+ada gambar Chatten sungguhan yang terpasang ke konten (lihat butir "Real
+Chatten imagery" di `docs/RELEASE_CHECKLIST.md`).
+
+**Masih terbuka, di luar batas Chatten: sisi TULIS.** Dua kebijakan yang tersisa
+memberi PUBLIC hak menulis ke bucket `3d-models`:
+
+```
+Public upload for development  | INSERT | PUBLIC | with_check: bucket_id = '3d-models'
+Public update for development  | UPDATE | PUBLIC | with_check: (null)
+```
+
+Dibuktikan sebagai `anon` di dalam transaksi yang di-rollback pada 2026-09-27:
+`insert into storage.objects (bucket_id, name, …) values ('3d-models', …)`
+**berhasil**, dan `update storage.objects … where bucket_id = '3d-models'`
+mengenai **11 baris**. Artinya siapa pun pemegang kunci anon dapat menitipkan
+berkas ke bucket itu dan menimpa metadata objek yang sudah ada. Tidak ada objek
+Chatten di `3d-models`, jadi ini tidak memengaruhi proyek ini, dan namanya
+("for development") menyiratkan sisa pengembangan yang lupa dicabut.
+**Tidak diubah** — ia milik tenant lain dan mencabutnya dapat mematahkan alur
+unggah mereka; dilaporkan ke operator instance untuk diputuskan.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a
