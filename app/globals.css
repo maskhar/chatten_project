@@ -79,6 +79,14 @@
      2.67), so this is one darkened token rather than the two it replaces. */
   --color-bark: #795f38;
 
+  /* A92. A warning is neither a success nor a failure, and the CMS had no name
+     for it: the one place that needed it reached for `border-amber-300` +
+     `bg-amber-50`, which are outside the palette and outside the contrast gate.
+     `honey` is the ink (5.91:1 on its own surface, 5.84:1 on paper) and
+     `honey-pale` the surface it is painted on. */
+  --color-honey: #7a5a12;
+  --color-honey-pale: #fdf6e6;
+
   /* peach: one button's states, plus the eyebrow tints */
   --color-peach: #e2a07a;
   --color-peach-deep: #d78f66;

@@ -1050,6 +1050,114 @@ work items; the audit document holds the evidence.
       pekerjaan penyapu maupun trigger database, jadi pelaporannya tetap manual
       lewat pesan yang membawa jalur berkas.
 
+### A92 — aksesibilitas papan tombol, target sentuh, dan gambar wajib di CMS
+
+Enam cacat, semuanya tidak terlihat pada tinjauan visual mana pun. Tautan lewati
+yang menunjuk ke tempat yang salah tampak identik dengan yang bekerja; `<nav>`
+tanpa nama tampak identik dengan yang bernama; `required` yang tidak memvalidasi
+apa pun tampak identik dengan yang memvalidasi. Tidak ada satu pun yang dapat
+ditangkap typecheck, lint, atau build, jadi setiap perbaikan di bawah ini dipaku
+uji kontrak sumber di `tests/admin-landmarks.test.mjs`.
+
+**Tidak ada jalan pintas ke isi halaman.** Sidebar CMS memuat dua puluh satu
+tautan, dan `<main>` tidak punya target yang dapat dituju. Pada setiap perpindahan
+halaman, operator yang memakai papan tombol atau pembaca layar menekan Tab dua
+puluh satu kali untuk mencapai kolom pertama. Sekarang ada tautan lewati sebagai
+tautan pertama di dalam dokumen — `sr-only` sampai difokuskan, lalu tampil sebagai
+kontrol nyata setinggi 44px, karena `sr-only` saja membuat pengguna papan tombol
+yang melihat memfokuskan sesuatu yang tidak kelihatan, dan fokus seolah lenyap
+dari halaman. `<main>` memakai `tabIndex={-1}`: tanpa itu banyak peramban
+memindahkan gulir tetapi tidak memindahkan fokus, sehingga Tab berikutnya kembali
+ke tautan sesudah tautan lewati — lompatan terlihat berhasil padahal tidak. Id-nya
+dinamai sekali sebagai `ADMIN_MAIN_ID` di `components/ui/control.ts`, sebab
+`href="#admin-main"` yang ditulis langsung di samping `<main>` yang kemudian
+diganti nama meninggalkan tautan yang tidak melakukan apa pun tanpa gejala apa pun.
+
+**Dua landmark navigasi tanpa nama.** Sidebar desktop dan drawer ponsel dapat
+berada di DOM sekaligus — CSS menyembunyikan salah satunya, DOM memuat keduanya —
+sehingga daftar landmark hanya berbunyi "navigation, navigation" dan tidak ada
+cara memilih yang benar. Keduanya kini dilabeli `aria-labelledby` ke `<h2
+className="sr-only">` masing-masing, dengan id berawalan per instans
+(`admin-sidebar-nav`, `admin-drawer-nav`), karena id ganda akan membuat
+`aria-labelledby` pada yang kedua menunjuk ke judul yang pertama.
+
+**Judul kelompok bukan judul.** "Situs", "Konten", "Pengaturan", "Administrasi"
+adalah `<p>`, jadi tidak muncul di daftar judul dan keanggotaan kelompok hanya
+disiratkan oleh jarak antar tautan. Sekarang `<h3>`, dan setiap daftar tautannya
+`<ul aria-labelledby>` yang menunjuk judul itu.
+
+**Tabel peran tidak mengatakan apa isinya.** Tanpa `<caption>` ia hanya berbunyi
+"table, 4 columns". Tanpa `scope`, sel header tidak terikat kolomnya — dan di
+tabel ini justru kolomnya yang menentukan artinya: "Admin" di bawah **Peran saat
+ini** adalah keadaan sekarang, "Admin" di bawah **Tetapkan** adalah perubahan yang
+belum disimpan. Email baris kini `<th scope="row">`, dan setiap kontrol per baris
+menyebut barisnya lewat `aria-label`, sebab di luar konteks tabel "Simpan" tidak
+memberi tahu peran siapa yang disimpan. Wadah `overflow-x-auto` di sekitarnya
+dapat digulir dengan tetikus dan tidak dengan apa pun selain itu; ia kini
+`role="region"` bernama, `tabIndex={0}`, dengan cincin fokus yang terlihat.
+
+**Warna mentah di luar palet dan di luar gerbang kontras.** Gerbang lama hanya
+menangkap `text-[#7a5a12]`; ia tidak berkata apa pun tentang `bg-amber-50`, dan
+justru bentuk itulah yang dipakai. `border-amber-300`/`bg-amber-50` pada
+peringatan migrasi beranda dan `text-red-800` pada tombol hapus CMS tidak terlihat
+oleh uji kontras, karena uji itu hanya dapat memeriksa pasangan yang dapat
+disebutkan namanya. CMS belum punya nama untuk *peringatan* — bukan sukses, bukan
+kegagalan — sehingga ditambahkan `honey` #7a5a12 (5.91:1 di atas permukaannya
+sendiri, 5.84:1 di atas `paper`) dan `honey-pale` #fdf6e6, dan keduanya masuk
+tabel `INK_ON`. `tests/palette.test.mjs` kini juga memindai dua puluh tiga ramp
+bernama Tailwind di seluruh `app/` dan `components/`; `black`/`white` sengaja tidak
+termasuk, keduanya bukan jalan pintas palet dan `bg-black/40` adalah cara yang
+benar menulis tirai. `DeleteButton` sebelumnya `text-sm text-red-800 underline`
+tanpa tinggi sama sekali (±20px) — tombol paling merusak di CMS sekaligus yang
+terkecil — sekarang `ROW_ACTION_DANGER`.
+
+**`required` pada MediaPicker tidak pernah memvalidasi apa pun.** Ia hanya
+menyembunyikan tombol **Hapus pilihan**, sementara nilainya dikirim melalui
+`<input type="hidden">` — dan input bertipe hidden dikecualikan dari validasi
+bawaan peramban. Formulir dengan gambar wajib tetap terkirim kosong, dan
+kegagalannya muncul sebagai galat server atau, lebih buruk, sebagai baris tanpa
+gambar di situs publik. Sekarang ada satu input sentinel yang benar-benar
+divalidasi peramban (`required`, tanpa `readOnly`, sebab `readOnly` juga
+mengecualikan sebuah kontrol dari validasi), gelembung bawaannya yang berbahasa
+Inggris ditekan dan digantikan pesan `role="alert"` berbahasa Indonesia, dan fokus
+dipindahkan ke pemilih. Peringatan itu diturunkan (`showMissing = missing &&
+!effective`), bukan dibersihkan di dalam efek: membersihkannya di efek memicu
+render berantai dan menyisakan satu frame di mana peringatan masih tampak setelah
+gambar dipilih.
+
+**Id terpilih yang basi ikut terkirim.** `media.find(...)` mengembalikan
+`undefined` bila `value` menyebut gambar yang sudah dihapus dari Pustaka Media,
+sehingga kartu "Terpilih" tidak dirender dan layar terlihat seperti belum memilih
+apa pun — tetapi input tersembunyi tetap mengirim id lama itu dan baris disimpan
+menunjuk ke gambar yang tidak ada. Yang dikirim sekarang `effective`: id hanya
+lolos bila benar-benar ada di `media`. Keadaan basi itu dikatakan lewat peringatan
+`honey`, bukan didiamkan — membuangnya diam-diam adalah cacat tersendiri, karena
+operator lalu tidak dapat mengetahui bahwa baris itu *pernah* punya gambar dan
+penyimpanan berikutnya akan mengosongkannya tanpa ada yang memutuskan begitu.
+
+Target sentuh yang dinaikkan ke 44px: dua puluh satu tautan navigasi CMS
+(sebelumnya `px-3 py-2`, ±36px), tombol hamburger, tombol tutup drawer, tautan
+merek, tombol keluar (sebelumnya `px-3 py-1.5 text-xs`), `<select>` peran dan
+tombol Simpan/Tambah pengguna di layar Pengguna, serta seluruh kolom pencarian,
+filter kategori, dan tombol kartu di MediaPicker.
+
+Dua uji yang memaku kontrak lama ikut diperbaiki maksudnya: `media-picker`
+sebelumnya menuntut `value={selected}` dan `item.id === selected`, yang persis
+bentuk cacat id basi itu. Tiga uji baru harus menghapus komentar sebelum mencocokkan
+markup, dengan alasan yang sama seperti `tests/palette.test.mjs`: catatan yang
+menerangkan *mengapa* `readOnly`, `text-red-800`, atau `<div role="region">` salah
+harus dapat mengutipnya, dan regex berbentuk elemen akan mencocokkan kutipannya —
+lulus atau gagal berdasarkan prosa, bukan kode.
+
+Verifikasi akhir: 423/423 uji, typecheck, lint, dan build lulus.
+
+Batas: `tests/admin-landmarks.test.mjs` adalah uji kontrak sumber, bukan uji
+render. Lapisan admin adalah Server Component yang memanggil `requireAdmin()`,
+jadi merendernya memerlukan sesi Supabase — dan uji yang memerlukan sesi hidup
+adalah uji yang akhirnya dilewati. Sifat yang dipaku di sini struktural, sehingga
+membaca strukturnya cukup; urutan fokus sebenarnya di peramban tetap belum ada
+yang mengujinya secara otomatis.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

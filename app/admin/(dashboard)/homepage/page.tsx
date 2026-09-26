@@ -24,7 +24,10 @@ export default async function HomepageManager() {
         <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl">
           Beranda
         </h1>
-        <p className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
+        {/* A92: tokens `honey`/`honey-pale`, bukan `border-amber-300`/`bg-amber-50`
+            yang berada di luar palet dan di luar gerbang kontras. `role="alert"`
+            karena ini satu-satunya keterangan mengapa halaman ini kosong. */}
+        <p role="alert" className="mt-4 rounded border border-honey bg-honey-pale p-4 text-sm text-honey">
           Migrasi bagian beranda belum diterapkan.
         </p>
       </section>

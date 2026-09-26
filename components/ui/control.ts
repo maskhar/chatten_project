@@ -61,3 +61,21 @@ export const TEXT_LINK_ON_DARK =
  * without adding visible padding, so the layout does not shift.
  */
 export const TAP_TARGET = "inline-flex min-h-11 items-center";
+
+// A92. The skip link and its target are one mechanism split across two files:
+// the anchor lives in the layout, the `id` lives on `<main>`. Naming the id here
+// is what stops them drifting — a renamed `<main>` with a stale `href="#..."`
+// leaves a link that silently does nothing, and nothing about it looks broken.
+/** The id `<main>` carries in the admin shell, and the skip link's target. */
+export const ADMIN_MAIN_ID = "admin-main";
+
+/**
+ * A skip link: invisible until focused, then a real, readable control.
+ *
+ * `sr-only` alone would leave it permanently invisible for sighted keyboard
+ * users, who need it just as much; `focus:not-sr-only` brings it back on focus.
+ * It is positioned over the page rather than inserted into the flow so that
+ * revealing it does not shift the header down.
+ */
+export const SKIP_LINK =
+  `sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center focus:rounded focus:border focus:border-forest focus:bg-white focus:px-4 focus:text-sm focus:font-semibold focus:text-forest ${FOCUS_RING} focus-visible:ring-forest focus-visible:ring-offset-paper`;

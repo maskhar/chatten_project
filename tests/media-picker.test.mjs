@@ -69,11 +69,63 @@ test("the picker uses the shared filter rather than its own copy", () => {
 });
 
 test("state initialized from value is the sole selection source", () => {
+  // A92. This test used to assert `item.id === selected` and `value={selected}`
+  // directly. That was the shape of a real defect: `selected` is whatever the
+  // parent passed in `value`, and nothing checked that the id still exists in
+  // `media`. When a selected image is later deleted from the Media Library the
+  // "Terpilih" card silently does not render — the screen looks like nothing is
+  // chosen — while the submitted field still carries the dead id, so the row
+  // saves pointing at an image that is gone.
+  //
+  // `effective` is the narrowing: `selected` unless it is stale, in which case
+  // nothing is submitted. `selected` remains the only *source*, which is what
+  // this test is actually about, so the first and last assertions stand.
   assert.match(src, /const \[selected, setSelected\] = useState\(value \?\? ""\)/);
-  assert.match(src, /item\.id === selected/);
-  assert.match(src, /name=\{name\} value=\{selected\}/);
-  assert.match(src, /const isSelected = selected === item\.id/);
+  assert.match(src, /const isStale = selected !== "" && !knownIds\.has\(selected\)/);
+  assert.match(src, /const effective = isStale \? "" : selected/);
+  assert.match(src, /item\.id === effective/);
+  assert.match(src, /const isSelected = effective === item\.id/);
   assert.doesNotMatch(src, /selected\s*\|\|\s*value/);
+  assert.ok(
+    !/value=\{selected\}/.test(src),
+    "the field submits the raw selection again, so a deleted image can still be saved",
+  );
+});
+
+test("a required picker blocks submission in the browser, not on the server", () => {
+  // `required` used to do one thing: hide "Hapus pilihan". The value travelled in
+  // an `<input type="hidden">`, and hidden inputs are barred from constraint
+  // validation, so a required picker with no selection submitted happily and the
+  // failure surfaced as a server error — or as a live row with no image.
+  //
+  // The sentinel is a real, validated control. `readOnly` would re-exempt it, so
+  // it must not appear; `onChange` is present only to keep React from warning
+  // about a controlled input with no handler.
+  assert.match(src, /type="text"\s*\n\s*name=\{name\}\s*\n\s*value=\{effective\}/);
+  assert.match(src, /required=\{required\}/);
+  // Comments stripped first: the note explaining that `readOnly` re-exempts the
+  // control has to be able to name `readOnly`, or the reason is lost.
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  assert.ok(!/readOnly/.test(code), "readOnly exempts the sentinel from validation again");
+  assert.match(src, /onInvalid=\{\(event\) => \{/);
+  assert.match(src, /event\.preventDefault\(\);/);
+  // The native bubble is in English and points at a visually hidden box, so it is
+  // replaced by an Indonesian alert and focus is moved to the picker itself.
+  assert.match(src, /const MISSING_MESSAGE = "Pilih satu gambar sebelum menyimpan\."/);
+  assert.match(src, /role="alert"[\s\S]{0,160}\{MISSING_MESSAGE\}/);
+  assert.match(src, /groupRef\.current\?\.focus\(\)/);
+  // An error that outlives its cause reads as a fresh rejection. Derived, not
+  // cleared in an effect: clearing it in an effect costs a cascading render and
+  // leaves one frame in which the warning is still on screen after a pick.
+  assert.match(src, /const showMissing = missing && !effective/);
+  assert.match(src, /\{showMissing \? \(/);
+});
+
+test("a stale selected id is reported, not silently dropped", () => {
+  // Dropping it quietly would be its own bug: the operator cannot tell that the
+  // row *had* an image, so saving would blank the field without anyone deciding to.
+  assert.match(src, /\{isStale \? \(/);
+  assert.match(src, /Gambar yang dipilih sebelumnya sudah tidak ada di Pustaka Media\./);
 });
 
 test("an empty selection intentionally clears an existing value", () => {

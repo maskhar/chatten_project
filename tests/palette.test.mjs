@@ -75,6 +75,49 @@ test("components use palette tokens, not raw hex", () => {
   assert.deepEqual(offenders, [], `use a --color-* token instead:\n${offenders.join("\n")}`);
 });
 
+// A92. The no-raw-hex rule above only catches `text-[#7a5a12]`. It says nothing
+// about `bg-amber-50`, and that is the form the drift actually took: Tailwind
+// ships twenty-two named ramps, they are always in scope, and `text-red-800`
+// reads like a deliberate choice rather than the palette escape that it is.
+//
+// Two consequences, both of which had already happened by A92:
+//   * `border-amber-300` + `bg-amber-50` on the homepage migration warning and
+//     `text-red-800` on the CMS delete buttons were invisible to the contrast
+//     test below, because that test can only check pairings it can name;
+//   * the same semantic colour got a different value at each call site, since
+//     nothing tied them together.
+//
+// `black` and `white` are deliberately not listed. They carry no ramp, they are
+// not a palette bypass, and `bg-black/40` is the correct way to write a scrim.
+const TAILWIND_RAMPS = [
+  "slate", "gray", "grey", "zinc", "neutral", "stone",
+  "red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal",
+  "cyan", "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink", "rose",
+];
+const NAMED_COLOUR = new RegExp(
+  String.raw`\b(?:text|bg|border|ring|ring-offset|from|via|to|divide|outline|decoration|placeholder|shadow|accent|caret|fill|stroke)` +
+    String.raw`-(?:${TAILWIND_RAMPS.join("|")})-(?:50|[1-9]00|950)\b`,
+  "g",
+);
+
+test("components use palette tokens, not Tailwind's named ramps", () => {
+  const offenders = [];
+  for (const file of sources) {
+    const src = readFileSync(file, "utf8");
+    // Same reason as above: the comment recording that `text-red-800` was wrong
+    // has to be able to quote `text-red-800`.
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    for (const m of code.matchAll(NAMED_COLOUR)) {
+      offenders.push(`${file.replace(/\\/g, "/")}  ${m[0]}`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `these bypass the palette and the contrast gate; add a --color-* token instead:\n${offenders.join("\n")}`,
+  );
+});
+
 // Which token is legible on which surface is not derivable from the CSS — the
 // pairing lives in the JSX. This table records the surfaces each ink token is
 // actually painted on, so a future change to either side gets caught.
@@ -92,6 +135,9 @@ const INK_ON = {
   rust: ["cream", "sand", "paper"],
   clay: ["cream", "sand", "paper"],
   bark: ["cream", "sand", "paper"],
+  // A92: the warning pair. `honey-pale` is the surface it is painted on; `paper`
+  // is the admin shell showing through the panel's own rounded border.
+  honey: ["honey-pale", "paper"],
   "peach-light": ["forest", "forest-deep", "moss"],
   "peach-pale": ["terracotta-deep"],
 };

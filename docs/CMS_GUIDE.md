@@ -1,5 +1,18 @@
 # Panduan CMS
 
+## Navigasi dengan Papan Tombol
+
+- Tekan **Tab** sekali setelah halaman CMS terbuka dan tautan **Lewati ke konten
+  utama** akan muncul di kiri atas. Menekan Enter memindahkan fokus langsung ke
+  isi halaman, melewati seluruh dua puluh satu tautan di sidebar. Tautan itu
+  tersembunyi selama tidak difokuskan, jadi ia tidak mengubah tampilan halaman.
+- Pada layar **Pengguna & Peran**, tabel anggota dapat digeser ke samping di layar
+  sempit. Tekan Tab hingga tabel itu mendapat garis fokus, lalu gunakan tombol
+  panah kiri/kanan untuk menggeser kolom yang terpotong.
+- Setiap tombol dan tautan CMS menampilkan garis fokus saat dijangkau dengan papan
+  tombol. Garis itu tidak muncul saat diklik dengan tetikus, jadi keberadaannya
+  selalu berarti fokus papan tombol sedang berada di sana.
+
 ## Aksi Baris dan Urutan Tampilan
 
 Aturan ini berlaku sama pada pengelola Homepage, Pengalaman, Ruang, Menu, dan Galeri.
@@ -139,6 +152,24 @@ Saat memilih gambar untuk konten (Hero, Moments, Menu, Galeri, Pengalaman, Acara
 - Gunakan **Ganti** untuk mengosongkan pilihan saat ini sebelum memilih gambar lain.
 - Gunakan **Hapus pilihan** untuk mengosongkan pilihan; tombol ini hanya tersedia bila bidang bersifat opsional.
 
+### Gambar Wajib
+
+- Pada bidang gambar yang wajib, menyimpan tanpa memilih gambar dihentikan di
+  halaman dan picker menampilkan `Pilih satu gambar sebelum menyimpan.` Formulir
+  tidak dikirim, jadi tidak ada perubahan yang tersimpan sebagian. Pesan itu hilang
+  sendiri begitu ada gambar yang dipilih.
+- Bidang wajib tidak menampilkan **Hapus pilihan**. Gunakan **Ganti** untuk
+  menukar gambar.
+
+### Gambar yang Sudah Terhapus
+
+- Bila gambar yang dipakai sebuah baris kemudian dihapus dari Pustaka Media, picker
+  menampilkan peringatan `Gambar yang dipilih sebelumnya sudah tidak ada di Pustaka
+  Media.` dan kartu **Terpilih** tidak lagi muncul.
+- Pilih gambar lain sebelum menyimpan. Bila bidangnya opsional, menyimpan tanpa
+  memilih akan mengosongkan gambar pada baris itu — itu keputusan yang disengaja,
+  bukan efek samping.
+
 ### Keadaan Kosong
 
 - Bila belum ada gambar, picker menampilkan **Belum ada gambar** dengan panduan untuk mengunggah gambar terlebih dahulu.
@@ -200,3 +231,9 @@ Saat memilih gambar untuk konten (Hero, Moments, Menu, Galeri, Pengalaman, Acara
 - Tidak ada peran yang dapat menghapus perannya sendiri, dan Super admin tidak dapat menurunkan perannya sendiri.
 - Aturan ini ditegakkan oleh basis data, bukan hanya oleh antarmuka, sehingga tetap berlaku pada setiap jalur akses.
 - Super admin terakhir tidak dapat dihapus. Angkat Super admin kedua terlebih dahulu bila peran itu perlu dipindahkan.
+- Kolom **Peran saat ini** menunjukkan peran yang sudah tersimpan; kolom **Tetapkan**
+  adalah perubahan yang belum dikirim. Keduanya dapat menampilkan tulisan yang sama,
+  dan artinya berbeda: yang kedua belum berlaku sampai **Simpan** ditekan.
+- Kontrol yang tampil nonaktif menandai perubahan yang memang ditolak server, bukan
+  kegagalan sementara. Mencobanya lewat jalur lain akan ditolak dengan alasan yang
+  sama.
