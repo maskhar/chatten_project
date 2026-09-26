@@ -1158,6 +1158,10 @@ adalah uji yang akhirnya dilewati. Sifat yang dipaku di sini struktural, sehingg
 membaca strukturnya cukup; urutan fokus sebenarnya di peramban tetap belum ada
 yang mengujinya secara otomatis.
 
+A96 menutup batas ini untuk sisi publik, tetapi **tidak** untuk CMS, dan itu
+disengaja: lapisan admin memerlukan sesi Supabase hidup, sehingga ujinya akan
+bergantung pada kredensial. Lihat A96 untuk alasan lengkapnya.
+
 ### A93 — persempit pemaparan baca media ke peran anonim
 
 `supabase/migrations/20260927000100_media_read_exposure.sql`. Tiga lubang baca
@@ -1354,8 +1358,96 @@ Verifikasi: 449/449 uji, typecheck, lint, dan build lulus.
 
 Batas yang sama seperti A92: ini uji kontrak sumber, bukan uji render. Halaman
 publik adalah Server Component yang memanggil Supabase, jadi merendernya
-memerlukan basis data. Urutan fokus sebenarnya di peramban masih belum ada yang
-mengujinya secara otomatis.
+memerlukan basis data.
+
+Batas itu **sudah ditutup untuk sisi publik** oleh A96 di bawah: urutan fokus di
+peramban sebenarnya sekarang diuji oleh `tests/e2e/focus-order.spec.ts`.
+
+### A96 — uji render nyata: urutan fokus di peramban
+
+Menutup batas yang dicatat dua kali di berkas ini, di bawah A92 dan di bawah A95:
+"urutan fokus sebenarnya di peramban masih belum ada yang mengujinya secara
+otomatis."
+
+**Mengapa uji sumber tidak cukup di sini.** `tests/public-landmarks.test.mjs`
+membaca teks berkas. Itu memadai untuk sifat struktural — sebuah `<main>` ada
+atau tidak ada — dan itu pilihan yang tepat untuk lapisan admin. Tetapi urutan
+tab tidak ditentukan oleh urutan tulis JSX. Ia ditentukan oleh urutan dokumen
+setelah render, dan dibelokkan oleh tiga hal yang semuanya ada di situs ini:
+`tabIndex={-1}` pada `<main>` milik shell, `display: none` pada bagian beranda
+yang disembunyikan operator, dan tautan lewati yang `sr-only` sampai ia
+difokuskan. Tidak satu pun dari ketiganya dapat dibaca dari sumber.
+
+`tests/e2e/focus-order.spec.ts` mengendarai Chrome sungguhan pada delapan halaman
+publik dan memeriksa lima hal per halaman: tautan lewati adalah perhentian Tab
+*pertama* dan benar-benar tergambar saat difokuskan; menekannya memindahkan fokus
+ke `<main id="main-content">`; perhentian sesudahnya tidak kembali ke header;
+tidak ada kontrol yang mengambil fokus sambil tak terlihat atau `aria-hidden`;
+dan setiap perhentian menggambar indikator fokus. Ditambah satu uji bahwa kontrol
+di dalam bagian `display: none` benar-benar keluar dari urutan tab.
+
+**Tidak memerlukan basis data.** `getShellData` menelan kegagalannya sendiri dan
+setiap pemuat publik jatuh ke keadaan kosong, jadi struktur halaman tetap utuh
+tanpa Supabase. Berkas ini karena itu tidak memakai kredensial apa pun, berbeda
+dari `auth-smoke.spec.ts`. Konsekuensinya: `/menu`, `/gallery` dan `/events`
+tidak punya satu pun kontrol di dalam `<main>` tanpa data, sehingga tuntutan
+"perhentian sesudah lompatan ada di dalam `<main>`" hanya diterapkan kalau
+`<main>` memang punya kontrol. Menuntut lebih berarti menuntut adanya data, dan
+uji yang menuntut adanya data adalah uji yang menjadi rapuh.
+
+**Dua kesalahan pada uji itu sendiri, keduanya ditemukan dengan menjalankannya.**
+Keduanya layak dicatat karena keduanya adalah cara uji peramban gagal secara
+diam-diam.
+
+1. *27 uji gagal, dan aplikasinya benar.* Versi pertama menyetel ulang fokus
+   dengan `body.click({ x: 1, y: 1 })`. Klik menetapkan **titik awal fokus
+   berurutan** di tempat yang diklik, dan titik (1,1) berada di atas tautan
+   lewati itu sendiri — sehingga Tab berikutnya melangkah ke kontrol
+   *sesudahnya*, dan tautan lewati tampak bukan perhentian pertama. Setelah
+   `page.goto()` titik awalnya sudah berada di awal dokumen. Kliknya dibuang.
+2. *41 uji lulus, dan aplikasinya rusak.* Setelah hijau, tautan lewati sengaja
+   diturunkan menjadi `className="sr-only"` saja — tepat regresi yang seharusnya
+   ditangkap A95 — lalu build itu diuji ulang. Seluruh 41 uji tetap lulus.
+   Sebabnya `toBeVisible()` milik Playwright: sebuah elemen `sr-only` berukuran
+   1x1 dengan `clip-path: inset(50%)` masih "visible" baginya, karena kotak tata
+   letaknya bukan nol. Yang membedakan tautan yang benar dari yang rusak hanya
+   ukuran — 135x44 utuh versus 1x1 terpotong. Assertion-nya diganti menjadi
+   pengukuran `getBoundingClientRect()` plus `clip-path`. Terhadap build yang
+   dirusak itu, 8 uji gagal, satu per halaman. Sesudahnya komponennya
+   dipulihkan, dibangun ulang, dan 41/41 lulus lagi.
+
+   Pemeriksaan cincin fokus diperketat dengan alasan yang sama: Tailwind selalu
+   memancarkan beberapa lapis `box-shadow`, dan lapisan yang tidak aktif keluar
+   sebagai `rgba(0, 0, 0, 0) 0px 0px 0px 0px`. Jadi `!== "none"` saja akan
+   meluluskan cincin yang seluruhnya transparan. Yang dihitung sekarang adalah
+   adanya sedikitnya satu lapis yang tidak transparan dan punya sebaran.
+
+**Bukan bagian dari gerbang.** `npm test` adalah `node --test tests/**/*.test.mjs`
+dan tidak memungut `tests/e2e/*.spec.ts`; CI juga tidak menjalankannya. Keduanya
+harus lulus tanpa server yang berjalan, sedangkan berkas ini memerlukan
+`npm start`. Menjalankannya:
+
+```bash
+npm run build && npm start
+```
+
+```bash
+PLAYWRIGHT_CHROME_PATH="/c/Program Files/Google/Chrome/Application/chrome.exe" npm run e2e:focus
+```
+
+`playwright.config.ts` sudah punya cabang `PLAYWRIGHT_CHROME_PATH` →
+`launchOptions.executablePath`, jadi Chrome sistem dipakai dan tidak ada peramban
+yang perlu diunduh. `E2E_APP_URL` menunjuk ke instance lain kalau port 3000 sudah
+terpakai.
+
+**Yang tetap belum tertutup.** Lapisan CMS. Urutan fokusnya masih hanya diuji
+dari sumber, karena merendernya memerlukan sesi Supabase hidup — dan itu
+menunggu kredensial uji sementara yang belum ada. Batas A92 tetap berlaku apa
+adanya untuk `/admin`.
+
+Verifikasi: 449/449 uji, typecheck, lint, dan build lulus; 41/41 uji fokus lulus
+di Chrome sungguhan, dan terbukti gagal (8 dari 41) terhadap regresi yang
+disengaja.
 
 ## Migration process note
 

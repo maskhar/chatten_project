@@ -13,6 +13,7 @@
     "e2e:auth:provision": "node --use-system-ca --env-file-if-exists=.env.local scripts/e2e-auth-provision.mjs",
     "e2e:auth:session": "node --use-system-ca --env-file-if-exists=.env.local scripts/e2e-auth-session.mjs",
     "e2e:auth:cleanup": "node --use-system-ca --env-file-if-exists=.env.local scripts/e2e-auth-cleanup.mjs",
+    "e2e:focus": "playwright test focus-order",
     "media:import": "node --use-system-ca --env-file-if-exists=.env.local scripts/media-import.mjs",
     "types:generate": "node scripts/gen-types.mjs",
     "types:check": "node scripts/gen-types.mjs --check"
