@@ -62,6 +62,21 @@ export const TEXT_LINK_ON_DARK =
  */
 export const TAP_TARGET = "inline-flex min-h-11 items-center";
 
+/**
+ * A95. A whole card that is itself one link — the Events, Experience and Spaces
+ * list tiles.
+ *
+ * These had `hover:` treatments and nothing for focus, so they kept only the
+ * browser's default outline: not invisible, but undesigned, and drawn tight
+ * against a photograph that fills the card's top half. The ring is drawn
+ * `ring-inset` for the same reason the shell's is — a full-width card's outset
+ * ring is clipped at the viewport edge on a phone.
+ *
+ * No height token: a card containing an `h-72` image is far past 44px already.
+ */
+export const CARD_FOCUS =
+  `${FOCUS_RING} focus-visible:ring-inset focus-visible:ring-forest focus-visible:ring-offset-cream`;
+
 // A92. The skip link and its target are one mechanism split across two files:
 // the anchor lives in the layout, the `id` lives on `<main>`. Naming the id here
 // is what stops them drifting — a renamed `<main>` with a stale `href="#..."`

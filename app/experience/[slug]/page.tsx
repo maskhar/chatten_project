@@ -28,10 +28,10 @@ export default async function ExperienceDetail({ params }: { params: Promise<{ s
     <PublicShell>
       {/* A38: the list cards show imagery; the detail page showed none. */}
       <PageHero eyebrow="Experience at Chatten" title={item.name} description={item.description ?? undefined} image={image} />
-      <main className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
+      <div className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
         <p className="text-lg leading-8 text-ink">{item.description ?? "This experience is being prepared for publication."}</p>
         <CtaLink href="/visit" className="mt-10">Plan Your Visit</CtaLink>
-      </main>
+      </div>
     </PublicShell>
   );
 }

@@ -28,13 +28,21 @@ export function Header({ navigation }: { navigation: NavItem[] }) {
         <button aria-label="Toggle navigation" aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen(!open)} className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded border border-white/50 px-4 text-sm ${HEADER_FOCUS} md:hidden`}>{open ? "Close" : "Menu"}</button>
         <nav aria-label="Main" className="hidden items-center gap-7 text-sm md:flex">
           {links.map((link) => <Link className={`${TAP_TARGET} ${HEADER_FOCUS} transition-opacity hover:opacity-70 aria-[current=page]:underline aria-[current=page]:underline-offset-4`} key={link.href} href={link.href} aria-current={current(link.href)}>{link.label}</Link>)}
-          <Link href="/visit" className="border border-white/70 px-4 py-2">Plan Your Visit</Link>
+          {/* A95: `px-4 py-2` at text-sm measures ~36px, the only clearly
+              undersized rendered target on the public site, and it carried no
+              focus style at all — the one framed button in the header was the
+              one control a keyboard user could not see themselves reach. */}
+          <Link href="/visit" className={`${TAP_TARGET} ${HEADER_FOCUS} border border-white/70 px-4`} aria-current={current("/visit")}>Plan Your Visit</Link>
         </nav>
       </div>
       {open ? (
+        // A95: the drawer links were tall enough but had no focus style, so the
+        // mobile menu was the one navigation on the site a keyboard user could
+        // open and then not track. `flex` is kept over TAP_TARGET's inline-flex
+        // because these fill the drawer width.
         <nav id="mobile-nav" aria-label="Main" className="mx-4 grid gap-1 border border-white/20 bg-forest/95 p-3 text-sm md:hidden">
-          {links.map((link) => <Link className="flex min-h-11 items-center px-3 aria-[current=page]:font-semibold" key={link.href} href={link.href} aria-current={current(link.href)} onClick={() => setOpen(false)}>{link.label}</Link>)}
-          <Link className="flex min-h-11 items-center px-3 font-semibold text-peach-light" href="/visit" onClick={() => setOpen(false)}>Plan Your Visit</Link>
+          {links.map((link) => <Link className={`flex min-h-11 items-center px-3 ${HEADER_FOCUS} aria-[current=page]:font-semibold`} key={link.href} href={link.href} aria-current={current(link.href)} onClick={() => setOpen(false)}>{link.label}</Link>)}
+          <Link className={`flex min-h-11 items-center px-3 font-semibold text-peach-light ${HEADER_FOCUS}`} href="/visit" aria-current={current("/visit")} onClick={() => setOpen(false)}>Plan Your Visit</Link>
         </nav>
       ) : null}
     </header>

@@ -32,8 +32,14 @@ export async function PublicShell({ children, navigation, socials }: { children:
           landed with no visible confirmation of where focus went. The ring is
           drawn `ring-inset` because the container is the full page width and an
           outset ring would sit off-screen on the left and right edges; the
-          offset colour is the shell background it is painted over. */}
-      <div id={SKIP_TARGET_ID} tabIndex={-1} className={`pt-0 ${FOCUS_RING} focus-visible:ring-inset focus-visible:ring-forest focus-visible:ring-offset-cream`}>{children}</div>
+          offset colour is the shell background it is painted over.
+          A95: this was a plain <div>, and every page below the homepage rendered
+          its own <main> *after* PageHero — so the hero section and the page's
+          only <h1> sat outside the main landmark on ten of eleven pages, and the
+          skip link jumped to a container that was not a landmark at all. The
+          shell owns <main> now; pages render a <div> and keep their own
+          spacing. */}
+      <main id={SKIP_TARGET_ID} tabIndex={-1} className={`pt-0 ${FOCUS_RING} focus-visible:ring-inset focus-visible:ring-forest focus-visible:ring-offset-cream`}>{children}</main>
       <PublicFooter navigation={links} socials={socialLinks} />
     </div>
   );

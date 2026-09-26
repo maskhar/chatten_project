@@ -1269,6 +1269,94 @@ di sini: membuatnya mengubah struktur basis data bersama dan memerlukan
 otorisasi tersendiri. Urutan penerapan harus dipastikan manual sebelum
 menjalankan keduanya.
 
+### A95 — aksesibilitas sisi publik: landmark, fokus, target sentuh, alt
+
+Perlakuan yang sama seperti A92, kali ini untuk sebelas halaman publik.
+
+**Landmark utama ada di tempat yang salah pada sepuluh dari sebelas halaman.**
+Shell membungkus anaknya dalam `<div id="main-content" tabIndex={-1}>`, dan
+setiap halaman kecuali beranda merender `<main>` sendiri — *setelah* `PageHero`.
+Akibatnya bagian hero dan satu-satunya `<h1>` halaman itu berada **di luar**
+landmark utama, dan tautan lewati-ke-konten melompat ke sebuah `<div>` yang
+bukan landmark sama sekali: pengguna papan tombol yang memakainya justru
+melewati judul halaman. Shell memiliki `<main>` sekarang; kedua belas halaman
+merender `<div>` dan tetap memegang spasinya sendiri. `app/error.tsx` justru
+kebalikannya dan tetap membawa `<main>` sendiri, karena ia sengaja tidak
+merender `PublicShell` — boundary galat yang bergantung pada pemuat data yang
+sama dengan yang baru saja gagal adalah boundary yang ikut gagal.
+
+**Satu `<section>` tanpa nama yang dapat diakses.** Band testimoni di beranda
+hanya punya `<p>` bergaya sebagai pengantar — tanpa `aria-label`, tanpa heading
+— sehingga ia bukan region dan hilang dari navigasi pembaca layar, satu-satunya
+band beranda yang begitu. Pengantar itu dinaikkan menjadi `<h2>` yang secara
+visual memang sudah ia perankan. Urutan heading di seluruh sisi publik ternyata
+bersih: tidak ada halaman tanpa `h1`, tidak ada yang punya dua, tidak ada
+tingkat yang dilewati.
+
+**Fokus yang tidak terlihat, pada sembilan kontrol.** Tautan berbingkai "Plan
+Your Visit" di header tidak punya gaya fokus apa pun — satu-satunya tombol
+berbingkai di header adalah satu-satunya kontrol yang tidak dapat ditelusuri
+pengguna papan tombol. Ketiga tautan di drawer navigasi ponsel juga kosong,
+sehingga menu ponsel dapat dibuka dengan papan tombol lalu tidak dapat diikuti.
+Footer — yang tampil di setiap halaman, menjadi perhentian tab terakhir, dan
+memuat tautan sosial keluar — mendapat `TAP_TARGET` di A71 tetapi cincinnya
+tertinggal. Dan ketiga kartu-sebagai-tautan di Events, Experience, dan Spaces
+hanya menyisakan outline bawaan peramban: bukan tidak terlihat, tetapi tanpa
+indikator yang dirancang, digambar rapat di atas foto yang mengisi separuh atas
+kartu. `CARD_FOCUS` ditambahkan ke `components/ui/control.ts` untuk pola
+terakhir itu, `ring-inset` dengan alasan yang sama seperti cincin shell: kartu
+selebar layar membuat cincin outset terpotong di tepi viewport pada ponsel.
+
+**Dua salinan tangan dari satu mekanisme.** `SKIP_LINK` sudah dinamai di A92,
+dan `skip-to-content.tsx` tetap memegang salinannya sendiri — yang menghilangkan
+cincinnya. `cta.tsx` menyalin `FOCUS_RING` dari sebelum token itu ada, dan
+salinannya sudah menyimpang: ia menghilangkan `focus-visible:outline-none`,
+sehingga peramban yang menggambar outline sendiri *dan* cincinnya menggambar
+dua. Keduanya mengimpor sekarang. Dua salinan satu mekanisme adalah persis
+bagaimana yang publik diam-diam tertinggal.
+
+**Target sentuh di bawah 44px.** Tautan berbingkai header (`px-4 py-2` pada
+`text-sm`, ±36px) dan `components/ui/button.tsx` (±36px, juga tanpa cincin).
+Satu-satunya pemanggil `Button` adalah tombol Masuk di formulir login CMS —
+kontrol pertama yang ditemui pengguna papan tombol di aplikasi ini, dan
+satu-satunya tempat di mana sesi belum ada sehingga tidak ada hal lain yang
+dapat memulihkannya.
+
+**Alt text yang mengumumkan hal yang sama dua kali.** Kartu di daftar Events
+memakai `alt={asset?.alt_text ?? event.title}`, dan `event.title` adalah `<h2>`
+di dalam `<a>` yang sama. Halaman detail Event lebih jauh lagi: ia merender
+`<MediaImage>` kedua atas **aset yang sama** dengan yang sudah ditampilkan
+hero, dengan judul acara sebagai cadangan alt — jadi satu foto muncul dua kali
+dan judulnya diumumkan dua kali berturut-turut, sekali sebagai `h1` dan sekali
+sebagai alt. Gambar duplikatnya dihapus; hero tetap memegangnya.
+
+**Satu band yang membuang alt text dari CMS.** Grid galeri di beranda lewat
+`visual()`, pembantu yang memaksa `alt=""` — benar untuk latar dan hero
+dekoratif, dan itu sebabnya pembantu itu ada. Tetapi grid galeri adalah satu
+band di beranda yang gambarnya *adalah* kontennya, tanpa teks di dekatnya yang
+menerangkan tiap petak. `/gallery` selalu meneruskan `item.alt_text`; beranda
+sekarang juga, dengan memanggil `MediaImage` langsung dan membungkus petaknya
+dalam `<figure>`.
+
+Tidak ditemukan cacat: tidak ada `<img>` mentah di sisi publik, tidak ada
+kontrol khusus-ikon tanpa nama, tidak ada `alt` yang benar-benar hilang
+(`MediaImage` selalu menghitungnya dan memberi `aria-hidden` pada yang
+dekoratif), tidak ada elemen yang membuang outline tanpa penggantinya, dan tidak
+ada kontrol formulir sama sekali di sisi publik.
+
+`tests/public-landmarks.test.mjs`, 13 uji. Ia menghapus komentar sebelum setiap
+pencocokan berbentuk elemen, dengan alasan yang sama seperti
+`tests/palette.test.mjs`: catatan yang menerangkan *mengapa* `<main>` dulu salah
+harus dapat mengutip `<main>`, dan regex berbentuk elemen akan mencocokkan
+kutipannya — lulus atau gagal berdasarkan prosa, bukan kode.
+
+Verifikasi: 449/449 uji, typecheck, lint, dan build lulus.
+
+Batas yang sama seperti A92: ini uji kontrak sumber, bukan uji render. Halaman
+publik adalah Server Component yang memanggil Supabase, jadi merendernya
+memerlukan basis data. Urutan fokus sebenarnya di peramban masih belum ada yang
+mengujinya secara otomatis.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

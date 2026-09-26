@@ -23,10 +23,10 @@ export default async function SpaceDetail({ params }: { params: Promise<{ slug: 
   return (
     <PublicShell>
       <PageHero eyebrow="A space at Chatten" title={item.name} description={item.description ?? undefined} image={image} />
-      <main className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
+      <div className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
         <p className="text-lg leading-8 text-ink">{item.description ?? "Details for this space are being prepared."}</p>
         <CtaLink href="/visit" className="mt-10">Plan Your Visit</CtaLink>
-      </main>
+      </div>
     </PublicShell>
   );
 }

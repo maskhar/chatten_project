@@ -26,12 +26,16 @@ export default async function EventDetail({ params }: { params: Promise<{ slug: 
   return (
     <PublicShell>
       <PageHero eyebrow="Event at Chatten" title={event.title} description={event.summary ?? undefined} image={image} />
-      <main className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
-        <MediaImage media={image} alt={image?.alt_text ?? event.title} sizes="(min-width: 768px) 48rem, 100vw" className="mb-10 aspect-[3/2] w-full" />
+      {/* A95: a second <MediaImage> used to render the same asset the hero is
+          already showing, with `alt={image?.alt_text ?? event.title}` — so the
+          one photograph appeared twice on the page, and a screen reader
+          announced the event title twice in a row, once as the h1 and once as
+          the duplicate's alt text. The hero keeps the image. */}
+      <div className="mx-auto max-w-3xl px-6 py-20 lg:px-0">
         <p className="text-sm font-semibold text-rust">{eventDate(event.starts_at)}</p>
         {event.body ? <p className="mt-8 text-lg leading-8 text-ink">{event.body}</p> : null}
         <CtaLink href="/visit" className="mt-10">Plan Your Visit</CtaLink>
-      </main>
+      </div>
     </PublicShell>
   );
 }
