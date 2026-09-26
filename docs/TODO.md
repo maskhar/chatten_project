@@ -1449,6 +1449,74 @@ Verifikasi: 449/449 uji, typecheck, lint, dan build lulus; 41/41 uji fokus lulus
 di Chrome sungguhan, dan terbukti gagal (8 dari 41) terhadap regresi yang
 disengaja.
 
+### A97 — CI dinonaktifkan sementara karena kunci tagihan
+
+Keadaan, bukan perbaikan. Dicatat di sini supaya tidak ada yang mengira gerbang
+otomatisnya hilang karena rusak.
+
+Sejak PR #1 dibuka, tidak ada satu pun run CI yang benar-benar berjalan. Keenam
+run terakhir semuanya membawa anotasi yang sama:
+
+> The job was not started because your account is locked due to a billing issue.
+
+Kata kuncinya "was not started". Runner menolak memberi mesin, jadi `npm test`,
+`typecheck`, `lint`, dan `build` tidak pernah dieksekusi sama sekali.
+`gh run view --log-failed` menjawab `log not found` karena tidak ada log yang
+pernah dihasilkan. Durasi 2s dan 1s adalah tanda khas penolakan itu; satu run
+sempat tercatat 38s dan itu sempat tampak seperti kegagalan nyata, tetapi
+anotasinya identik — 38s itu waktu mengantre, bukan waktu berjalan.
+
+Akibatnya setiap push memasang check merah pada PR yang bukan kegagalan kode,
+dan monitor Autofix berbunyi berulang karena ia membaca "check gagal" tanpa
+dapat melihat sebabnya.
+
+**Keputusan operator: matikan workflow, jangan hapus berkasnya.**
+
+```bash
+gh workflow disable CI --repo maskhar/chatten_project
+```
+
+Berkas `.github/workflows/ci.yml` sengaja dipertahankan utuh. Menghapusnya akan
+membuang seluruh alasan yang tertulis di dalamnya — termasuk sebab ia dibuat:
+PR #1 terbuka dengan `0 passing / 0 failing / 0 pending`, artinya tidak ada apa
+pun yang menghalangi perubahan gagal-uji ikut ter-merge. Alasan itu tidak
+berubah hanya karena tagihannya terkunci.
+
+**Selama mati, gerbangnya pindah ke mesin lokal, bukan hilang.** Keempatnya
+dijalankan manual sebelum setiap push:
+
+```bash
+npm test && npm run typecheck && npm run lint && npm run build
+```
+
+Risiko yang diterima dengan sadar: gerbang lokal bergantung pada disiplin dan
+tidak terlihat oleh peninjau — persis kelemahan yang CI ini dibuat untuk
+menutup. Karena itu keadaan ini sementara, bukan desain baru.
+
+**Menyalakannya kembali** setelah tagihan beres:
+
+```bash
+gh workflow enable CI --repo maskhar/chatten_project
+```
+
+Run yang sudah gagal dapat dijalankan ulang tanpa commit baru:
+
+```bash
+gh run rerun 36263766695 --repo maskhar/chatten_project
+```
+
+Baris proteksi branch `main` di `docs/RELEASE_CHECKLIST.md` tetap belum
+tercentang, dan sekarang ada dua hal yang menghalanginya: setelannya belum
+diaktifkan di GitHub, dan check yang akan diwajibkannya sedang mati. Keduanya
+harus beres sebelum baris itu dicentang.
+
+Catatan sampingan dari anotasi yang sama, tidak terkait kegagalan ini:
+`ubuntu-latest` bermigrasi ke Ubuntu 26 mulai 19 Oktober 2026. Pin sekarang
+`ubuntu-latest` dengan Node 24, jadi runner akan ikut berpindah tanpa
+pemberitahuan. Mematoknya ke `ubuntu-24.04` akan membuat kenaikan itu menjadi
+keputusan, bukan kejutan — belum dilakukan, menunggu CI hidup lagi supaya
+perubahannya dapat diverifikasi.
+
 ## Migration process note
 
 `20260910000100_event_promotion_ordering.sql` created a unique index over a

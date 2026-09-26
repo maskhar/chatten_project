@@ -27,6 +27,21 @@ dan build produksi pada setiap PR ke `main` serta setiap push ke `main` dan
 `dev-maskhar`. Sebelum ini, satu-satunya bukti kesehatan sebuah PR adalah
 verifikasi manual di mesin lokal, yang tidak terlihat oleh peninjau.
 
+> **DINONAKTIFKAN SEMENTARA (2026-09-27).** Akun GitHub terkunci karena masalah
+> tagihan, sehingga setiap job ditolak runner sebelum mulai ("The job was not
+> started because your account is locked due to a billing issue") dan setiap
+> push menghasilkan check merah yang bukan kegagalan kode. Atas keputusan
+> operator, workflow dimatikan lewat `gh workflow disable CI` — berkasnya
+> sengaja tidak dihapus. Selama mati, keempat gerbang dijalankan manual di
+> mesin lokal sebelum setiap push. Setelah tagihan beres, nyalakan lagi dengan:
+>
+> ```
+> gh workflow enable CI --repo maskhar/chatten_project
+> ```
+>
+> lalu pastikan run pertama hijau sebelum mencentang kembali baris proteksi
+> branch di bawah.
+
 - [x] CI menjalankan `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`
 - [x] Langkah uji memeriksa baris ringkasan `ℹ fail` sebagai pengaman di atas exit code
 - [x] Build CI memakai `NEXT_PUBLIC_APP_URL` placeholder, jadi gerbang A47 diuji pada jalur suksesnya
